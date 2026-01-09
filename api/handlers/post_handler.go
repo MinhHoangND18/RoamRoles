@@ -7,13 +7,14 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
 type PostResponse struct {
-	ID          int64           `json:"id"`
-	Slug        string          `json:"slug"`
-	Company     string          `json:"company"`
-	Title       string          `json:"title"`
-	Content     json.RawMessage `json:"content"`
-	PublishedAt string          `json:"published_at"`
+	ID          int64  `json:"id"`
+	Slug        string `json:"slug"`
+	Company     string `json:"company"`
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	PublishedAt string `json:"published_at"`
 }
 
 func GetPostBySlug(db *sql.DB) http.HandlerFunc {

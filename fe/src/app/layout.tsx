@@ -1,24 +1,31 @@
-import Header from '@/src/components/Header';
-import Footer from '@/src/components/Footer';
-import Note from '@/src/components/Notes';
+import ThemeRegistry from '@/components/ThemeRegistry';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import Note from '@/components/Notes';
 import { Box } from '@mui/material';
-import { Source_Sans_3 } from 'next/font/google'
+import { Source_Sans_3 } from 'next/font/google';
 
-const sourceSans3 = Source_Sans_3({ subsets: ['latin'] })
+const sourceSans3 = Source_Sans_3({ subsets: ['latin'] });
+
+export const metadata = {
+  title: 'RoamRoles',
+  description: 'Job board for digital nomads',
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body>
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <Header />
-          
-          <Box component="main" sx={{ py: 5 }}>
-            {children}
+      <body className={sourceSans3.className}>
+        <ThemeRegistry>
+          <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header />
+            
+            {children} 
+            
+            <Note />
+            <Footer />
           </Box>
-          <Note/>
-          <Footer />
-        </Box>
+        </ThemeRegistry>
       </body>
     </html>
   );

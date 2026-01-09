@@ -1,27 +1,21 @@
 import { api } from './api-client';
-import { getPostBySlugEndpoint } from '@/src/constants/api-endpoints';
-import { PostApiResponse } from '@/src/types/api';
-import { JobPost } from '@/src/types/jobPost';
+import { getPostBySlugEndpoint } from '@/constants/api-endpoints';
+import { PostApiResponse } from '@/types/api';
 
 /**
  * Fetch a post by slug from the API
  */
-export async function fetchPostBySlug(slug: string): Promise<JobPost | null> {
+export async function fetchPostBySlug(slug: string): Promise<PostApiResponse | null> {
   try {
-    const response = await api.get<PostApiResponse>(getPostBySlugEndpoint(slug));
-    
-    // Parse the content JSON field
-    let content: JobPost;
-    try {
-      content = typeof response.content === 'string' 
-        ? JSON.parse(response.content) 
-        : response.content;
-    } catch (error) {
-      console.error('Error parsing post content:', error);
+    const url = getPostBySlugEndpoint(slug);
+    const post: PostApiResponse = await api.get(url);
+
+    if (!post) {
       return null;
     }
 
-    return content;
+    // Return the post object directly from the API
+    return post;
   } catch (error: any) {
     console.error('Error fetching post:', error);
     
@@ -37,10 +31,10 @@ export async function fetchPostBySlug(slug: string): Promise<JobPost | null> {
 /**
  * Fetch all posts (if you have this endpoint later)
  */
-export async function fetchAllPosts() {
+export async function fetchAllPosts(): Promise<PostApiResponse[] | null> {
   try {
     // This is a placeholder - implement when you have the endpoint
-    const response = await api.get<any>('/api/posts');
+    const response = await api.get<PostApiResponse[]>('/api/posts');
     return response;
   } catch (error: any) {
     console.error('Error fetching posts:', error);

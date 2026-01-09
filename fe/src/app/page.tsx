@@ -1,7 +1,7 @@
-import { posts } from "@/src/app/data/mockPosts";
+import { posts } from "@/app/data/mockPosts";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import PostCard from "@/src/components/PostCard";
+import PostCard from "@/components/PostCard";
 
 export default function HomePage() {
   return (

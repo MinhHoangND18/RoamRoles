@@ -10,7 +10,7 @@ import (
 var DB *sql.DB
 
 func InitDB() {
-	dsn := "root:@tcp(127.0.0.1:3306)/posts(1)?charset=utf8mb4&parseTime=True"
+	dsn := "root:@tcp(127.0.0.1:3306)/roamroles_db?charset=utf8mb4&parseTime=True"
 
 	var err error
 	DB, err = sql.Open("mysql", dsn)

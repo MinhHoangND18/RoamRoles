@@ -1,4 +1,4 @@
-import { API_CONFIG } from '@/src/constants/app-config';
+import { API_CONFIG } from '@/constants/app-config';
 
 // Types for API responses
 export interface ApiError {

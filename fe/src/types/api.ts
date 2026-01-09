@@ -14,7 +14,7 @@ export interface PostFromApi {
   slug: string;
   company: string;
   title: string;
-  content: any; // Parsed JSON content
+  content: string; // Parsed JSON content
   published_at: string;
 }
 

@@ -88,22 +88,22 @@ const Footer = () => {
                         >
                             {links.map((link) => (
                                 <Box component="li" key={link.href} sx={{ mb: 1 }}>
-                                    <Link href={link.href} passHref legacyBehavior>
-                                        <MuiLink
-                                            sx={{
-                                                color: 'white',
-                                                textDecoration: 'none',
-                                                fontSize: '0.875rem',
-                                                fontFamily: '"Source Sans 3", sans-serif',
-                                                '&:hover': { 
-                                                    textDecoration: 'underline',
-                                                    color: 'white'
-                                                },
-                                            }}
-                                        >
-                                            {link.label}
-                                        </MuiLink>
-                                    </Link>
+                                    <MuiLink
+                                        component={Link}
+                                        href={link.href}
+                                        sx={{
+                                            color: 'white',
+                                            textDecoration: 'none',
+                                            fontSize: '0.875rem',
+                                            fontFamily: '"Source Sans 3", sans-serif',
+                                            '&:hover': { 
+                                                textDecoration: 'underline',
+                                                color: 'white'
+                                            },
+                                        }}
+                                    >
+                                        {link.label}
+                                    </MuiLink>
                                 </Box>
                             ))}
                         </Box>
@@ -142,22 +142,22 @@ const Footer = () => {
                         >
                             {categories.map((category) => (
                                 <Box component="li" key={category.href} sx={{ mb: 1 }} className="cat-item">
-                                    <Link href={category.href} passHref legacyBehavior>
-                                        <MuiLink
-                                            sx={{
-                                                color: 'white',
-                                                textDecoration: 'none',
-                                                fontSize: '0.875rem',
-                                                fontFamily: '"Source Sans 3", sans-serif',
-                                                '&:hover': { 
-                                                    textDecoration: 'underline',
-                                                    color: 'white'
-                                                },
-                                            }}
-                                        >
-                                            {category.label}
-                                        </MuiLink>
-                                    </Link>
+                                    <MuiLink
+                                        component={Link}
+                                        href={category.href}
+                                        sx={{
+                                            color: 'white',
+                                            textDecoration: 'none',
+                                            fontSize: '0.875rem',
+                                            fontFamily: '"Source Sans 3", sans-serif',
+                                            '&:hover': { 
+                                                textDecoration: 'underline',
+                                                color: 'white'
+                                            },
+                                        }}
+                                    >
+                                        {category.label}
+                                    </MuiLink>
                                 </Box>
                             ))}
                         </Box>
