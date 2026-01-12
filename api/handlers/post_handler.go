@@ -1,52 +1,61 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
-type PostResponse struct {
-	ID          int64  `json:"id"`
-	Slug        string `json:"slug"`
-	Company     string `json:"company"`
-	Title       string `json:"title"`
-	Content     string `json:"content"`
-	PublishedAt string `json:"published_at"`
+type PostModel struct {
+	ID          int64     `json:"id"`
+	Slug        string    `gorm:"column:slug" json:"slug"`
+	Content     string    `gorm:"column:content" json:"content"`
+
 }
 
-func GetPostBySlug(db *sql.DB) http.HandlerFunc {
+func (p PostModel) TableName() string {
+	return "posts"
+}
+
+type PostResponse struct {
+	ID          int64  `json:"id" gorm:"cloiu"`
+	Slug        string `json:"slug"`
+	Content     string `json:"content"`
+}
+
+func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		slug := params["slug"]
-
-		var post PostResponse
-
-		err := db.QueryRow(`
-			SELECT id, slug, company, title, content, published_at
-			FROM posts
-			WHERE slug = ?
-		`, slug).Scan(
-			&post.ID,
-			&post.Slug,
-			&post.Company,
-			&post.Title,
-			&post.Content,
-			&post.PublishedAt,
-		)
-
-		if err == sql.ErrNoRows {
-			http.Error(w, "Post not found", http.StatusNotFound)
+		if slug == "" {
+			http.Error(w, "Slug is required", http.StatusBadRequest)
 			return
 		}
+		post := PostModel{}
+		result := db.Model(&PostModel{}).Where("slug = ?", slug).First(&post)
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				http.Error(w, "Post not found", http.StatusNotFound)
+				return
+			}
+			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(post)
+	}
+}
 
+func GetPosts(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		post := []PostModel{}
+		err := db.Model(&PostModel{}).Find(&post).Error
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(post)
 	}

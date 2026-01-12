@@ -1,27 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
-	apiHandlers "roamroles-api/handlers"
+	"roamroles-api/config"
+	"roamroles-api/handlers"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	InitDB()
+	cf, err := config.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config:", err)
+	}
 
+	DB, err := config.InitDB(cf.DbUrl)
+	if err != nil {
+		log.Fatal("cannot connect to db:", err)
+	}
 	r := mux.NewRouter()
-
-	r.HandleFunc("/api/posts/{slug}", apiHandlers.GetPostBySlug(DB)).Methods("GET")
-
-	// Add CORS middleware
-	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
-	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
-	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type"})
-
-	log.Println("🚀 Server running at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)(r)))
+	r.HandleFunc("/api", handlers.GetPosts(DB)).Methods("GET")
+	r.HandleFunc("/api/", handlers.GetPosts(DB)).Methods("GET")
+	r.HandleFunc("/api/{slug}", handlers.GetPostBySlug(DB)).Methods("GET")
+	sv := fmt.Sprintf("%v:%v", "127.0.0.1", cf.Port)
+	log.Println("🚀 Server running at http://", sv)
+	log.Fatal(http.ListenAndServe(sv, r))
 }
