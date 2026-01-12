@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import theme from "@/src/themes/theme"
+import theme from "@/themes/theme"
 
 export default function Providers({
   children,

@@ -1,12 +1,11 @@
 import { API_CONFIG } from '@/constants/app-config';
-
-// Types for API responses
 export interface ApiError {
   message: string;
   status?: number;
 }
 
-// API Client utility class
+type RequestBody = Record<string, unknown> | unknown[] | null | undefined;
+
 class ApiClient {
   private baseURL: string;
   private timeout: number;
@@ -16,20 +15,13 @@ class ApiClient {
     this.timeout = API_CONFIG.TIMEOUT;
   }
 
-  /**
-   * Make a GET request
-   */
   async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'GET',
     });
   }
-
-  /**
-   * Make a POST request
-   */
-  async post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+  async post<T>(endpoint: string, data?: RequestBody, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -41,10 +33,7 @@ class ApiClient {
     });
   }
 
-  /**
-   * Make a PUT request
-   */
-  async put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+  async put<T>(endpoint: string, data?: RequestBody, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -56,9 +45,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * Make a DELETE request
-   */
   async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
@@ -66,9 +52,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * Core request method
-   */
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     
@@ -79,17 +62,12 @@ class ApiClient {
       const response = await fetch(url, {
         ...options,
         signal: controller.signal,
-        headers: {
-          ...options.headers,
-        },
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          message: response.statusText || 'An error occurred',
-        }));
+        const errorData = (await response.json().catch(() => ({}))) as Record<string, string>;
 
         const error: ApiError = {
           message: errorData.message || `HTTP error! status: ${response.status}`,
@@ -99,42 +77,44 @@ class ApiClient {
         throw error;
       }
 
-      // Handle empty responses
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         return {} as T;
       }
 
-      return await response.json();
-    } catch (error: any) {
+      return (await response.json()) as T;
+    } catch (error: unknown) { 
       clearTimeout(timeoutId);
-
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw {
           message: 'Request timeout',
           status: 408,
         } as ApiError;
       }
 
-      if (error.status) {
+      if (this.isApiError(error)) {
         throw error;
       }
 
       throw {
-        message: error.message || 'Network error occurred',
+        message: error instanceof Error ? error.message : 'Network error occurred',
       } as ApiError;
     }
   }
+  private isApiError(error: unknown): error is ApiError {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error
+    );
+  }
 }
 
-// Export singleton instance
 export const apiClient = new ApiClient();
 
-// Export convenience functions
 export const api = {
   get: <T>(endpoint: string, options?: RequestInit) => apiClient.get<T>(endpoint, options),
-  post: <T>(endpoint: string, data?: any, options?: RequestInit) => apiClient.post<T>(endpoint, data, options),
-  put: <T>(endpoint: string, data?: any, options?: RequestInit) => apiClient.put<T>(endpoint, data, options),
+  post: <T>(endpoint: string, data?: RequestBody, options?: RequestInit) => apiClient.post<T>(endpoint, data, options),
+  put: <T>(endpoint: string, data?: RequestBody, options?: RequestInit) => apiClient.put<T>(endpoint, data, options),
   delete: <T>(endpoint: string, options?: RequestInit) => apiClient.delete<T>(endpoint, options),
 };
-

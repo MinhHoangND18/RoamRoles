@@ -29,7 +29,7 @@ export default function Header() {
                     {/* Logo và Menu */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         {/* Logo */}
-                        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'black' }}>
+                        {/* <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'black' }}>
                             <Image
                                 src="https://roamroles.com/wp-content/uploads/sites/220/2025/08/Design-sem-nome.png"
                                 alt="Roam Roles"
@@ -40,7 +40,7 @@ export default function Header() {
                             <Typography variant="h6" sx={{ ml: 1, fontWeight: 600, fontSize: '1.25rem' }}>
                                 Roam Roles
                             </Typography>
-                        </Link>
+                        </Link> */}
 
                         {/* MENU DESKTOP */}
                         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3 }}>

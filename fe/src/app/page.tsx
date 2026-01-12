@@ -1,4 +1,4 @@
-import { posts } from "@/app/data/mockPosts";
+
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import PostCard from "@/components/PostCard";
@@ -10,13 +10,7 @@ export default function HomePage() {
         📚 Bài viết mới
       </Typography>
 
-      <Grid container spacing={2}>
-        {posts.map((post) => (
-          <Grid size={{xs:12, sm:6}}  key={post.id}>
-            <PostCard post={post} />
-          </Grid>
-        ))}
-      </Grid>
+  
     </>
   );
 }

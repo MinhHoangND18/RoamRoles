@@ -5,7 +5,7 @@
  */
 
 import { api } from './api-client';
-import { API_ENDPOINTS, getPostBySlugEndpoint } from '@/src/constants/api-endpoints';
+import { API_ENDPOINTS, getPostBySlugEndpoint } from "@/constants/api-endpoints"
 
 // ============================================
 // VÍ DỤ 1: Client Component (sử dụng useEffect)

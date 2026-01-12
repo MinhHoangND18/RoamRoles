@@ -37,7 +37,7 @@ const Footer = () => {
             <Container maxWidth="lg">
                 <Grid container spacing={10}>
                     {/* Logo  */}
-                    <Grid size={{ xs: 12, md: 3 }}>
+                    {/* <Grid size={{ xs: 12, md: 3 }}>
                         <Box className="footer-widget-area" id="footer-widget-1">
                             <Box sx={{ pt: 2 }}>
                                 <Box sx={{ position: 'relative', width: 148, height: 148 }}>
@@ -51,7 +51,7 @@ const Footer = () => {
                                 </Box>
                             </Box>
                         </Box>
-                    </Grid>
+                    </Grid> */}
 
                     {/* Links */}
                     <Grid size={{ xs: 12, md: 3 }}>
