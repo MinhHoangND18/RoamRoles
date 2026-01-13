@@ -5,10 +5,7 @@ import { PostApiResponse } from '@/types/api';
 export async function fetchPostBySlug(slug: string): Promise<PostApiResponse | null> {
   try {
     const url = getPostBySlugEndpoint(slug);
-    console.log('fetchPostBySlug - fetching URL:', url);
     const post: PostApiResponse = await api.get(url);
-    console.log('fetchPostBySlug - received post:', post ? { id: post.id, slug: post.slug } : 'null');
-
     if (!post) {
       return null;
     }

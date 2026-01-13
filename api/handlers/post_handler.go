@@ -9,10 +9,11 @@ import (
 )
 
 type PostModel struct {
-	ID          int64     `json:"id"`
-	Slug        string    `gorm:"column:slug" json:"slug"`
-	Content     string    `gorm:"column:content" json:"content"`
-
+	ID             int64  `json:"id"`
+	Slug           string `gorm:"column:slug" json:"slug"`
+	Content        string `gorm:"column:content" json:"content"`
+	HeadingTitle   string `json:"heading_title"`
+	PostNavigation string `json:"post_navigation"`
 }
 
 func (p PostModel) TableName() string {
@@ -20,9 +21,11 @@ func (p PostModel) TableName() string {
 }
 
 type PostResponse struct {
-	ID          int64  `json:"id" gorm:"cloiu"`
-	Slug        string `json:"slug"`
-	Content     string `json:"content"`
+	ID             int64  `json:"id" gorm:"cloiu"`
+	Slug           string `json:"slug"`
+	Content        string `json:"content"`
+	HeadingTitle   string `json:"heading_title"`
+	PostNavigation string `json:"post_navigation"`
 }
 
 func GetPostBySlug(db *gorm.DB) http.HandlerFunc {

@@ -1,185 +1,92 @@
-"use client";
-import React from 'react';
-import { Box, Container, Grid, Typography, Link as MuiLink } from '@mui/material';
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
+import "@/css/all.min.css";
 
 const Footer = () => {
-    const links = [
-        { label: 'About', href: '/home/about' },
-        { label: 'Contact', href: '/contact' },
-        { label: 'Terms of Use', href: '/terms' },
-        { label: 'Privacy Policy', href: '/privacy' },
-    ];
+  return (
+    <footer id="footer">
+      <div className="container">
+        <div className="row">
+          {/* Logo */}
+          <div className="col-md-3 d-flex align-items-center">
+            <div id="footer-widget-1" className="footer-widget-area">
+              <div className="widget">
+                <h5 className="wp-block-heading has-text-align-left"> </h5>
+              </div>
+              <div className="widget  mt-3" style={{ marginTop: '20px' }}>
+                <figure className="wp-block-image size-full is-resized">
+                  <Image
+                    src="/images/jobzesty.png"
+                    alt="Roam Roles Logo"
+                    width={500}
+                    height={500} 
+                    className="wp-image-340"
+                    style={{ width: '186px', height: '86px'}}
+                  />
+                </figure>
+              </div>
+            </div>
+          </div>
 
-    const categories = [
-        { label: 'Career Stories', href: '/category/career-stories' },
-        { label: 'Guides', href: '/category/guides' },
-        { label: 'Job Listings', href: '/category/job-listings' },
-        { label: 'Planning', href: '/category/planning' },
-        { label: 'Remote Work', href: '/category/remote-work' },
-    ];
+          {/* Links */}
+          <div className="col-md-3">
+            <h4>Links</h4>
+            <div className="menu-legal-container">
+              <ul id="menu-legal" className="footer-links">
+                <li id="menu-item-326" className="menu-item menu-item-type-post_type menu-item-object-page">
+                  <Link href="/home/about/">About</Link>
+                </li>
+                <li id="menu-item-327" className="menu-item menu-item-type-post_type menu-item-object-page">
+                  <Link href="/contact/">Contact</Link>
+                </li>
+                <li id="menu-item-328" className="menu-item menu-item-type-post_type menu-item-object-page">
+                  <Link href="/terms/">Terms of Use</Link>
+                </li>
+                <li id="menu-item-338" className="menu-item menu-item-type-post_type menu-item-object-page">
+                  <Link href="/privacy/">Privacy Policy</Link>
+                </li>
+              </ul>
+            </div>
+          </div>
 
-    return (
-        <Box
-            component="footer"
-            id="footer"
-            sx={{
-                bgcolor: '#cfbae2', 
-                color: 'white',
-                pt: 2,
-                pb: 1,
-                mt: 'auto',
-                fontFamily: '"Source Sans 3", sans-serif',
-                fontSize: '18px'
-            }}
-        >
-            <Container maxWidth="lg">
-                <Grid container spacing={10}>
-                    {/* Logo  */}
-                    {/* <Grid size={{ xs: 12, md: 3 }}>
-                        <Box className="footer-widget-area" id="footer-widget-1">
-                            <Box sx={{ pt: 2 }}>
-                                <Box sx={{ position: 'relative', width: 148, height: 148 }}>
-                                    <Image
-                                        src="https://roamroles.com/wp-content/uploads/sites/220/2025/08/Logo-Roam-Roler.png"
-                                        alt="Roam Roles Logo"
-                                        fill
-                                        style={{ objectFit: 'contain' }}
-                                        unoptimized
-                                    />
-                                </Box>
-                            </Box>
-                        </Box>
-                    </Grid> */}
+          {/* Categories */}
+          <div className="col-md-3">
+            <h4>Categories</h4>
+            <ul>
+              <li className="cat-item cat-item-2">
+                <Link href="/category/career-stories/">Career Stories</Link>
+              </li>
+              <li className="cat-item cat-item-5">
+                <Link href="/category/guides/">Guides</Link>
+              </li>
+              <li className="cat-item cat-item-10">
+                <Link href="/category/job-listings/">Job Listings</Link>
+              </li>
+              <li className="cat-item cat-item-3">
+                <Link href="/category/planning/">Planning</Link>
+              </li>
+              <li className="cat-item cat-item-6">
+                <Link href="/category/remote-work/">Remote Work</Link>
+              </li>
+            </ul>
+          </div>
 
-                    {/* Links */}
-                    <Grid size={{ xs: 12, md: 3 }}>
-                        <Typography 
-                            component="h4"
-                            sx={{ 
-                                fontSize: '1.125rem',
-                                fontWeight: 500,
-                                mb: 2,
-                                mt: 0,
-                                pb: 0.5,
-                                borderBottom: '2px solid rgba(255,255,255,0.6)',
-                                display: 'inline-block',
-                                textTransform: 'uppercase',
-                                fontFamily: '"Source Sans 3", sans-serif'
-                            }}
-                        >
-                            Links
-                        </Typography>
-                        <Box 
-                            component="ul" 
-                            className="footer-links"
-                            id="menu-legal"
-                            sx={{ 
-                                listStyle: 'disc',
-                                pl: 2.5,
-                                m: 0,
-                                mt: 0,
-                                color: 'white',
-                                '& li::marker': {
-                                    fontSize: '0.8rem'
-                                }
-                            }}
-                        >
-                            {links.map((link) => (
-                                <Box component="li" key={link.href} sx={{ mb: 1 }}>
-                                    <MuiLink
-                                        component={Link}
-                                        href={link.href}
-                                        sx={{
-                                            color: 'white',
-                                            textDecoration: 'none',
-                                            fontSize: '0.875rem',
-                                            fontFamily: '"Source Sans 3", sans-serif',
-                                            '&:hover': { 
-                                                textDecoration: 'underline',
-                                                color: 'white'
-                                            },
-                                        }}
-                                    >
-                                        {link.label}
-                                    </MuiLink>
-                                </Box>
-                            ))}
-                        </Box>
-                    </Grid>
+          <div className="col-md-3">
+            <h4></h4>
+            <div className="social-icons">
+            </div>
+          </div>
+        </div>
 
-                    {/* Categories */}
-                    <Grid size={{ xs: 12, md: 3 }}>
-                        <Typography 
-                            component="h4"
-                            sx={{ 
-                                fontSize: '1.125rem',
-                                fontWeight: 500,
-                                mb: 2,
-                                mt: 0,
-                                pb: 0.5,
-                                borderBottom: '2px solid rgba(255,255,255,0.6)',
-                                display: 'inline-block',
-                                textTransform: 'uppercase',
-                                fontFamily: '"Source Sans 3", sans-serif'
-                            }}
-                        >
-                            Categories
-                        </Typography>
-                        <Box 
-                            component="ul" 
-                            sx={{ 
-                                listStyle: 'disc',
-                                pl: 2.5,
-                                m: 0,
-                                mt: 0,
-                                color: 'white',
-                                '& li::marker': {
-                                    fontSize: '0.8rem'
-                                }
-                            }}
-                        >
-                            {categories.map((category) => (
-                                <Box component="li" key={category.href} sx={{ mb: 1 }} className="cat-item">
-                                    <MuiLink
-                                        component={Link}
-                                        href={category.href}
-                                        sx={{
-                                            color: 'white',
-                                            textDecoration: 'none',
-                                            fontSize: '0.875rem',
-                                            fontFamily: '"Source Sans 3", sans-serif',
-                                            '&:hover': { 
-                                                textDecoration: 'underline',
-                                                color: 'white'
-                                            },
-                                        }}
-                                    >
-                                        {category.label}
-                                    </MuiLink>
-                                </Box>
-                            ))}
-                        </Box>
-                    </Grid>
-
-                    {/* Empty column */}
-                    <Grid size={{ xs: 12, md: 3 }}>
-                        <Box className="social-icons">
-                            {/* Empty space for social icons if needed later */}
-                        </Box>
-                    </Grid>
-                </Grid>
-
-                {/* Copyright row */}
-                <Box sx={{ mt: 4, textAlign: 'center' }}>
-                    <Typography component="p" sx={{ color: 'white', fontSize: '0.875rem', m: 0, fontFamily: '"Source Sans 3", sans-serif' }}>
-                        © 2026 Roam Roles - All rights reserved.
-                    </Typography>
-                </Box>
-            </Container>
-        </Box>
-    );
+        {/* Copyright Row */}
+        <div className="row">
+          <div className="col-md-12 text-center">
+            <p>© 2026 Roam Roles - All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
 };
 
 export default Footer;

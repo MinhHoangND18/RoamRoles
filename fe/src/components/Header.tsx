@@ -1,137 +1,101 @@
-"use client";
-import React, { useState } from 'react';
-import {
-    AppBar, Toolbar, Typography, Button, IconButton,
-    Drawer, List, ListItem, ListItemText, Box,
-    Container, InputBase, Paper
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
+'use client'; 
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import "@/css/all.min.css";
 
-const navItems = [
-    { title: 'Career Stories', href: '/category/career-stories/' },
-    { title: 'Job Listings', href: '/category/job-listings/' },
-    { title: 'Remote Work', href: '/category/remote-work/' },
-];
+const Header = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
 
-export default function Header() {
-    const [mobileOpen, setMobileOpen] = useState(false);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
 
-    const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+      router.push(`/?s=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
-    return (
-        <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid #e0e0e0' }}>
-            <Container maxWidth="lg">
-                <Toolbar disableGutters sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1 }}>
+  return (
+    <header>
+      <nav id="header" className="navbar navbar-expand-md navbar-light bg-light home">
+        <div className="container">
+          {/* Logo Section */}
+          <Link href="/" className="navbar-brand" title="Roam Roles">
+            <Image 
+              src="/images/jobzesty.png" 
+              alt="Roam Roles"
+              width={120} 
+              height={40}
+              style={{ marginRight: '0px' }}
+            />
+          </Link>
 
-                    {/* Logo và Menu */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {/* Logo */}
-                        {/* <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'black' }}>
-                            <Image
-                                src="https://roamroles.com/wp-content/uploads/sites/220/2025/08/Design-sem-nome.png"
-                                alt="Roam Roles"
-                                width={45}
-                                height={45}
-                                unoptimized
-                            />
-                            <Typography variant="h6" sx={{ ml: 1, fontWeight: 600, fontSize: '1.25rem' }}>
-                                Roam Roles
-                            </Typography>
-                        </Link> */}
+          {/* Mobile Menu Button */}
+          <button 
+            className="navbar-toggler" 
+            type="button" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#navbar" 
+            aria-controls="navbar" 
+            aria-expanded="false" 
+            aria-label="Toggle navigation"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
 
-                        {/* MENU DESKTOP */}
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3 }}>
-                            {navItems.map((item) => (
-                                <Button
-                                    key={item.title}
-                                    component={Link}
-                                    href={item.href}
-                                    sx={{
-                                        color: '#666',
-                                        textTransform: 'none',
-                                        fontSize: '0.95rem',
-                                        fontWeight: 400,
-                                        minWidth: 'auto',
-                                        padding: 0,
-                                        '&:hover': {
-                                            color: '#a32df1',
-                                            bgcolor: 'transparent'
-                                        }
-                                    }}
-                                >
-                                    {item.title}
-                                </Button>
-                            ))}
-                        </Box>
-                    </Box>
+          <div id="navbar" className="collapse navbar-collapse">
+            {/* Navigation Links */}
+            <ul id="menu-categories" className="navbar-nav me-auto">
+              <li className="menu-item nav-item">
+                <Link href="/category/career-stories/" className="nav-link" title="Career Stories">
+                  Career Stories
+                </Link>
+              </li>
+              <li className="menu-item nav-item">
+                <Link href="/category/job-listings/" className="nav-link" title="Job Listings">
+                  Job Listings
+                </Link>
+              </li>
+              <li className="menu-item nav-item">
+                <Link href="/category/remote-work/" className="nav-link" title="Remote Work">
+                  Remote Work
+                </Link>
+              </li>
+            </ul>
 
-                    {/* Search Bar */}
-                    <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-                        <Paper
-                            component="form"
-                            action="/"
-                            method="GET"
-                            elevation={0}
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                width: 280,
-                                border: '1px solid #ddd',
-                                borderRadius: '4px',
-                                overflow: 'hidden'
-                            }}
-                        >
-                            <InputBase
-                                sx={{ ml: 2, flex: 1, fontSize: '0.9rem' }}
-                                placeholder="Search"
-                                name="s"
-                            />
-                            <IconButton
-                                type="submit"
-                                sx={{
-                                    p: '12px',
-                                    bgcolor: '#a32df1',
-                                    color: 'white',
-                                    borderRadius: 0,
-                                    '&:hover': { bgcolor: '#8e24d4' }
-                                }}
-                                aria-label="search"
-                            >
-                                <SearchIcon />
-                            </IconButton>
-                        </Paper>
-                    </Box>
+            {/* Search Container */}
+            <div className="search-container">
+              <form 
+                id="site-search-form" 
+                className="search-form" 
+                role="search" 
+                onSubmit={handleSearch}
+              >
+                <div className="input-group">
+                  <input 
+                    type="text" 
+                    id="search-input" 
+                    name="s" 
+                    className="form-control" 
+                    placeholder="Search" 
+                    required 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <button type="submit" className="btn btn-activeview" aria-label="Search">
+                    <i className="fas fa-search"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+  );
+};
 
-                    {/* MOBILE MENU ICON */}
-                    <IconButton
-                        color="inherit"
-                        edge="start"
-                        onClick={handleDrawerToggle}
-                        sx={{ display: { md: 'none' } }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                </Toolbar>
-            </Container>
-
-            {/* MOBILE DRAWER */}
-            <Drawer
-                anchor="right"
-                open={mobileOpen}
-                onClose={handleDrawerToggle}
-                sx={{ '& .MuiDrawer-paper': { width: 250 } }}
-            >
-                <List>
-                    {navItems.map((item) => (
-                        <ListItem key={item.title} component={Link} href={item.href} onClick={handleDrawerToggle}>
-                            <ListItemText primary={item.title} />
-                        </ListItem>
-                    ))}
-                </List>
-            </Drawer>
-        </AppBar>
-    );
-}
+export default Header;

@@ -15853,7 +15853,7 @@ span.d-block {
 }
 
 .btn-activeview {
-    background-color: var(--accent)
+    background-color: #a30bef;
 }
 
 .btn-activeview,.btn-activeview:hover {
@@ -15977,7 +15977,7 @@ span.d-block {
 }
 
 .home-post-readmore {
-    background-color: var(--accent);
+    background-color: #a30bef;
     border-radius: 5px;
     padding: 10px 20px;
     text-decoration: none;
