@@ -12,7 +12,11 @@ type PostModel struct {
 	ID             int64  `json:"id"`
 	Slug           string `gorm:"column:slug" json:"slug"`
 	Content        string `gorm:"column:content" json:"content"`
-	HeadingTitle   string `json:"heading_title"`
+	Descrip        string `gorm:"column:descrip" json:"descrip"`
+	Title          string `gorm:"column:title" json:"title"`
+	Excerpt        string `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader    string `gorm:"column:title_header" json:"title_header"`
+	Status         string `gorm:"column:status" json:"status"`
 	PostNavigation string `json:"post_navigation"`
 }
 
@@ -21,10 +25,14 @@ func (p PostModel) TableName() string {
 }
 
 type PostResponse struct {
-	ID             int64  `json:"id" gorm:"cloiu"`
+	ID             int64  `json:"id"`
 	Slug           string `json:"slug"`
 	Content        string `json:"content"`
-	HeadingTitle   string `json:"heading_title"`
+	Descrip        string `gorm:"column:descrip" json:"descrip"`
+	Title          string `gorm:"column:title" json:"title"`
+	Excerpt        string `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader    string `gorm:"column:title_header" json:"title_header"`
+	Status         string `gorm:"column:status" json:"status"`
 	PostNavigation string `json:"post_navigation"`
 }
 
@@ -61,5 +69,43 @@ func GetPosts(db *gorm.DB) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(post)
+	}
+}
+
+func UpdatePostBySlug(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		slug := params["slug"]
+		if slug == "" {
+			http.Error(w, "Slug is required", http.StatusBadRequest)
+			return
+		}
+
+		var payload map[string]interface{}
+		err := json.NewDecoder(r.Body).Decode(&payload)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		result := db.Model(&PostModel{}).Where("slug = ?", slug).Updates(payload)
+		if result.Error != nil {
+			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if result.RowsAffected == 0 {
+			var count int64
+			db.Model(&PostModel{}).Where("slug = ?", slug).Count(&count)
+			if count == 0 {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				json.NewEncoder(w).Encode(map[string]string{"message": "Post not found."})
+				return
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Post updated successfully"})
 	}
 }

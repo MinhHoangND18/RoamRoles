@@ -15,7 +15,6 @@ export default function HomePage() {
               <Image 
                 width="768" 
                 height="512" 
-                // style={{ backgroundImage: "url('images/entrevista_curriculo_2.jpg')"}}
                 src="/images/entrevista_curriculo_2.jpg"
                 className="img-fluid rounded wp-post-image" 
                 alt="Flexible Jobs" 

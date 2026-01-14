@@ -4,13 +4,32 @@ import Footer from "@/components/Footer";
 import Note from "@/components/Notes";
 import { Box } from "@mui/material";
 import { Source_Sans_3 } from "next/font/google";
-const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
 import Script from "next/script";
+import { headers } from "next/headers";
 
-export const metadata = {
-  title: "RoamRoles",
-  description: "Job board for digital nomads",
-};
+const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
+
+export async function generateMetadata() {
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+
+  if (host.includes("jobsmatch4u.com")) {
+    return {
+      title: "Jobsmatch",
+      description: "Find your perfect career match",
+      icons: {
+        icon: '/images/jm4u-favicon.png',
+      },
+    };
+  }
+  return {
+    title: "Jobzesty",
+    description: "Job board for digital nomads",
+    icons: {
+      icon: '/images/jz-favicon.png',
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -29,9 +48,7 @@ export default function RootLayout({
             }}
           >
             <Header />
-
             {children}
-
             <Note />
             <Footer />
           </Box>
