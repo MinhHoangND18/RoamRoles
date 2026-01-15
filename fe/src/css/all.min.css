@@ -221,13 +221,13 @@ h1 {
 
 .h2,
 h2 {
-  font-size: calc(1.325rem + 0.9vw);
+  font-size: calc(0.85rem + 0.9vw);
 }
 
 @media (min-width: 1200px) {
   .h2,
   h2 {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 }
 
@@ -350,8 +350,9 @@ sup {
 }
 
 a {
-  color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1));
+  color: #cfbae2;
   text-decoration: none;
+  letter-spacing: 0.001em;
 }
 
 a:hover {
@@ -17297,7 +17298,7 @@ p.gb-headline-ebd47fe1 .gb-icon svg {
 }
 
 .archive .card-title.h2 a,
-.archive h2.card-title a {
+.archive h2.card-title a{
   color: var(--contrast-2);
 }
 

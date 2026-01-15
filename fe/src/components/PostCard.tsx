@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Post } from "@/types/post"
 
 export default function PostCard({ post }: { post: Post }) {
@@ -6,9 +5,9 @@ export default function PostCard({ post }: { post: Post }) {
     <div className="post-card">
       <h3>{post.title}</h3>
 
-      <Link href={`/${post.slug}`}>
+      <a href={`/${post.slug}`}>
         Đọc thêm →
-      </Link>
+      </a>
     </div>
   );
 }

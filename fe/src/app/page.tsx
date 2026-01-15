@@ -1,8 +1,7 @@
-import Link from "next/link";
 import Grid from "@mui/material/Grid";
 import "@/css/all.min.css";
 import Image from 'next/image';
-
+/* eslint-disable @next/next/no-html-link-for-pages */
 export default function HomePage() {
   return (
     <main id="main" className="container">
@@ -27,7 +26,7 @@ export default function HomePage() {
                 <div className="post-excerpt">
                   <p>Looking for flexible work that fits your schedule and pays reliably? From home-based roles to seasonal gigs, there are growing opportunities — even without formal experience.</p>
                 </div>
-                <Link href="/flexible-jobs-open/" className="home-post-readmore">Read More</Link>
+                <a href="/flexible-jobs-open/" className="home-post-readmore">Read More</a>
               </div>
             </div>
           </div>
@@ -49,7 +48,7 @@ export default function HomePage() {
                 <h2 className="home-post-title" style={{ color: "var(--base-3)", fontSize: "24px", marginBottom: "5px" }}>
                   Opportunities at Wimpy: Open Jobs in SA With Pay Up to R7,000
                 </h2>
-                <Link href="/opportunities-at-wimpy/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/opportunities-at-wimpy/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
@@ -57,7 +56,7 @@ export default function HomePage() {
                 <h2 className="home-post-title" style={{ color: "var(--base-3)", fontSize: "24px", marginBottom: "5px" }}>
                   McDonald’s Job: Flexible Shifts and Staff Meals
                 </h2>
-                <Link href="/mcdonalds-job/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/mcdonalds-job/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
@@ -65,7 +64,7 @@ export default function HomePage() {
                 <h2 className="home-post-title" style={{ color: "var(--base-3)", fontSize: "24px", marginBottom: "5px" }}>
                   Now Hiring: Cleaning Jobs Available
                 </h2>
-                <Link href="/cleaning-jobs/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/cleaning-jobs/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
           </div>
@@ -85,19 +84,19 @@ export default function HomePage() {
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/entrevista_curriculo_2.jpg')" }}>
                 <h2 className="home-post-title">Flexible Jobs That Pay Well: From House Cleaning to Home Office Roles</h2>
-                <Link href="/flexible-jobs-open/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/flexible-jobs-open/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/8.jpg')" }}>
                 <h2 className="home-post-title">Opportunities at Wimpy: Open Jobs in SA With Pay Up to R7,000</h2>
-                <Link href="/opportunities-at-wimpy/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/opportunities-at-wimpy/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/Chat-GPT-4.jpg')" }}>
                 <h2 className="home-post-title">Job Opportunities at Pick n Pay: Find your career path</h2>
-                <Link href="/pick-n-pay-job-opportunities/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/pick-n-pay-job-opportunities/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
           </div>
@@ -117,19 +116,19 @@ export default function HomePage() {
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/A-business-meeting-in-a-modern-office-in-Lagos-Nigeria-featuring-two-professionals-engaged-in-a-discussion.jpg')" }}>
                 <h2 className="home-post-title">The Complete Guide to Preparing for Interviews in South Africa</h2>
-                <Link href="/complete-guide-preparing-interviews-south-africa/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/complete-guide-preparing-interviews-south-africa/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/A-focused-businessman-in-formal-attire-holding-a-notebook-against-a-neutral-background.jpg')" }}>
                 <h2 className="home-post-title">How to write a standout CV for South African employers</h2>
-                <Link href="/how-to-write-a-standout-cv-for-south-african-employers/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/how-to-write-a-standout-cv-for-south-african-employers/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/African-American-woman-presenting-in-office-environment-with-clipboard-and-whiteboard.jpg')" }}>
                 <h2 className="home-post-title">Long-term Career Planning: Steps for Success</h2>
-                <Link href="/long-term-career-planning-steps-for-success/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/long-term-career-planning-steps-for-success/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
           </div>
@@ -149,19 +148,19 @@ export default function HomePage() {
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/Business-professionals-conducting-an-interview-with-resume-on-clipboard-in-an-office-setting.jpg')" }}>
                 <h2 className="home-post-title">Returning to the Workforce After a Career Break: A South African Guide</h2>
-                <Link href="/returning-to-the-workforce-after-a-career-break-practical-steps-for-south-africans/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/returning-to-the-workforce-after-a-career-break-practical-steps-for-south-africans/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/A-man-in-stripes-works-intently-on-a-laptop-indoors-showcasing-productivity-and-focus.jpg')" }}>
                 <h2 className="home-post-title">Balancing career success and personal life: real stories</h2>
-                <Link href="/balancing-career-success-and-personal-life-real-stories/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/balancing-career-success-and-personal-life-real-stories/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/A-group-of-professionals-engaged-in-a-collaborative-meeting-at-an-office-with-laptops-and-documents-1.jpg')" }}>
                 <h2 className="home-post-title">First-job experiences: what graduates can expect</h2>
-                <Link href="/first-job-experiences-what-graduates-can-expect/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/first-job-experiences-what-graduates-can-expect/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
           </div>
@@ -181,19 +180,19 @@ export default function HomePage() {
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/Two-professionals-working-together-on-a-laptop-showcasing-teamwork-in-a-modern-office-setting.jpg')" }}>
                 <h2 className="home-post-title">The Future of Remote Work in South Africa: Shifts, Challenges, and Opportunities</h2>
-                <Link href="/the-future-of-remote-work-in-south-africa-shifts-challenges-and-opportunities/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/the-future-of-remote-work-in-south-africa-shifts-challenges-and-opportunities/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/A-child-in-uniform-walks-past-a-rural-South-African-home-on-a-sunny-day.jpg')" }}>
                 <h2 className="home-post-title">Remote Work Success Stories from Across the Country</h2>
-                <Link href="/remote-work-success-stories-from-across-the-country/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/remote-work-success-stories-from-across-the-country/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="home-post-mini gb-container-724b7582" style={{ backgroundImage: "url('images/Focused-young-woman-working-on-a-laptop-at-her-desk-managing-finances.jpg')" }}>
                 <h2 className="home-post-title">Taxes and remote work: what South Africans should know</h2>
-                <Link href="/taxes-and-remote-work-what-south-africans-should-know/" className="gb-button gb-button-70507aac arrow-link">Read More</Link>
+                <a href="/taxes-and-remote-work-what-south-africans-should-know/" className="gb-button gb-button-70507aac arrow-link">Read More</a>
               </div>
             </div>
           </div>

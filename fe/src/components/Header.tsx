@@ -1,14 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+/* eslint-disable @next/next/no-html-link-for-pages */
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import "@/css/all.min.css";
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const router = useRouter();
   const getDomainConfig = () => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
@@ -32,7 +30,7 @@ const Header = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/?s=${encodeURIComponent(searchQuery.trim())}`);
+      window.location.href = `/?s=${encodeURIComponent(searchQuery.trim())}`;
     }
   };
 
@@ -41,7 +39,7 @@ const Header = () => {
       <nav id="header" className="navbar navbar-expand-md navbar-light bg-light home">
         <div className="container">
           {/* Logo Section */}
-          <Link href={logoConfig.href} className="navbar-brand" title={logoConfig.alt}>
+          <a href={logoConfig.href} className="navbar-brand" title={logoConfig.alt}>
             <Image
               src={logoConfig.src}
               alt={logoConfig.alt}
@@ -53,7 +51,7 @@ const Header = () => {
                 marginRight: '0px'
               }}
             />
-          </Link>
+          </a>
 
           {/* Mobile Menu Button */}
           <button
@@ -71,20 +69,20 @@ const Header = () => {
           <div id="navbar" className="collapse navbar-collapse">
             {/* Navigation Links */}
             <ul id="menu-categories" className="navbar-nav me-auto">
-              <li className="menu-item nav-item">{/*/category/career-stories/*/}
-                <Link href="#" className="nav-link" title="Career Stories">
+              <li className="menu-item nav-item">{/**/}
+                <a href="/category/career-stories/" className="nav-link" title="Career Stories">
                   Career Stories
-                </Link>
+                </a>
               </li>
               <li className="menu-item nav-item">{/*/category/job-listings/ */}
-                <Link href="#" className="nav-link" title="Job Listings">
+                <a href="/category/job-listings/" className="nav-link" title="Job Listings">
                   Job Listings
-                </Link>
+                </a>
               </li>
               <li className="menu-item nav-item"> {/*/category/remote-work/ */}
-                <Link href="#" className="nav-link" title="Remote Work">
+                <a href="/category/remote-work/" className="nav-link" title="Remote Work">
                   Remote Work
-                </Link>
+                </a>
               </li>
             </ul>
 

@@ -9,15 +9,17 @@ import (
 )
 
 type PostModel struct {
-	ID             int64  `json:"id"`
-	Slug           string `gorm:"column:slug" json:"slug"`
-	Content        string `gorm:"column:content" json:"content"`
-	Descrip        string `gorm:"column:descrip" json:"descrip"`
-	Title          string `gorm:"column:title" json:"title"`
-	Excerpt        string `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader    string `gorm:"column:title_header" json:"title_header"`
-	Status         string `gorm:"column:status" json:"status"`
-	PostNavigation string `json:"post_navigation"`
+	ID             int64     `json:"id"`
+	Slug           string    `gorm:"column:slug" json:"slug"`
+	Content        string    `gorm:"column:content" json:"content"`
+	Descrip        string    `gorm:"column:descrip" json:"descrip"`
+	Title          string    `gorm:"column:title" json:"title"`
+	Excerpt        string    `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader    string    `gorm:"column:title_header" json:"title_header"`
+	Status         string    `gorm:"column:status" json:"status"`
+	PostNavigation string    `json:"post_navigation"`
+	TypeID         int64     `gorm:"column:type_id" json:"type_id"`
+	Type           TypeModel `gorm:"foreignKey:TypeID" json:"type"`
 }
 
 func (p PostModel) TableName() string {
@@ -25,15 +27,17 @@ func (p PostModel) TableName() string {
 }
 
 type PostResponse struct {
-	ID             int64  `json:"id"`
-	Slug           string `json:"slug"`
-	Content        string `json:"content"`
-	Descrip        string `gorm:"column:descrip" json:"descrip"`
-	Title          string `gorm:"column:title" json:"title"`
-	Excerpt        string `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader    string `gorm:"column:title_header" json:"title_header"`
-	Status         string `gorm:"column:status" json:"status"`
-	PostNavigation string `json:"post_navigation"`
+	ID             int64     `json:"id"`
+	Slug           string    `gorm:"column:slug" json:"slug"`
+	Content        string    `gorm:"column:content" json:"content"`
+	Descrip        string    `gorm:"column:descrip" json:"descrip"`
+	Title          string    `gorm:"column:title" json:"title"`
+	Excerpt        string    `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader    string    `gorm:"column:title_header" json:"title_header"`
+	Status         string    `gorm:"column:status" json:"status"`
+	PostNavigation string    `json:"post_navigation"`
+	TypeID         int64     `gorm:"column:type_id" json:"type_id"`
+	Type           TypeModel `gorm:"foreignKey:TypeID" json:"type"`
 }
 
 func GetPostBySlug(db *gorm.DB) http.HandlerFunc {

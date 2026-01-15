@@ -5,5 +5,5 @@ export const API_ENDPOINTS = {
 };
 
 // Helper function to build post endpoints
-export const getPostBySlugEndpoint = (slug: string) => `${API_ENDPOINTS.POSTS}/${slug}`;
-export const getPostsEndpoint = () => `${API_ENDPOINTS.POSTS}`;
+export const getPostBySlugEndpoint = (slug: string) => `/api/posts/${slug}`;
+export const getPostsEndpoint = () => `/api/posts`;

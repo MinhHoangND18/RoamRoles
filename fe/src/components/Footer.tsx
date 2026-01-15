@@ -1,6 +1,6 @@
-'use client'; 
+'use client';
 
-import Link from 'next/link';
+/* eslint-disable @next/next/no-html-link-for-pages */
 import Image from 'next/image';
 import { useState } from 'react';
 import "@/css/all.min.css";
@@ -42,9 +42,9 @@ const Footer = () => {
                     src={config.logo}
                     alt={config.alt}
                     width={500}
-                    height={500} 
+                    height={500}
                     className="wp-image-340"
-                    style={{ width: '186px', height: 'auto'}}
+                    style={{ width: '186px', height: 'auto' }}
                   />
                 </figure>
               </div>
@@ -56,10 +56,10 @@ const Footer = () => {
             <h4>Links</h4>
             <div className="menu-legal-container">
               <ul id="menu-legal" className="footer-links">
-                <li className="menu-item"><Link href="/about">About</Link></li>
-                <li className="menu-item"><Link href="/contact">Contact</Link></li>
-                <li className="menu-item"><Link href="/terms">Terms of Use</Link></li>
-                <li className="menu-item"><Link href="/privacy">Privacy Policy</Link></li>
+                <li className="menu-item"><a href="/about">About</a></li>
+                <li className="menu-item"><a href="/contact">Contact</a></li>
+                <li className="menu-item"><a href="/terms">Terms of Use</a></li>
+                <li className="menu-item"><a href="/privacy">Privacy Policy</a></li>
               </ul>
             </div>
           </div>
@@ -68,11 +68,21 @@ const Footer = () => {
           <div className="col-md-3">
             <h4>Categories</h4>
             <ul>
-              <li className="cat-item"><Link href="#">Career Stories</Link></li>
-              <li className="cat-item"><Link href="#">Guides</Link></li>
-              <li className="cat-item"><Link href="#">Job Listings</Link></li>
-              <li className="cat-item"><Link href="#">Planning</Link></li>
-              <li className="cat-item"><Link href="#">Remote Work</Link></li>
+              <li className="cat-item cat-item-2">
+                <a href="/category/career-stories/">Career Stories</a>
+              </li>
+              <li className="cat-item cat-item-5">
+                <a href="/category/guides/">Guides</a>
+              </li>
+              <li className="cat-item cat-item-10">
+                <a href="/category/job-listings/">Job Listings</a>
+              </li>
+              <li className="cat-item cat-item-3">
+                <a href="/category/planning/">Planning</a>
+              </li>
+              <li className="cat-item cat-item-6">
+                <a href="/category/remote-work/">Remote Work</a>
+              </li>
             </ul>
           </div>
 
