@@ -8,8 +8,8 @@ import (
 	"roamroles-api/config"
 	"roamroles-api/handlers"
 
-	"github.com/gorilla/mux"
 	gorillahandlers "github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -23,13 +23,20 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 	r := mux.NewRouter()
+	r.HandleFunc("/api/categories", handlers.GetCategories(DB)).Methods("GET")
+	r.HandleFunc("/api/categories/{slug}", handlers.GetCategoryBySlug(DB)).Methods("GET")
 	r.HandleFunc("/api/posts", handlers.GetPosts(DB)).Methods("GET")
+	r.HandleFunc("/api/posts", handlers.CreatePost(DB)).Methods("POST")
 	r.HandleFunc("/api/posts/{slug}", handlers.GetPostBySlug(DB)).Methods("GET")
 	r.HandleFunc("/api/posts/{slug}", handlers.UpdatePostBySlug(DB)).Methods("PUT")
+	r.HandleFunc("/api/posts/check-slug", handlers.CheckSlugUniqueness(DB)).Methods("GET")
 	r.HandleFunc("/api/types", handlers.GetTypes(DB)).Methods("GET")
 	r.HandleFunc("/api/types/{slug}", handlers.GetTypeBySlug(DB)).Methods("GET")
-
-	
+	r.HandleFunc("/api/accounts", handlers.GetAccounts(DB)).Methods("GET")
+	r.HandleFunc("/api/accounts", handlers.CreateAccount(DB)).Methods("POST")
+	r.HandleFunc("/api/check-access", handlers.CheckAccess(DB)).Methods("GET")
+	r.HandleFunc("/api/accounts/{id}", handlers.GetAccountByID(DB)).Methods("GET")
+	r.HandleFunc("/api/accounts/{id}", handlers.UpdateAccount(DB)).Methods("PUT")
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"http://localhost:3000", "http://localhost:3001"}),
@@ -38,6 +45,6 @@ func main() {
 	)
 
 	sv := fmt.Sprintf("%v:%v", "127.0.0.1", cf.Port)
-	log.Println("🚀 Server running at http://", sv)
+	log.Println(" Server running at http://", sv)
 	log.Fatal(http.ListenAndServe(sv, corsHandler(r)))
 }

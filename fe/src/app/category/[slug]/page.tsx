@@ -7,16 +7,28 @@ import DisableAds from './DisableAds';
 const transformContent = (content: string) => {
   if (!content) return "";
   let processed = content;
-  
+
+  processed = processed.replace(
+    /href="https:\/\/roamroles\.com\/category\/([^"\/]+)\/page\/(\d+)\/?"/g,
+    'href="/category/$1-page-$2"'
+  );
+  processed = processed.replace(
+    /href="https:\/\/roamroles\.com\/category\/([^"\/]+)\/?"/g,
+    'href="/category/$1"'
+  );
   processed = processed.replace(
     /href="https:\/\/roamroles\.com\/([^"\/]+)\/?"/g,
     'href="/$1"'
   );
-  
   processed = processed.replace(
-    /href="https?:\/\/(?!localhost|127\.0\.0\.1)[^"]+"/g,
-    'href="#"'
+    /<a[^>]*href="https:\/\/roamroles\.com\/author\/[^"]*"[^>]*>(.*?)<\/a>/g,
+    '$1'
   );
+
+  // processed = processed.replace(
+  //   /href="https?:\/\/(?!localhost|127\.0\.0\.1)[^"]+"/g,
+  //   'href="#"'
+  // );
 
   const wpUploadsRegex =
     /https:\/\/roamroles\.com\/wp-content\/uploads\/(?:sites\/\d+\/)?\d{4}\/\d{2}\//g;
@@ -33,7 +45,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   if (!post) return { title: "Post Not Found" };
 
   return {
-    title: post.title_header || post.slug.split('-').join(' ').toUpperCase(), 
+    title: post.title_header || post.slug.split('-').join(' ').toUpperCase(),
   };
 }
 
@@ -56,33 +68,33 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <DisableAds />
       <div className="row">
         <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
-          
+
           <article className="post-wrapper">
             <header className="entry-header text-center">
               {processedDescrip && (
-                <div 
-                  className="mb-2" 
-                  dangerouslySetInnerHTML={{ __html: processedDescrip }} 
+                <div
+                  className="mb-2"
+                  dangerouslySetInnerHTML={{ __html: processedDescrip }}
                 />
               )}
 
               {processedTitle && (
-                <div 
-                  className="post-header-title" 
-                  dangerouslySetInnerHTML={{ __html: processedTitle }} 
+                <div
+                  className="post-header-title"
+                  dangerouslySetInnerHTML={{ __html: processedTitle }}
                 />
               )}
 
               {processedExcerpt && (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: processedExcerpt }} 
+                <div
+                  dangerouslySetInnerHTML={{ __html: processedExcerpt }}
                 />
               )}
             </header>
 
-            <div 
+            <div
               className="entry-content"
-              dangerouslySetInnerHTML={{ __html: processedContent }} 
+              dangerouslySetInnerHTML={{ __html: processedContent }}
             />
           </article>
 

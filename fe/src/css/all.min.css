@@ -16650,6 +16650,8 @@ img {
 .embed-responsive,
 .post-thumbnail,
 .wp-video {
+  display: flex;
+  justify-content: center;
   margin: 5px 0;
   width: 100% !important;
 }

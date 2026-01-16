@@ -3,27 +3,19 @@ import "@/css/all.min.css";
 import { fetchPostBySlug, fetchAllPosts } from "@/lib/posts-api";
 import { PostApiResponse } from '@/types/api';
 import AdScript from '../ADS/AdScript';
+import { transformContent } from "@/lib/content-utils";
 
-const transformContent = (content: string) => {
-  if (!content) return "";
-  let processed = content;
-
-  processed = processed.replace(
-    /href="https:\/\/roamroles\.com\/([^"\/]+)\/?"/g,
-    'href="/$1"'
-  );
-
-  // processed = processed.replace(
-  //   /href="https?:\/\/(?!localhost|127\.0\.0\.1)[^"]+"/g,
-  //   'href="#"'
-  // );
-
-  const wpUploadsRegex =
-    /https:\/\/roamroles\.com\/wp-content\/uploads\/(?:sites\/\d+\/)?\d{4}\/\d{2}\//g;
-
-  processed = processed.replace(wpUploadsRegex, "/images/");
-
-  return processed;
+const fetchPostWithRetry = async (slug: string) => {
+  const maxRetries = 3;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fetchPostBySlug(slug);
+    } catch (error) {
+      if (i === maxRetries - 1) console.error(`Failed to fetch ${slug} after ${maxRetries} attempts`);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  }
+  return null;
 };
 
 export async function generateStaticParams() {
@@ -43,10 +35,21 @@ export async function generateStaticParams() {
     return [];
   }
 }
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const { slug } = await props.params;
+  const post = await fetchPostWithRetry(slug);
+
+  if (!post) return { title: "Post Not Found" };
+
+  return {
+    title: post.title_header || post.slug.split('-').join(' ').toUpperCase(),
+  };
+}
+
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await fetchPostBySlug(slug);
+  const post = await fetchPostWithRetry(slug);
 
   if (!post || !post.slug || post.id === 0) {
     notFound();
@@ -122,16 +125,5 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   );
 }
 
-
-export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
-  const { slug } = await props.params;
-  const post = await fetchPostBySlug(slug);
-
-  if (!post) return { title: "Post Not Found" };
-
-  return {
-    title: post.slug,
-  };
-}
 
 // export const dynamicParams = true;

@@ -2,30 +2,53 @@
 
 /* eslint-disable @next/next/no-html-link-for-pages */
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import "@/css/all.min.css";
 
-const Header = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const getDomainConfig = () => {
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      if (hostname.includes('jobsmatch4u.com')) {
-        return {
-          src: '/images/jobsmatch4u1.png',
-          href: 'https://jobsmatch4u.com/',
-          alt: 'Jobs Match 4U'
-        };
-      }
-    }
-    return {
-      src: '/images/jobzesty1.png',
-      href: 'https://jobzesty.com/',
-      alt: 'Job Zesty'
-    };
-  };
+const defaultLogoConfig = {
+  src: '/images/jobzesty1.png',
+  href: '/',
+  alt: 'Job Zesty'
+};
 
-  const [logoConfig] = useState(getDomainConfig);
+const jobsmatchLogoConfig = {
+  src: '/images/jobsmatch4u1.png',
+  href: 'https://jobsmatch4u.com/',
+  alt: 'Jobs Match 4U'
+};
+
+const jobzestyLogoConfig = {
+  src: '/images/jobzesty1.png',
+  href: 'https://jobzesty.com/',
+  alt: 'Job Zesty'
+};
+
+// Cache logo config - trả về object đã tồn tại, không tạo mới
+let cachedLogoConfig = defaultLogoConfig;
+const getLogoConfig = () => {
+  if (typeof window === 'undefined') return defaultLogoConfig;
+  const hostname = window.location.hostname;
+  if (hostname.includes('jobsmatch4u.com')) {
+    cachedLogoConfig = jobsmatchLogoConfig;
+  } else {
+    cachedLogoConfig = jobzestyLogoConfig;
+  }
+  return cachedLogoConfig;
+};
+
+const Header = () => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const initialQuery = searchParams.get('s') || '';
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+
+  const logoConfig = useSyncExternalStore(
+    () => () => {},
+    getLogoConfig,
+    () => defaultLogoConfig
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +58,7 @@ const Header = () => {
   };
 
   return (
-    <header>
+    <header style={{ minHeight: '80px' }}>
       <nav id="header" className="navbar navbar-expand-md navbar-light bg-light home">
         <div className="container">
           {/* Logo Section */}
@@ -44,7 +67,7 @@ const Header = () => {
               src={logoConfig.src}
               alt={logoConfig.alt}
               width={200}
-              height={100}
+              height={58}
               style={{
                 width: '200px', 
                 height: 'auto',
@@ -69,18 +92,30 @@ const Header = () => {
           <div id="navbar" className="collapse navbar-collapse">
             {/* Navigation Links */}
             <ul id="menu-categories" className="navbar-nav me-auto">
-              <li className="menu-item nav-item">{/**/}
-                <a href="/category/career-stories/" className="nav-link" title="Career Stories">
+              <li className="menu-item nav-item">
+                <a 
+                  href="/category/career-stories/" 
+                  className={`nav-link ${pathname?.includes('/category/career-stories') ? 'active fw-bold' : ''}`} 
+                  title="Career Stories"
+                >
                   Career Stories
                 </a>
               </li>
-              <li className="menu-item nav-item">{/*/category/job-listings/ */}
-                <a href="/category/job-listings/" className="nav-link" title="Job Listings">
+              <li className="menu-item nav-item">
+                <a 
+                  href="/category/job-listings/" 
+                  className={`nav-link ${pathname?.includes('/category/job-listings') ? 'active fw-bold' : ''}`} 
+                  title="Job Listings"
+                >
                   Job Listings
                 </a>
               </li>
-              <li className="menu-item nav-item"> {/*/category/remote-work/ */}
-                <a href="/category/remote-work/" className="nav-link" title="Remote Work">
+              <li className="menu-item nav-item">
+                <a 
+                  href="/category/remote-work/" 
+                  className={`nav-link ${pathname?.includes('/category/remote-work') ? 'active fw-bold' : ''}`} 
+                  title="Remote Work"
+                >
                   Remote Work
                 </a>
               </li>

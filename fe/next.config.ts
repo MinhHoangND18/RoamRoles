@@ -9,7 +9,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'roamroles.com',
+        hostname: 'jobzesty.com',
         port: '',
         pathname: '/**',
       },

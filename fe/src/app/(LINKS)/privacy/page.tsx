@@ -1,9 +1,9 @@
-// app/privacy/page.tsx
+
 import React from 'react';
 import { headers } from "next/headers";
 import { getBrandData } from "@/constants/brands";
 
-// Tối ưu SEO động theo từng domain
+
 export async function generateMetadata() {
     const headerList = await headers();
     const host = headerList.get("host");
@@ -16,7 +16,6 @@ export async function generateMetadata() {
 }
 
 export default async function PrivacyPolicyPage() {
-    // Lấy host và dữ liệu brand từ headers
     const headerList = await headers();
     const host = headerList.get("host");
     const brand = getBrandData(host);

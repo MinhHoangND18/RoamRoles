@@ -6,6 +6,7 @@ import { Box } from "@mui/material";
 import { Source_Sans_3 } from "next/font/google";
 import Script from "next/script";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 
 const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
 
@@ -47,7 +48,9 @@ export default function RootLayout({
               minHeight: "100vh",
             }}
           >
-            <Header />
+            <Suspense fallback={null}>
+              <Header />
+            </Suspense>
             {children}
             <Note />
             <Footer />

@@ -1,4 +1,4 @@
-// constants/brands.ts
+
 export const brands = {
   "jobzesty.com": {
     name: "Job Zesty",
