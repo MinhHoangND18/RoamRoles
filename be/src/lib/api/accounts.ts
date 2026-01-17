@@ -1,6 +1,8 @@
 import { Account } from "@/types";
+import { API_CONFIG } from "@/lib/api/config";
 
-const API_BASE_URL = "http://127.0.0.1:8088/api";
+
+const API_BASE_URL = `${API_CONFIG.BASE_URL}/api`;
 
 export const getAccountById = async (id: string): Promise<Account> => {
   const res = await fetch(`${API_BASE_URL}/accounts/${id}`);

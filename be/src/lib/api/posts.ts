@@ -1,6 +1,7 @@
 import { Post, Type, Category } from "@/types";
+import { API_CONFIG } from "@/lib/api/config";
 
-const API_BASE_URL = "http://127.0.0.1:8088/api";
+const API_BASE_URL = `${API_CONFIG.BASE_URL}/api`;
 
 export const getTypes = async (): Promise<Type[]> => {
   const res = await fetch(`${API_BASE_URL}/types`);

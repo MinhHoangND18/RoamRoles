@@ -39,7 +39,7 @@ func main() {
 	r.HandleFunc("/api/accounts/{id}", handlers.UpdateAccount(DB)).Methods("PUT")
 
 	corsHandler := gorillahandlers.CORS(
-		gorillahandlers.AllowedOrigins([]string{"http://localhost:3000", "http://localhost:3001"}),
+		gorillahandlers.AllowedOrigins([]string{"*"}),
 		gorillahandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
 		gorillahandlers.AllowedHeaders([]string{"Content-Type", "X-Requested-With"}),
 	)

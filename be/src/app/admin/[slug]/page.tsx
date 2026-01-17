@@ -13,12 +13,15 @@ import {
   createPost,
   updatePost,
 } from "@/lib/api/posts";
+import { APP_CONFIG } from "@/lib/api/config";
+
 
 // Định nghĩa interface cho lỗi từ API để thay thế 'any'
 interface ApiError {
   message?: string;
   [key: string]: unknown;
 }
+
 
 const debounce = <A extends unknown[], U>(
   func: (...args: A) => U,
@@ -155,7 +158,6 @@ function EditPostContent() {
     }
 
     setSaving(true);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, type: postType, category: postCategory, ...payload } = post;
     const finalPayload = {
       ...payload,
@@ -194,29 +196,35 @@ function EditPostContent() {
   };
 
   const generateFrontendUrl = (postToGenerate: Post) => {
-    const FRONTEND_URL = "http://localhost:3000";
+    const FRONTEND_URL_API = process.env.FRONTEND_URL || "";
+
     if (!postToGenerate.type || !postToGenerate.type.slug) {
-      return `${FRONTEND_URL}/${postToGenerate.slug}`;
+      return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
     }
+
     switch (postToGenerate.type.slug) {
       case "tag":
-        return `${FRONTEND_URL}/tag/${postToGenerate.slug}`;
+        return `${FRONTEND_URL_API}/tag/${postToGenerate.slug}`;
+      case "post":
+        return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
       case "category":
-        return `${FRONTEND_URL}/category/${postToGenerate.slug}`;
+        return `${FRONTEND_URL_API}/category/${postToGenerate.slug}`;
+
       case "page":
         if (postToGenerate.slug === "about") {
-          return `${FRONTEND_URL}/home/about`;
+          return `${FRONTEND_URL_API}/home/about`;
         }
-        return `${FRONTEND_URL}/${postToGenerate.slug}`;
+        return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
       default:
-        return `${FRONTEND_URL}/${postToGenerate.slug}`;
+        return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
     }
   };
 
-  const handleOverviewClick = () => {
-    if (post) {
-      const url = generateFrontendUrl(post);
-      window.open(url, "_blank", "noopener,noreferrer");
+  const handleOverviewClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (originalPost?.slug) {
+      const url = `${APP_CONFIG.FRONTEND_URL}/${originalPost.slug}`;
+      window.open(url, '_blank');
     }
   };
 
@@ -239,7 +247,7 @@ function EditPostContent() {
         return text;
       }
     } catch (e: unknown) {
-        console.error("Title parse error:", e);
+      console.error("Title parse error:", e);
     }
     const strippedTitle = title.replace(/<[^>]+>/g, "");
     if (strippedTitle.includes(":")) {
@@ -335,6 +343,7 @@ function EditPostContent() {
                 <div className="overflow-hidden border border-slate-100 shadow-sm">
                   <Editor
                     apiKey="vb3rf5t71lcc6x2a1imujbsh6uea23dz7zqhe6b2q1it3q8u"
+
                     value={
                       isNewPost
                         ? currentTitleInput
@@ -369,11 +378,10 @@ function EditPostContent() {
                     setPost((prev) => (prev ? { ...prev, slug: e.target.value } : null))
                   }
                   readOnly={!isNewPost}
-                  className={`w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 ${
-                    isNewPost
-                      ? "bg-white border-slate-200"
-                      : "bg-slate-100 border-slate-200"
-                  }`}
+                  className={`w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 ${isNewPost
+                    ? "bg-white border-slate-200"
+                    : "bg-slate-100 border-slate-200"
+                    }`}
                   placeholder="e.g., my-awesome-post"
                 />
               </div>
@@ -480,20 +488,18 @@ function EditPostContent() {
                         status: prev.status === "active" ? "inactive" : "active",
                       } : null))
                     }
-                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
-                      post.status === "active" ? "bg-green-500" : "bg-slate-300"
-                    }`}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.status === "active" ? "bg-green-500" : "bg-slate-300"
+                      }`}
                   >
                     <span
-                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
-                        post.status === "active"
-                          ? "translate-x-3"
-                          : "translate-x-0.5"
-                      }`}
+                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${post.status === "active"
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                        }`}
                     />
                   </button>
                 </div>
-                
+
                 <select
                   id="category_id"
                   value={post.category_id || ""}

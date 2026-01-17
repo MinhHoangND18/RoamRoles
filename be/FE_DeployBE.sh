@@ -7,9 +7,8 @@ SERVER_USER="root"
 REMOTE_DIR=/var/www/roam/be
 NODE_ENV="production"
 
-WORKING_DIR=$(pwd)
 rm -Rf out
-npm run build
+# npm run build
 
 cp -r .next/standalone out
 cp -r .next/static ./out/.next/static
@@ -26,7 +25,13 @@ sshpass -p "$SERVER_PASS" scp -P "$SERVER_PORT" frontend_build.zip "$SERVER_USER
 
 # Giải nén trên server (dùng sshpass)
 echo "🚀 Deploying on server..."
-sshpass -p "$SERVER_PASS" ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_IP" << EOF
+sshpass -p "$SERVER_PASS" ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_IP" << 'EOF'
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+nvm use 22
+
+export REMOTE_DIR=/var/www/roam/be
 mkdir -p $REMOTE_DIR
 cd $REMOTE_DIR
 rm -rf frontend 
@@ -34,13 +39,6 @@ unzip -o frontend_build.zip
 mv out frontend
 rm frontend_build.zip
 
-export NVM_DIR="$HOME/.nvm"
-TARGET_DIR="/var/www/roam/be"
-
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-nvm use 22
-
-cd $TARGET_DIR
 pm2 restart roam-be
 EOF
 
