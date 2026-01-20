@@ -91,10 +91,10 @@ function AdminPageContent() {
   );
 
   // const generateFrontendUrl = (post: Post) => {
-  //   const FRONTEND_URL = "http://localhost:3000";
+  //   const NEXT_PUBLIC_FRONTEND_URL = "http://localhost:3000";
   //   if (post.type?.slug === "page" && post.slug === "about")
-  //     return `${FRONTEND_URL}/home/about`;
-  //   return `${FRONTEND_URL}/${post.slug}`;
+  //     return `${NEXT_PUBLIC_FRONTEND_URL}/home/about`;
+  //   return `${NEXT_PUBLIC_FRONTEND_URL}/${post.slug}`;
   // };
 
   return (

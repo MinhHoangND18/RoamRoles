@@ -196,34 +196,34 @@ function EditPostContent() {
   };
 
   const generateFrontendUrl = (postToGenerate: Post) => {
-    const FRONTEND_URL_API = process.env.FRONTEND_URL || "";
+    const NEXT_PUBLIC_FRONTEND_URL_API = process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
     if (!postToGenerate.type || !postToGenerate.type.slug) {
-      return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
+      return `${NEXT_PUBLIC_FRONTEND_URL_API}/${postToGenerate.slug}`;
     }
 
     switch (postToGenerate.type.slug) {
       case "tag":
-        return `${FRONTEND_URL_API}/tag/${postToGenerate.slug}`;
+        return `${NEXT_PUBLIC_FRONTEND_URL_API}/tag/${postToGenerate.slug}`;
       case "post":
-        return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
+        return `${NEXT_PUBLIC_FRONTEND_URL_API}/${postToGenerate.slug}`;
       case "category":
-        return `${FRONTEND_URL_API}/category/${postToGenerate.slug}`;
+        return `${NEXT_PUBLIC_FRONTEND_URL_API}/category/${postToGenerate.slug}`;
 
       case "page":
         if (postToGenerate.slug === "about") {
-          return `${FRONTEND_URL_API}/home/about`;
+          return `${NEXT_PUBLIC_FRONTEND_URL_API}/home/about`;
         }
-        return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
+        return `${NEXT_PUBLIC_FRONTEND_URL_API}/${postToGenerate.slug}`;
       default:
-        return `${FRONTEND_URL_API}/${postToGenerate.slug}`;
+        return `${NEXT_PUBLIC_FRONTEND_URL_API}/${postToGenerate.slug}`;
     }
   };
 
   const handleOverviewClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (originalPost?.slug) {
-      const url = `${APP_CONFIG.FRONTEND_URL}/${originalPost.slug}`;
+      const url = `${APP_CONFIG.NEXT_PUBLIC_FRONTEND_URL_API}/${originalPost.slug}`;
       window.open(url, '_blank');
     }
   };

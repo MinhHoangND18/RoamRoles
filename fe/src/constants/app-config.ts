@@ -4,6 +4,6 @@ export const API_CONFIG = {
   TIMEOUT: 30000, 
 };
 
-export const APP_CONFIG = {
-  FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
-};
+// export const APP_CONFIG = {
+//   FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
+// };

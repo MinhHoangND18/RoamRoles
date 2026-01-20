@@ -10,6 +10,12 @@ NODE_ENV="production"
 rm -Rf out
 # npm run build
 
+# Load biến từ .env.production để đè lên .env.local khi build
+if [ -f .env.production ]; then
+    export $(grep -v '^#' .env.production | tr -d '\r' | xargs)
+fi
+npm run build
+
 cp -r .next/standalone out
 cp -r .next/static ./out/.next/static
 cp -r public ./out

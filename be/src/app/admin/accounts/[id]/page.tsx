@@ -96,11 +96,7 @@ export default function EditAccountPage() {
             </div>
             <span className="hidden sm:inline">Back to Accounts</span>
           </button>
-          
-          <div className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm shadow-sm">
-            <Shield className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-semibold text-slate-600">Admin Panel</span>
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -160,40 +156,10 @@ export default function EditAccountPage() {
               {/* Status Card */}
               <div className="bg-white/80 backdrop-blur-sm p-6 shadow-xl border border-white/20">
                 <h3 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wide">
-                  Account Status
+                  Action
                 </h3>
                 
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 mb-6">
-                  <div className="flex items-center gap-3">
-                    {account.status === "active" ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-slate-400" />
-                    )}
-                    <span className="text-sm font-bold text-slate-700">
-                      {account.status === "active" ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() =>
-                      setAccount({
-                        ...account,
-                        status: account.status === "active" ? "inactive" : "active",
-                      })
-                    }
-                    className={`relative inline-flex items-center h-7 w-14 transition-all duration-300 shadow-inner ${
-                      account.status === "active" 
-                        ? "bg-gradient-to-r from-green-400 to-green-500" 
-                        : "bg-slate-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block w-5 h-5 transform bg-white transition-all duration-300 shadow-md ${
-                        account.status === "active" ? "translate-x-8" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
+
 
                 {/* Save Button */}
                 <button

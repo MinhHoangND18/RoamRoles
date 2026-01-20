@@ -13,7 +13,7 @@ const handler = NextAuth({
       if (!user.email) return false;
 
       try {
-        const response = await fetch(`${process.env.API_URL}/api/check-access?email=${user.email}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/check-access?email=${user.email}`);
         const data = await response.json();
         console.log("Auth server response:", data);
         return data.allowed === true;

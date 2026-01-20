@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"github.com/gorilla/mux"
+	"errors"
 	"gorm.io/gorm"
 )
 
@@ -56,21 +57,22 @@ func CreateAccount(db *gorm.DB) http.HandlerFunc {
 }
 
 func UpdateAccount(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		params := mux.Vars(r)
-		var account AccountModel
-		if err := db.First(&account, params["id"]).Error; err != nil {
-			http.Error(w, "Account not found", http.StatusNotFound)
-			return
-		}
-		if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
-			http.Error(w, "Invalid request", http.StatusBadRequest)
-			return
-		}
-		db.Save(&account)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(account)
-	}
+    return func(w http.ResponseWriter, r *http.Request) {
+        params := mux.Vars(r)
+        var account AccountModel
+        if err := db.First(&account, params["id"]).Error; err != nil {
+            http.Error(w, "Account not found", http.StatusNotFound)
+            return
+        }
+        if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
+            http.Error(w, "Invalid request", http.StatusBadRequest)
+            return
+        }
+        db.Save(&account) 
+        
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(account)
+    }
 }
 
 func CheckAccess(db *gorm.DB) http.HandlerFunc {
@@ -87,9 +89,24 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 
 		if result.Error != nil {
+			if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				http.Error(w, "Database error", http.StatusInternalServerError)
+				return
+			}
+
+			newAccount := AccountModel{
+				Account: email,
+				Status:  "pending",
+			}
+			if err := db.Create(&newAccount).Error; err != nil {
+				http.Error(w, "Database error", http.StatusInternalServerError)
+				return
+			}
+
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"allowed": false,
-				"message": "Email không có quyền truy cập.",
+				"status":  "pending",
+				"message": "Tài khoản mới đã được ghi nhận và đang chờ phê duyệt.",
 			})
 			return
 		}
@@ -97,13 +114,15 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 		if account.Status != "active" {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"allowed": false,
-				"message": "Tài khoản của bạn đã bị khóa.",
+				"status":  account.Status,
+				"message": "Tài khoản chưa được kích hoạt hoặc đã bị khóa.",
 			})
 			return
 		}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"allowed": true,
+			"status":  "active",
 		})
 	}
 }

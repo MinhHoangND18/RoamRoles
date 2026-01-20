@@ -22,7 +22,6 @@ export const getCategories = async (): Promise<Category[]> => {
 export const checkSlugUniqueness = async (slug: string): Promise<{ exists: boolean }> => {
   const response = await fetch(`${API_BASE_URL}/posts/check-slug?slug=${slug}`);
   if (!response.ok) {
-    // If the API fails, assume the slug is not unique to be safe, or handle as needed
     return { exists: true };
   }
   return response.json();

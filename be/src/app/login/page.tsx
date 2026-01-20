@@ -1,33 +1,90 @@
 'use client';
-import { signIn, useSession } from "next-auth/react";
-import { useEffect } from "react";
+
+import { signIn, useSession, signOut } from "next-auth/react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, ArrowRight } from "lucide-react";
+import { ShieldCheck, ArrowRight, Clock, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/admin");
-    }
-  }, [status, router]);
+  const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'pending' | 'denied'>('idle');
+  const hasCalledApi = useRef(false);
 
-  if (status === "loading" || status === "authenticated") {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  useEffect(() => {
+    const email = session?.user?.email;
+
+    if (status === "authenticated" && email && !hasCalledApi.current) {
+      hasCalledApi.current = true;
+
+      const verifyAccess = async () => {
+        setCheckStatus('checking');
+        try {
+          const res = await fetch(`${API_URL}/api/check-access?email=${encodeURIComponent(email)}`);
+
+          if (!res.ok) throw new Error("Access check failed");
+
+          const data = await res.json();
+          if (data.allowed) {
+            router.push("/admin");
+          } else if (data.status === 'pending') {
+            setCheckStatus('pending');
+          } else {
+            setCheckStatus('denied');
+          }
+        } catch (err) {
+          console.error(err);
+          setCheckStatus('denied');
+        }
+      };
+
+      verifyAccess();
+    }
+  }, [status, session, router, API_URL]);
+
+  if (status === "loading" || checkStatus === 'checking') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#f8fafc]">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-none border-4 border-blue-500/10"></div>
-            <div className="absolute inset-0 rounded-none border-4 border-t-blue-600 animate-spin"></div>
-          </div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Verifying access...</p>
         </div>
       </div>
     );
   }
 
-  return (
+  if (checkStatus === 'pending') {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc]">
+        <div className="max-w-md w-full bg-white p-8 border border-slate-200 shadow-sm text-center">
+          <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Account Pending</h2>
+          <p className="text-slate-500 mb-6">
+            Account <strong>{session?.user?.email}</strong> is waiting for approval.
+          </p>
+          <button onClick={() => signOut()} className="text-blue-600 hover:underline">Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (checkStatus === 'denied') {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc]">
+        <div className="max-w-md w-full bg-white p-8 border border-slate-200 shadow-sm text-center">
+          <Lock className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h2>
+          <p className="text-slate-500 mb-6">You don`t have permission to access.</p>
+          <button onClick={() => signOut()} className="text-blue-600 hover:underline">Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
+   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc] relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400"></div>
       
