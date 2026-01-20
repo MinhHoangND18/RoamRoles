@@ -37,6 +37,7 @@ func main() {
 	r.HandleFunc("/api/check-access", handlers.CheckAccess(DB)).Methods("GET")
 	r.HandleFunc("/api/accounts/{id}", handlers.GetAccountByID(DB)).Methods("GET")
 	r.HandleFunc("/api/accounts/{id}", handlers.UpdateAccount(DB)).Methods("PUT")
+	r.HandleFunc("/api/contact", handlers.CreateContact(DB)).Methods("POST")
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"http://localhost:3000", "http://localhost:3001"}),
@@ -47,4 +48,6 @@ func main() {
 	sv := fmt.Sprintf("%v:%v", "127.0.0.1", cf.Port)
 	log.Println(" Server running at http://", sv)
 	log.Fatal(http.ListenAndServe(sv, corsHandler(r)))
+	log.Printf("Listening on http://%s", sv)
+
 }
