@@ -24,3 +24,14 @@ export interface PostApiResponse {
   category_id: number | null;
   category: CategoryModel | null;
 }
+
+export interface PageModel {
+  id: number;
+  slug: string;
+  title: string;
+  title_header: string;
+  content: string;
+  status: 'active' | 'inactive';
+  created_at?: string;
+  updated_at?: string;
+}

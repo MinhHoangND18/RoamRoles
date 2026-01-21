@@ -38,11 +38,11 @@ func main() {
 	r.HandleFunc("/api/accounts/{id}", handlers.GetAccountByID(DB)).Methods("GET")
 	r.HandleFunc("/api/accounts/{id}", handlers.UpdateAccount(DB)).Methods("PUT")
 	r.HandleFunc("/api/contact", handlers.ContactHandler(DB)).Methods("POST")
-	r.HandleFunc("/api/admin/pages", handlers.GetPages(DB)).Methods("GET")
-	r.HandleFunc("/api/admin/pages", handlers.CreatePage(DB)).Methods("POST")
-	r.HandleFunc("/api/admin/pages/{slug}", handlers.GetPageBySlug(DB)).Methods("GET")
-	r.HandleFunc("/api/admin/pages/{slug}", handlers.UpdatePageBySlug(DB)).Methods("PUT")
-	r.HandleFunc("/api/admin/pages/check-slug", handlers.CheckPageSlugUniqueness(DB)).Methods("GET")
+	r.HandleFunc("/api/pages/check-slug", handlers.CheckPageSlugUniqueness(DB)).Methods("GET")
+	r.HandleFunc("/api/pages", handlers.GetPages(DB)).Methods("GET")
+	r.HandleFunc("/api/pages", handlers.CreatePage(DB)).Methods("POST")
+	r.HandleFunc("/api/pages/{slug}", handlers.GetPageBySlug(DB)).Methods("GET")
+	r.HandleFunc("/api/pages/{slug}", handlers.UpdatePageBySlug(DB)).Methods("PUT")
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),
