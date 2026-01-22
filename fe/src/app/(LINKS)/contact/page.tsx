@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { Loader2 } from "lucide-react";
 import { API_CONFIG } from "@/constants/app-config";
 import toast, { Toaster } from 'react-hot-toast';
-import styles from './contact.module.css';
+
+import styles from '@/css/contact.module.css';
 
 export default function ContactPage() {
   const [isSending, setIsSending] = useState(false);
