@@ -27,6 +27,7 @@ sshpass -p "$SERVER_PASS" scp -P "$SERVER_PORT" frontend_build.zip "$SERVER_USER
 # Giải nén trên server (dùng sshpass)
 echo "🚀 Deploying on server..."
 sshpass -p "$SERVER_PASS" ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_IP" << EOF
+REMOTE_DIR=/var/www/roam/fe-new
 mkdir -p $REMOTE_DIR
 cd $REMOTE_DIR
 rm -rf frontend 
@@ -35,12 +36,9 @@ mv out frontend
 rm frontend_build.zip
 
 export NVM_DIR="$HOME/.nvm"
-TARGET_DIR="/var/www/roam/fe-new"
-
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 nvm use 22
 
-cd $TARGET_DIR
 pm2 restart roam
 EOF
 

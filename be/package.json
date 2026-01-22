@@ -6,6 +6,7 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
+    "pro": "node --env-file=.env.production server.js",
     "lint": "eslint"
   },
   "dependencies": {

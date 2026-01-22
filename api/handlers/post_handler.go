@@ -10,18 +10,18 @@ import (
 )
 
 type PostModel struct {
-	ID             int64     `json:"id"`
-	Slug           string    `gorm:"column:slug" json:"slug"`
-	Content        string    `gorm:"column:content" json:"content"`
-	Descrip        string    `gorm:"column:descrip" json:"descrip"`
-	Title          string    `gorm:"column:title" json:"title"`
-	Excerpt        string    `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader    string    `gorm:"column:title_header" json:"title_header"`
-	Status         string    `gorm:"column:status" json:"status"`
-	PostNavigation string    `json:"post_navigation"`
-	TypeID         int64     `gorm:"column:type_id" json:"type_id"`
-	Type           TypeModel `json:"type"`
-	CategoryID     *int64        `gorm:"column:category_id" json:"category_id"`
+	ID             int64          `json:"id"`
+	Slug           string         `gorm:"column:slug" json:"slug"`
+	Content        string         `gorm:"column:content" json:"content"`
+	Title          string         `gorm:"column:title" json:"title"`
+	Excerpt        string         `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader    string         `gorm:"column:title_header" json:"title_header"`
+	Status         string         `gorm:"column:status" json:"status"`
+	PostNavigation string         `gorm:"-" json:"post_navigation"`
+	ThumbnailURL   string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
+	TypeID         int64          `gorm:"column:type_id" json:"type_id"`
+	Type           TypeModel      `json:"type"`
+	CategoryID     *int64         `gorm:"column:category_id" json:"category_id"`
 	Category       *CategoryModel `json:"category"`
 }
 
@@ -30,34 +30,34 @@ func (p PostModel) TableName() string {
 }
 
 type PostResponse struct {
-	ID             int64     `json:"id"`
-	Slug           string    `json:"slug"`
-	Content        string    `json:"content"`
-	Descrip        string    `gorm:"column:descrip" json:"descrip"`
-	Title          string    `gorm:"column:title" json:"title"`
-	Excerpt        string    `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader    string    `gorm:"column:title_header" json:"title_header"`
-	Status         string    `gorm:"column:status" json:"status"`
-	PostNavigation string    `json:"post_navigation"`
-	TypeID         int64     `gorm:"column:type_id" json:"type_id"`
-	Type           TypeModel `gorm:"foreignKey:TypeID" json:"type"`
-	CategoryID     *int64        `gorm:"column:category_id" json:"category_id"`
+	ID             int64          `json:"id"`
+	Slug           string         `json:"slug"`
+	Content        string         `json:"content"`
+	Title          string         `gorm:"column:title" json:"title"`
+	Excerpt        string         `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader    string         `gorm:"column:title_header" json:"title_header"`
+	Status         string         `gorm:"column:status" json:"status"`
+	PostNavigation string         `json:"post_navigation"`
+	ThumbnailURL   string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
+	TypeID         int64          `gorm:"column:type_id" json:"type_id"`
+	Type           TypeModel      `gorm:"foreignKey:TypeID" json:"type"`
+	CategoryID     *int64         `gorm:"column:category_id" json:"category_id"`
 	Category       *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
 }
 
-func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
+func GetPostById(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
-		slug := params["slug"]
-		if slug == "" {
-			http.Error(w, "Slug is required", http.StatusBadRequest)
+		id, err := strconv.ParseInt(params["id"], 10, 64)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
 
 		typeParam := r.URL.Query().Get("type")
 
 		post := PostModel{}
-		query := db.Model(&PostModel{}).Preload("Type").Where("slug = ?", slug)
+		query := db.Model(&PostModel{}).Preload("Type").Where("id = ?", id)
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -96,25 +96,25 @@ func GetPosts(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func UpdatePostBySlug(db *gorm.DB) http.HandlerFunc {
+func UpdatePostById(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
-		slug := params["slug"]
-		if slug == "" {
-			http.Error(w, "Slug is required", http.StatusBadRequest)
+		id, err := strconv.ParseInt(params["id"], 10, 64)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
 
 		typeParam := r.URL.Query().Get("type")
 
 		var payload map[string]interface{}
-		err := json.NewDecoder(r.Body).Decode(&payload)
+		err = json.NewDecoder(r.Body).Decode(&payload)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		query := db.Model(&PostModel{}).Where("slug = ?", slug)
+		query := db.Model(&PostModel{}).Where("id = ?", id)
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -133,7 +133,7 @@ func UpdatePostBySlug(db *gorm.DB) http.HandlerFunc {
 
 		if result.RowsAffected == 0 {
 			var count int64
-			db.Model(&PostModel{}).Where("slug = ?", slug).Count(&count)
+			db.Model(&PostModel{}).Where("id = ?", id).Count(&count)
 			if count == 0 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
@@ -194,5 +194,108 @@ func CheckSlugUniqueness(db *gorm.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]bool{"exists": count > 0})
+	}
+}
+
+func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		slug := params["slug"]
+		if slug == "" {
+			http.Error(w, "Slug is required", http.StatusBadRequest)
+			return
+		}
+
+		typeParam := r.URL.Query().Get("type")
+
+		post := PostModel{}
+		query := db.Model(&PostModel{}).Preload("Type").Where("slug = ?", slug)
+
+		if typeParam != "" {
+			typeID, err := strconv.Atoi(typeParam)
+			if err != nil {
+				http.Error(w, "Invalid type parameter", http.StatusBadRequest)
+				return
+			}
+			query = query.Where("type_id = ?", typeID)
+		}
+
+		result := query.First(&post)
+
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				http.Error(w, "Post not found", http.StatusNotFound)
+				return
+			}
+			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(post)
+	}
+	
+}
+
+func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		categorySlug := params["slug"]
+
+		pageStr := r.URL.Query().Get("page")
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			page = 1
+		}
+
+		limit := 10
+		offset := (page - 1) * limit
+
+		var category CategoryModel
+		if err := db.Where("slug = ?", categorySlug).First(&category).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				http.Error(w, "Category not found", http.StatusNotFound)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var totalPosts int64
+		db.Model(&PostModel{}).Where("category_id = ? AND status = ?", category.ID, "active").Count(&totalPosts)
+
+		var posts []PostModel
+		err = db.Model(&PostModel{}).
+			Preload("Type").
+			Preload("Category").
+			Where("category_id = ? AND status = ?", category.ID, "active").
+			Order("created_at DESC").
+			Limit(limit).
+			Offset(offset).
+			Find(&posts).Error
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		totalPages := int((totalPosts + int64(limit) - 1) / int64(limit))
+		hasNext := page < totalPages
+		hasPrev := page > 1
+
+		response := map[string]interface{}{
+			"category": category,
+			"posts":    posts,
+			"pagination": map[string]interface{}{
+				"current_page": page,
+				"total_pages":  totalPages,
+				"total_posts":  totalPosts,
+				"per_page":     limit,
+				"has_next":     hasNext,
+				"has_prev":     hasPrev,
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 }

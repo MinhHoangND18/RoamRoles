@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Save, ArrowLeft, Loader2, User, ShieldCheck } from "lucide-react";
+import { Save, ArrowLeft, Loader2, User, Mail, Shield, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { Account } from "@/types";
 import { getAccountById, createAccount, updateAccount } from "@/lib/api/accounts";
@@ -67,8 +67,11 @@ export default function EditAccountPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#f8fafc]">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="relative">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+          <div className="absolute inset-0 blur-xl bg-blue-400/30 animate-pulse"></div>
+        </div>
       </div>
     );
   }
@@ -76,82 +79,123 @@ export default function EditAccountPage() {
   if (!account) return null;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-6 md:p-12">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8 lg:p-12">
+      {/* Decorative elements */}
+      <div className="fixed top-0 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl -z-10"></div>
+      <div className="fixed bottom-0 right-0 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl -z-10"></div>
+      
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-all font-bold text-sm uppercase tracking-wider"
+            className="group flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-all duration-300 font-semibold text-sm"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to list
+            <div className="w-8 h-8 bg-white shadow-md group-hover:shadow-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            <span className="hidden sm:inline">Back to Accounts</span>
           </button>
+
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <div className="bg-white border border-slate-200 p-8 shadow-sm space-y-8">
-              <div className="flex items-center gap-3 border-b pb-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Header Card */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 shadow-xl">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <User className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {isNewAccount ? "Add New Account" : "Edit Account"}
-                  </h2>
-                  <p className="text-slate-400 text-xs font-medium uppercase tracking-tight">Access Control Manager</p>
+                  <h1 className="text-3xl font-bold text-white">
+                    {isNewAccount ? "Create New Account" : "Edit Account"}
+                  </h1>
+                  <p className="text-blue-100 text-sm mt-1 font-medium">
+                    Manage access control and permissions
+                  </p>
                 </div>
               </div>
+            </div>
 
+            {/* Form Card */}
+            <div className="bg-white/80 backdrop-blur-sm p-8 shadow-xl border border-white/20">
               <div className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-3 ml-1">
+                {/* Email Input */}
+                <div className="group">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                    <Mail className="w-4 h-4" />
                     Google Email Address
                   </label>
-                  <input
-                    type="email"
-                    value={account.account}
-                    onChange={(e) => setAccount({ ...account, account: e.target.value })}
-                    className="w-full bg-white border border-slate-200 p-4 text-[15px] font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-bold"
-                    placeholder="example@gmail.com"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={account.account}
+                      onChange={(e) => setAccount({ ...account, account: e.target.value })}
+                      className="w-full bg-white border-2 border-slate-200 px-4 py-4 text-slate-700 font-medium shadow-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 placeholder:text-slate-400"
+                      placeholder="example@gmail.com"
+                    />
+                    {account.account && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 ml-1">
+                    This email will be used for authentication and notifications
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="md:col-span-1">
-            <div className="sticky top-12 space-y-4">
-              <div className="bg-white border border-slate-200 shadow-sm p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-600">Active</span>
-                  <button
-                    onClick={() =>
-                      setAccount({
-                        ...account,
-                        status: account.status === "active" ? "inactive" : "active",
-                      })
-                    }
-                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
-                      account.status === "active" ? "bg-green-500" : "bg-slate-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
-                        account.status === "active" ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8 space-y-6">
+              {/* Status Card */}
+              <div className="bg-white/80 backdrop-blur-sm p-6 shadow-xl border border-white/20">
+                <h3 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wide">
+                  Action
+                </h3>
+                
 
-                <div className="pt-4 border-t border-slate-100">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 font-black text-xs uppercase tracking-widest shadow-lg transition-all disabled:opacity-50"
-                  >
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    {saving ? "Saving..." : "Save Account"}
-                  </button>
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !account.account}
+                  className="group relative w-full overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 font-bold text-sm uppercase tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  <div className="relative flex items-center justify-center gap-2">
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" />
+                        Save Account
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+
+              {/* Info Card */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 border border-amber-100">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-amber-500 flex items-center justify-center flex-shrink-0 mt-1">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-900 mb-2">Security Notice</h4>
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      Ensure you use a secure email address. All changes are logged for security purposes.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

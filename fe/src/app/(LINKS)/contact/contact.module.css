@@ -1,0 +1,98 @@
+.contentWrapper {
+  width: 100%;
+  max-width: 60%;
+  margin: 0 auto;
+  transition: max-width 0.3s ease;
+}
+
+@media (max-width: 910px) {
+  .contentWrapper {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+}
+
+.heading {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.iconWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.fieldGroup {
+  margin-bottom: 20px;
+}
+
+.label {
+  margin-bottom: 8px;
+  display: block;
+  font-weight: 500;
+}
+
+.nameGroup {
+  display: flex;
+  gap: 15px;
+}
+
+.nameField {
+  flex: 1;
+}
+
+.formInput {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  outline: none;
+}
+
+.subLabel {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.submitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 60px;
+  background-color: #a30bef;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 200px;
+  text-transform: uppercase;
+}
+
+.submitButton.submitting {
+  background-color: #c4b5fd;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

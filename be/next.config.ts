@@ -14,6 +14,24 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      { source: "/posts", destination: "/admin/posts" },
+      { source: "/pages", destination: "/admin/pages" },
+      { source: "/categories", destination: "/admin/categories" },
+      { source: "/accounts", destination: "/admin/accounts" },
+
+      { source: "/pages/add", destination: "/admin/pages/add" },
+      { source: "/posts/add", destination: "/admin/posts/add" },
+      { source: "/categories/add", destination: "/admin/categories/add" },
+      { source: "/accounts/add", destination: "/admin/accounts/add" },
+
+      { source: "/posts/:id", destination: "/admin/posts/:id" },
+      { source: "/pages/:id", destination: "/admin/pages/:id" },
+      { source: "/categories/:id", destination: "/admin/categories/:id" },
+    ];
+  },
+
 };
 
 export default nextConfig;

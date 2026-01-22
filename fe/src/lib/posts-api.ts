@@ -6,18 +6,15 @@ export async function fetchPostBySlug(slug: string): Promise<PostApiResponse | n
   try {
     const url = getPostBySlugEndpoint(slug);
     const post: PostApiResponse = await api.get(url);
-    if (!post) {
-      return null;
-    }
-    return post;
+    return post || null;
   } catch (error: unknown) {
-    console.error('Error fetching post:', error);
-    console.error('Error details - slug:', slug, 'status:', (error as { status?: number })?.status);
+    const status = (error as { status?: number })?.status;
 
-    if ((error as { status?: number })?.status === 404) {
+    if (status === 404) {
       return null;
     }
 
+    console.error('Error fetching post:', error);
     throw error;
   }
 }
