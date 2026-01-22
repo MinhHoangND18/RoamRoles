@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Loader2 } from "lucide-react";
 import { API_CONFIG } from "@/constants/app-config";
-import toast, { Toaster } from 'react-hot-toast'; 
+import toast, { Toaster } from 'react-hot-toast';
+import styles from '@/css/contact.module.css';
 
 export default function ContactPage() {
   const [isSending, setIsSending] = useState(false);
@@ -64,15 +65,15 @@ export default function ContactPage() {
     <main id="main" className="container" style={{ padding: '40px 0' }}>
       <Toaster /> 
 
-      <div className="content-wrapper">
+      <div className={styles.contentWrapper}>
         <div id="post-83" className="content">
-          <p style={{ margin: '30px 0', textAlign: 'center' }}>
-            <span style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+          <p className={styles.heading}>
+            <span className={styles.iconWrapper}>
               <svg viewBox="0 0 36.7 3" xmlns="http://www.w3.org/2000/svg" style={{ width: '50px' }}>
                 <path d="M0 0h36.7v3H0z" fill="#a30bef"></path>
               </svg>
             </span>
-            <span style={{ fontSize: '24px', fontWeight: '600', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+            <span className={styles.title}>
               CONTACT
             </span>
           </p>
@@ -80,34 +81,34 @@ export default function ContactPage() {
           <div className="wpforms-container">
             <form onSubmit={handleSubmit}>
               <div className="wpforms-field-container">
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ marginBottom: '8px', display: 'block', fontWeight: '500' }}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>
                     Name <span style={{ color: '#d63638' }}>*</span>
                   </label>
-                  <div className="name-group">
-                    <div className="name-field">
-                      <input name="first_name" type="text" className="form-input" required />
-                      <div className="sub-label">First</div>
+                  <div className={styles.nameGroup}>
+                    <div className={styles.nameField}>
+                      <input name="first_name" type="text" className={styles.formInput} required />
+                      <div className={styles.subLabel}>First</div>
                     </div>
-                    <div className="name-field">
-                      <input name="last_name" type="text" className="form-input" required />
-                      <div className="sub-label">Last</div>
+                    <div className={styles.nameField}>
+                      <input name="last_name" type="text" className={styles.formInput} required />
+                      <div className={styles.subLabel}>Last</div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ marginBottom: '8px', display: 'block', fontWeight: '500' }}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>
                     Email <span style={{ color: '#d63638' }}>*</span>
                   </label>
-                  <input name="email" type="email" className="form-input" required />
+                  <input name="email" type="email" className={styles.formInput} required />
                 </div>
 
-                <div style={{ marginBottom: '25px' }}>
-                  <label style={{ marginBottom: '8px', display: 'block', fontWeight: '500' }}>
+                <div className={styles.fieldGroup} style={{ marginBottom: '25px' }}>
+                  <label className={styles.label}>
                     Comment or Message <span style={{ color: '#d63638' }}>*</span>
                   </label>
-                  <textarea name="message" className="form-input" style={{ minHeight: '120px' }} required />
+                  <textarea name="message" className={styles.formInput} style={{ minHeight: '120px' }} required />
                 </div>
               </div>
 
@@ -115,9 +116,9 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="submit-button"
+                  className={`${styles.submitButton} ${isSending ? styles.submitting : ''}`}
                 >
-                  {isSending && <Loader2 className="spinner" />}
+                  {isSending && <Loader2 className={styles.spinner} />}
                   {isSending ? "Sending..." : "Submit"}
                 </button>
               </div>
@@ -125,71 +126,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .content-wrapper {
-          width: 100%;
-          max-width: 60%;
-          margin: 0 auto;
-          transition: max-width 0.3s ease;
-        }
-
-        @media (max-width: 910px) {
-          .content-wrapper {
-            max-width: 100%;
-            padding: 0 15px;
-          }
-        }
-
-        .name-group {
-          display: flex;
-          gap: 15px;
-        }
-        .name-field {
-          flex: 1;
-        }
-        .form-input {
-          width: 100%;
-          padding: 10px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          outline: none;
-        }
-        .sub-label {
-          font-size: 11px;
-          color: #666;
-          margin-top: 4px;
-        }
-
-        .submit-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          padding: 12px 60px;
-          background-color: ${isSending ? '#c4b5fd' : '#a30bef'};
-          color: #fff;
-          border: none;
-          border-radius: 8px;
-          cursor: ${isSending ? 'not-allowed' : 'pointer'};
-          font-size: 15px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          min-width: 200px;
-          text-transform: uppercase;
-        }
-
-        :global(.spinner) {
-          width: 18px;
-          height: 18px;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </main>
   );
 }
