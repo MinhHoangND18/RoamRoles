@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ===== Request DTO =====
 type ContactRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -18,7 +17,6 @@ type ContactRequest struct {
 	Message   string `json:"message"`
 }
 
-// ===== DB Model: map đúng bảng users =====
 type User struct {
 	ID int64 `gorm:"primaryKey"`
 

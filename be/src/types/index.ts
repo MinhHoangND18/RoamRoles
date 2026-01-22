@@ -6,12 +6,15 @@ export interface Type {
 
 export interface Category {
   id: number;
-  name: string;
+  title: string;
+  title_header?: string;
   slug: string;
+  status: "active" | "inactive";
 }
 
+
 export interface Post {
-  id?: number;
+  id: number;
   title: string;
   title_header?: string;
   excerpt: string;
@@ -20,6 +23,7 @@ export interface Post {
   status: string;
   slug: string;
   type_id: number;
+  post_navigation: string;
   type?: Type;
   category_id?: number | null;
   category?: Category | null;
@@ -29,4 +33,13 @@ export interface Account {
   id: number;
   account: string;
   status: string;
+}
+
+export interface Page {
+  id: number;
+  slug: string;
+  title: string;
+  title_header?: string;
+  content: string;
+  status: "active" | "inactive";
 }

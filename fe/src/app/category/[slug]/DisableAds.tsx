@@ -6,9 +6,7 @@ const DisableAds = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Disable ads API if it exists
     if (window.__arbAPI) {
-      // Prevent ads from being initialized
       const originalInit = window.__arbAPI.init;
       const originalInitPageContent = window.__arbAPI.initPageContent;
       
@@ -16,10 +14,7 @@ const DisableAds = () => {
       window.__arbAPI.initPageContent = () => {};
       window.__arbAPI.onContentRenderEnded = () => {};
     }
-
-    // Remove any existing ad elements
     const removeAds = () => {
-      // Remove ad placeholders
       const adPlaces = document.querySelectorAll('.ad-place, .advertisement, [data-ad-mode]');
       adPlaces.forEach((ad) => {
         const parent = ad.closest('.advertisement') || ad.parentElement;

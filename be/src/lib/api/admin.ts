@@ -20,7 +20,6 @@ export const getPosts = async (): Promise<Post[]> => {
 };
 
 
-
 export const getAccounts = async (): Promise<Account[]> => {
   const res = await fetch(`${API_BASE_URL}/accounts`);
   if (!res.ok) {

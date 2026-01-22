@@ -45,7 +45,6 @@ function AccountManagementContent() {
     fetchData();
   }, []);
 
-  // Hàm xử lý khi bấm Accept
   const handleAccept = async (id: number, email: string) => {
     setProcessingId(id);
     try {
@@ -56,7 +55,7 @@ function AccountManagementContent() {
       });
       if (!res.ok) throw new Error("Update failed");
       toast.success("Đã kích hoạt tài khoản!");
-      fetchData(); // Tải lại danh sách
+      fetchData(); 
     } catch (error) {
       toast.error("Lỗi khi kích hoạt");
     } finally {
@@ -140,7 +139,7 @@ function AccountManagementContent() {
                           </td>
                           <td className="px-10 py-6 text-right">
                             <div className="flex items-center justify-end gap-3">
-                              {/* CHỈ THÊM NÚT ACCEPT TẠI ĐÂY NẾU STATUS LÀ PENDING */}
+                              {/* PENDING */}
                               {acc.status === "pending" && (
                                 <button
                                   onClick={() => handleAccept(acc.id, acc.account)}

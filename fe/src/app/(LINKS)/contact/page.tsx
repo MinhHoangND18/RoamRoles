@@ -22,7 +22,7 @@ export default function ContactPage() {
     };
 
     if (!payload.first_name || !payload.last_name || !payload.email || !payload.message) {
-      toast.error("Please fill in all required fields."); // Thông báo lỗi nhập liệu
+      toast.error("Please fill in all required fields.");
       return;
     }
 
@@ -45,7 +45,6 @@ export default function ContactPage() {
       const data = await res.json();
       console.log("Contact saved:", data);
 
-      // 2. Hiện popup thành công ở bên phải
       toast.success("Message sent successfully!", {
         position: "top-right",
       });
@@ -53,7 +52,6 @@ export default function ContactPage() {
       form.reset();
     } catch (err) {
       console.error("Submit error:", err);
-      // 3. Hiện popup lỗi ở bên phải
       toast.error("Failed to send message. Please try again.", {
         position: "top-right",
       });
@@ -64,7 +62,6 @@ export default function ContactPage() {
 
   return (
     <main id="main" className="container" style={{ padding: '40px 0' }}>
-      {/* 4. Thêm component Toaster để hiển thị popup */}
       <Toaster /> 
 
       <div className="content-wrapper">

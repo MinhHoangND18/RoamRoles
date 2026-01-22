@@ -3,5 +3,5 @@ export const API_CONFIG = {
 };
 
 export const APP_CONFIG = {
-  NEXT_PUBLIC_FRONTEND_URL_API: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
+  FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
 };

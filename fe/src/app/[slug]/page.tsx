@@ -105,8 +105,6 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
   const headerList = await headers();
   const host = headerList.get("host");
   const brand = getBrandData(host);
-
-  // Try fetching Post first (Posts are more common)
   const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
   if (post && post.slug && post.id !== 0) {
     return <PostContent post={post} />;
@@ -122,7 +120,7 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
 }
 
 function PostContent({ post }: { post: PostApiResponse }) {
-  const processedDescrip = transformContent(post.descrip || "");
+  // const processedDescrip = transformContent(post.descrip || "");
   const processedTitle = transformContent(post.title || "");
   const processedExcerpt = transformContent(post.excerpt || "");
   const processedContent = transformContent(post.content || "");
@@ -135,12 +133,12 @@ function PostContent({ post }: { post: PostApiResponse }) {
         <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
           <article className="post-wrapper">
             <header className="entry-header mb-4 text-center">
-              {processedDescrip && (
+              {/* {processedDescrip && (
                 <div
                   className="mb-2"
                   dangerouslySetInnerHTML={{ __html: processedDescrip }}
                 />
-              )}
+              )} */}
               {processedTitle && (
                 <div
                   className="post-header-title"
