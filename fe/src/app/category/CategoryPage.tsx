@@ -1,10 +1,11 @@
-// app/category/[slug]/page.tsx
+
 import React from 'react';
 import { notFound } from "next/navigation";
 import { fetchCategoryWithPosts } from "@/lib/category-api";
 import { CategoryPostsResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
 import CategoryContent from '@/app/category/CategoryContent';
+import "@/css/all.min.css"; 
 
 interface ApiError {
   message: string;

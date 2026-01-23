@@ -12,3 +12,4 @@ export const getCategoryBySlugEndpoint = (slug: string) => `/api/categories/${sl
 
 export const getCategoryPostsEndpoint = (slug: string, page: number = 1) => 
   `/api/categories/${slug}/posts?page=${page}`;
+

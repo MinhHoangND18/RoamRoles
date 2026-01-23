@@ -1,21 +1,54 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { CategoryPostsResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
-import "@/css/all.min.css";
+// import "@/css/all.min.css";
 
 interface CategoryContentProps {
     data: CategoryPostsResponse;
     slug: string;
     currentPage: number;
 }
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export default function CategoryContent({ data, slug, currentPage }: CategoryContentProps) {
     const router = useRouter();
-    
-    // Validation: Đảm bảo data có đủ thông tin
+    const { category, posts, pagination } = data;
+    const isReady = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    const handlePageChange = (newPage: number) => {
+        router.push(`/category/${slug}?page=${newPage}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    if (!isReady) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '600px',
+                width: '100%'
+            }}>
+                <div style={{
+                    width: '50px',
+                    height: '50px',
+                    border: '5px solid #f3f3f3',
+                    borderTop: '5px solid #482d70',
+                    borderRadius: '50%',
+                    animation: 'spin 0.2s linear infinite'
+                }} />
+                <style jsx>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
+        );
+    }
     if (!data || !data.category || !data.posts || !data.pagination) {
         return (
             <main id="main" className="container py-2 px-lg-5" style={{ maxWidth: '910px' }}>
@@ -26,16 +59,18 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
         );
     }
 
-    const { category, posts, pagination } = data;
-
-    const handlePageChange = (newPage: number) => {
-        router.push(`/category/${slug}?page=${newPage}`);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
 
     return (
         <>
-            <main id="main" className="container py-2 px-lg-5" style={{ maxWidth: '910px' }}>
+            <main
+                id="main"
+                className="container py-2 px-lg-5"
+                style={{
+                    maxWidth: '910px',
+                    minHeight: '600px',
+                    opacity: isReady ? 1 : 0,
+                }}
+            >
                 {/* Header */}
                 <header className="page-header mb-2">
                     <p className="entry-title gb-headline gb-headline-ebd47fe1">
@@ -102,7 +137,7 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                                                 WebkitLineClamp: 3,
                                                 WebkitBoxOrient: "vertical",
                                                 overflow: "hidden",
-                                                textAlign: "left" 
+                                                textAlign: "left"
                                             }}
                                         />
 

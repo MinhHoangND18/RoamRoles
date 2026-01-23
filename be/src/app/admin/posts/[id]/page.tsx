@@ -141,6 +141,10 @@ function EditPostContent() {
       if (elementToChange) {
         elementToChange.textContent = displayTitle;
         updatedPost.title = doc.body.innerHTML;
+      } else if (doc.body.children.length === 1) {
+        const genericElement = doc.body.children[0];
+        genericElement.textContent = displayTitle;
+        updatedPost.title = genericElement.outerHTML;
       } else {
         updatedPost.title = displayTitle;
       }
@@ -185,14 +189,17 @@ function EditPostContent() {
       toast.success("Post updated successfully!");
       setOriginalPost(post);
 
-      if (isNewPost) {
-        router.replace(`/admin/posts/${responseData.id}`);
-      } else if (post.slug && originalPost && post.slug !== originalPost.slug) {
-        const newUrl = post.type?.id
-          ? `/admin/posts/${post.slug}?type=${post.type.id}`
-          : `/admin/posts/${post.slug}`;
-        router.push(newUrl);
-      }
+      const navigate = () => {
+        if (isNewPost) {
+          router.replace(`/posts/${responseData.id}`);
+        } else if (post.slug && originalPost && post.slug !== originalPost.slug) {
+          const newUrl = post.type?.id
+            ? `/posts/${post.slug}?type=${post.type.id}`
+            : `/posts/${post.slug}`;
+          router.push(newUrl);
+        }
+      };
+      setTimeout(navigate, 100);
     } catch (error: unknown) {
       setSaving(false);
       const err = error as ApiError;
@@ -238,8 +245,10 @@ function EditPostContent() {
   }
 
   const selectedCategoryName =
-    categories.find((c) => c.id === post.category_id)?.title ||
-    "Select Category";
+    post.category_id === null
+      ? "No Category"
+      : categories.find((c) => c.id === post.category_id)?.title ||
+        "Select Category";
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 md:p-12">
@@ -442,6 +451,19 @@ function EditPostContent() {
                   </button>
                   {isCategoryOpen && (
                     <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm">
+                      <li
+                        onClick={() => {
+                          setPost((prev) =>
+                            prev
+                              ? { ...prev, category_id: null }
+                              : null,
+                          );
+                          setIsCategoryOpen(false);
+                        }}
+                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
+                      >
+                        No Category
+                      </li>
                       {categories.map((category) => (
                         <li
                           key={category.id}
