@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, Suspense, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Editor } from "@tinymce/tinymce-react";
+import type { Editor as TinyMCEEditor } from "tinymce";
 import {
   Save,
   ArrowLeft,
@@ -192,7 +193,11 @@ function EditPostContent() {
       const navigate = () => {
         if (isNewPost) {
           router.replace(`/posts/${responseData.id}`);
-        } else if (post.slug && originalPost && post.slug !== originalPost.slug) {
+        } else if (
+          post.slug &&
+          originalPost &&
+          post.slug !== originalPost.slug
+        ) {
           const newUrl = post.type?.id
             ? `/posts/${post.slug}?type=${post.type.id}`
             : `/posts/${post.slug}`;
@@ -354,6 +359,8 @@ function EditPostContent() {
                       menubar: false,
                       branding: false,
                       help_accessibility: false,
+                      auto_focus: false,
+                      toolbar_mode: "wrap",
                       plugins: [
                         "advlist",
                         "autolink",
@@ -382,6 +389,41 @@ function EditPostContent() {
                       content_style:
                         "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
                       skin: "oxide",
+                      setup: (editor: TinyMCEEditor) => {
+                        editor.on("ExecCommand", (e: { command: string }) => {
+                          if (e.command === "mceCodeEditor") {
+                            let attempts = 0;
+                            const forceScrollTop = setInterval(() => {
+                              const textarea = document.querySelector(
+                                ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
+                              ) as HTMLTextAreaElement;
+
+                              if (textarea) {
+                                textarea.setSelectionRange(0, 0);
+                                textarea.scrollTop = 0;
+                                textarea.focus();
+
+                                if (textarea.scrollTop === 0 || attempts > 10) {
+                                  clearInterval(forceScrollTop);
+                                }
+                              }
+                              attempts++;
+                            }, 50); 
+                          }
+                        });
+
+                        editor.on("OpenWindow", () => {
+                          setTimeout(() => {
+                            const textarea = document.querySelector(
+                              ".tox-textarea",
+                            ) as HTMLTextAreaElement;
+                            if (textarea) {
+                              textarea.scrollTop = 0;
+                              textarea.setSelectionRange(0, 0);
+                            }
+                          }, 200);
+                        });
+                      },
                     }}
                     onEditorChange={(content: string) =>
                       setPost((prev) =>
@@ -454,9 +496,7 @@ function EditPostContent() {
                       <li
                         onClick={() => {
                           setPost((prev) =>
-                            prev
-                              ? { ...prev, category_id: null }
-                              : null,
+                            prev ? { ...prev, category_id: null } : null,
                           );
                           setIsCategoryOpen(false);
                         }}

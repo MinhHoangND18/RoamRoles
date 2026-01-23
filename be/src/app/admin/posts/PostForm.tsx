@@ -429,7 +429,7 @@ function PostFormContent() {
                     />
                   </button>
                   {isRowsOpen && (
-                    <ul className="absolute top-full right-0 mt-2 w-full min-w-[max-content] bg-white border border-slate-200 shadow-lg rounded-md py-1 z-20 font-bold text-sm">
+                    <ul className="absolute bottom-full right-0 mb-2 w-full min-w-[max-content] bg-white border border-slate-200 shadow-lg rounded-none py-1 z-20 font-bold text-sm">
                       {[10, 25, 50].map((size) => (
                         <li
                           key={size}

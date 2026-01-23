@@ -1,47 +1,20 @@
 import { API_CONFIG } from '@/constants/app-config';
-
-// Type riêng cho Related Posts
-export interface RelatedPost {
-  id: number;
-  slug: string;
-  title: string;
-  excerpt: string;
-  thumbnail_url: string;
-  category_id: number | null;
-}
-
-interface RelatedPostsApiResponse {
-  category: {
-    id: number;
-    title: string;
-    slug: string;
-  };
-  posts: RelatedPost[];
-  pagination: {
-    current_page: number;
-    total_pages: number;
-    total_posts: number;
-    per_page: number;
-    has_next: boolean;
-    has_prev: boolean;
-  };
-}
+import { PostApiResponse } from '@/types/api';
 
 /**
- * Fetch related posts by category slug
- * @param categorySlug - Category slug
- * @param currentPostId - Current post ID to exclude
- * @param limit - Number of posts to fetch (default: 3)
+ * Fetch related posts by post ID
+ * Sử dụng endpoint mới /api/posts/{id}/related
+ * 
+ * @param postId - ID của bài viết hiện tại
+ * @param limit - Số lượng bài viết muốn lấy (mặc định: 3)
  * @returns Array of related posts
  */
-export async function fetchRelatedPostsByCategory(
-  categorySlug: string,
-  currentPostId: number,
+export async function fetchRelatedPostsByPostId(
+  postId: number,
   limit: number = 3
-): Promise<RelatedPost[]> {
+): Promise<PostApiResponse[]> {
   try {
-    const perPage = limit + 1; // Fetch 1 extra to ensure we have enough after filtering
-    const url = `${API_CONFIG.BASE_URL}/categories/${categorySlug}/posts?page=1&per_page=${perPage}`;
+    const url = `${API_CONFIG.BASE_URL}/api/posts/${postId}/related?limit=${limit}`;
     
     console.log('Fetching related posts from:', url);
     
@@ -50,8 +23,7 @@ export async function fetchRelatedPostsByCategory(
       headers: {
         'Content-Type': 'application/json',
       },
-      // Add cache option for better performance
-      next: { revalidate: 300 } // Revalidate every 5 minutes
+      next: { revalidate: 0 } 
     });
 
     console.log('Response status:', response.status);
@@ -61,21 +33,52 @@ export async function fetchRelatedPostsByCategory(
       return [];
     }
 
-    const data: RelatedPostsApiResponse = await response.json();
-    console.log('API Response data:', data);
-
-    if (!data || !data.posts || !Array.isArray(data.posts)) {
+    const data: PostApiResponse[] = await response.json();
+    
+    if (!Array.isArray(data)) {
       console.error('Invalid response structure:', data);
       return [];
     }
 
-    // Filter out current post and limit results
-    const filteredPosts = data.posts
-      .filter(post => post.id !== currentPostId)
-      .slice(0, limit);
+    console.log('Related posts fetched:', data);
+    return data;
 
-    console.log('Filtered posts:', filteredPosts);
-    return filteredPosts;
+  } catch (error) {
+    console.error('Error fetching related posts:', error);
+    return [];
+  }
+}
+
+export async function fetchRelatedPostsByCategory(
+  categorySlug: string,
+  currentPostId: number,
+  limit: number = 3
+): Promise<PostApiResponse[]> {
+  try {
+    const perPage = limit + 1;
+    const url = `${API_CONFIG.BASE_URL}/categories/${categorySlug}/posts?page=1&per_page=${perPage}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 0 }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (!data || !data.posts || !Array.isArray(data.posts)) {
+      return [];
+    }
+
+    return data.posts
+      .filter((post: PostApiResponse) => post.id !== currentPostId)
+      .slice(0, limit);
 
   } catch (error) {
     console.error('Error fetching related posts:', error);
