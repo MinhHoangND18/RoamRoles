@@ -45,12 +45,11 @@ export default async function HomePage({
 
       // Strip HTML trước khi search - chỉ tìm trong nội dung text, không tìm trong HTML tags
       const processedTitle = normalizeText(transformContent(post.title || ""));
-      const processedDescrip = normalizeText(transformContent(post.descrip || ""));
+
       const processedExcerpt = normalizeText(transformContent(post.excerpt || ""));
 
       return (
         processedTitle.includes(query) ||
-        processedDescrip.includes(query) ||
         processedExcerpt.includes(query)
       );
     });
@@ -76,7 +75,7 @@ export default async function HomePage({
           <div className="row">
             {filteredPosts.map((post) => {
               const title = stripHtml(transformContent(post.title || ''));
-              const excerpt = truncateText(transformContent(post.excerpt || post.descrip || ''));
+              const excerpt = truncateText(transformContent(post.excerpt || ''));
               const imageUrl = getPostImage(post);
 
               return (

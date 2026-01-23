@@ -45,7 +45,7 @@ func GetPageBySlug(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var page PageModel
-		result := db.Where("slug = ?", slug).First(&page)
+		result := db.Where("slug = ?", slug).Where("status = ?", "active").First(&page)
 
 		if result.Error != nil {
 			if result.Error == gorm.ErrRecordNotFound {
@@ -72,15 +72,20 @@ func UpdatePageBySlug(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		result := db.Model(&PageModel{}).Where("slug = ?", slug).Updates(payload)
-		if result.Error != nil {
-			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+		var existingPage PageModel
+		if err := db.Where("slug = ?", slug).First(&existingPage).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				w.WriteHeader(http.StatusNotFound)
+				json.NewEncoder(w).Encode(map[string]string{"message": "Page not found with that slug"})
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if result.RowsAffected == 0 {
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Page not found"})
+		result := db.Model(&existingPage).Updates(payload)
+		if result.Error != nil {
+			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
 			return
 		}
 

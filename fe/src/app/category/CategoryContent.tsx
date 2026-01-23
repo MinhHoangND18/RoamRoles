@@ -1,31 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { CategoryPostsResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
+// import "@/css/all.min.css";
 
 interface CategoryContentProps {
     data: CategoryPostsResponse;
     slug: string;
     currentPage: number;
 }
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export default function CategoryContent({ data, slug, currentPage }: CategoryContentProps) {
     const router = useRouter();
     const { category, posts, pagination } = data;
-    const [isReady, setIsReady] = useState(false);
-
-    useEffect(() => {
-        setIsReady(true);
-    }, []);
-
+    const isReady = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
     const handlePageChange = (newPage: number) => {
         router.push(`/category/${slug}?page=${newPage}`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
-    // Loading spinner overlay
     if (!isReady) {
         return (
             <div style={{
@@ -52,6 +49,16 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
             </div>
         );
     }
+    if (!data || !data.category || !data.posts || !data.pagination) {
+        return (
+            <main id="main" className="container py-2 px-lg-5" style={{ maxWidth: '910px' }}>
+                <div className="alert alert-warning">
+                    Unable to load category data. Please try again later.
+                </div>
+            </main>
+        );
+    }
+
 
     return (
         <>
@@ -60,9 +67,8 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                 className="container py-2 px-lg-5"
                 style={{
                     maxWidth: '910px',
-                    minHeight: '600px', // ← Prevent layout shift
+                    minHeight: '600px',
                     opacity: isReady ? 1 : 0,
-                    transition: 'opacity 0.2s ease-in' // ← Smooth fade-in
                 }}
             >
                 {/* Header */}
@@ -99,7 +105,6 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                                                     className="w-100"
                                                     style={{
                                                         width: "233px",
-                                                        // height: "350px",
                                                         objectFit: "cover",
                                                         borderRadius: "0px"
                                                     }}
@@ -132,7 +137,7 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                                                 WebkitLineClamp: 3,
                                                 WebkitBoxOrient: "vertical",
                                                 overflow: "hidden",
-                                                textAlign: "left" 
+                                                textAlign: "left"
                                             }}
                                         />
 

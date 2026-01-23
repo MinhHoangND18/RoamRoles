@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -7,12 +7,31 @@ import {
   ChevronLeft,
   Loader2,
   ChevronDown,
-
 } from "lucide-react";
 import { Category } from "@/types";
 import { getCategories } from "@/lib/api/categories";
 
 export const dynamic = "force-dynamic";
+
+function useOnClickOutside(
+  ref: React.RefObject<HTMLElement>,
+  handler: (event: MouseEvent | TouchEvent) => void,
+) {
+  useEffect(() => {
+    const listener = (event: MouseEvent | TouchEvent) => {
+      if (!ref.current || ref.current.contains(event.target as Node)) {
+        return;
+      }
+      handler(event);
+    };
+    document.addEventListener("mousedown", listener);
+    document.addEventListener("touchstart", listener);
+    return () => {
+      document.removeEventListener("mousedown", listener);
+      document.removeEventListener("touchstart", listener);
+    };
+  }, [ref, handler]);
+}
 
 function CategoryFormContent() {
   const router = useRouter();
@@ -52,6 +71,16 @@ function CategoryFormContent() {
 
   const [isRowsOpen, setIsRowsOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const rowsDropdownRef = useRef<HTMLDivElement>(null);
+
+  useOnClickOutside(statusDropdownRef as React.RefObject<HTMLElement>, () =>
+    setIsStatusOpen(false),
+  );
+  useOnClickOutside(rowsDropdownRef as React.RefObject<HTMLElement>, () =>
+    setIsRowsOpen(false),
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
@@ -154,7 +183,7 @@ function CategoryFormContent() {
                 className="w-full bg-white border border-slate-200 py-4 pl-14 pr-6 text-[15px] shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-medium"
               />
             </div>
-            <div className="relative">
+            <div className="relative" ref={statusDropdownRef}>
               <button
                 onClick={() => setIsStatusOpen(!isStatusOpen)}
                 className="flex items-center justify-between w-full md:w-40 bg-white border gap-3 border-slate-200 py-4 px-4 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all"
@@ -285,7 +314,7 @@ function CategoryFormContent() {
                 <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">
                   Rows:
                 </span>
-                <div className="relative">
+                <div className="relative" ref={rowsDropdownRef}>
                   <button
                     onClick={() => setIsRowsOpen(!isRowsOpen)}
                     className="flex items-center gap-1 bg-white border border-slate-200 px-4 py-2 shadow-sm hover:bg-slate-50 transition-all font-bold text-slate-700 text-sm"

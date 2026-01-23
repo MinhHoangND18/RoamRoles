@@ -1,16 +1,9 @@
 'use client';
 
-/* eslint-disable @next/next/no-html-link-for-pages */
 import Image from 'next/image';
 import { useState, useSyncExternalStore } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import "@/css/all.min.css";
-
-const defaultLogoConfig = {
-  src: '/images/jobzesty1.png',
-  href: '/',
-  alt: 'Job Zesty'
-};
 
 const jobsmatchLogoConfig = {
   src: '/images/jobsmatch4u1.png',
@@ -24,17 +17,28 @@ const jobzestyLogoConfig = {
   alt: 'Job Zesty'
 };
 
-// Cache logo config - trả về object đã tồn tại, không tạo mới
-let cachedLogoConfig = defaultLogoConfig;
+const localLogoConfig = {
+  src: '/images/jobzesty1.png',
+  href: '/',
+  alt: 'Job Zesty (Local)'
+};
+
+const defaultLogoConfig = jobzestyLogoConfig;
+
 const getLogoConfig = () => {
   if (typeof window === 'undefined') return defaultLogoConfig;
+  
   const hostname = window.location.hostname;
-  if (hostname.includes('jobsmatch4u.com')) {
-    cachedLogoConfig = jobsmatchLogoConfig;
-  } else {
-    cachedLogoConfig = jobzestyLogoConfig;
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return localLogoConfig;
   }
-  return cachedLogoConfig;
+
+  if (hostname.includes('jobsmatch4u.com')) {
+    return jobsmatchLogoConfig;
+  }
+
+  return jobzestyLogoConfig;
 };
 
 const Header = () => {
@@ -68,6 +72,7 @@ const Header = () => {
               alt={logoConfig.alt}
               width={200}
               height={58}
+              priority
               style={{
                 width: '200px', 
                 height: 'auto',

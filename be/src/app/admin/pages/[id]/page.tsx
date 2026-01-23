@@ -84,6 +84,18 @@ function EditPageContent() {
 
   const handleSave = async () => {
     if (!page) return;
+
+    if (!isNewPage && originalPage) {
+      const hasTitleChanged = displayTitle !== extractTitleText(originalPage.title);
+      const hasContentChanged = page.content !== originalPage.content;
+      const hasStatusChanged = page.status !== originalPage.status;
+
+      if (!hasTitleChanged && !hasContentChanged && !hasStatusChanged) {
+        toast.success("Page updated successfully!");
+        return;
+      }
+    }
+
     setSaving(true);
 
     const updatedPage = { ...page };
@@ -110,7 +122,7 @@ function EditPageContent() {
         router.replace(`/admin/pages/${res.id}`);
       } else {
         await updatePage(page.slug, updatedPage);
-        toast.success("Page updated!");
+        toast.success("Page updated successfully!");
         setOriginalPage(updatedPage);
       }
     } catch (error) {

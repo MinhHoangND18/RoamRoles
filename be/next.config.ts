@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
+    async rewrites() {
     return [
       { source: "/posts", destination: "/admin/posts" },
       { source: "/pages", destination: "/admin/pages" },
@@ -29,6 +29,7 @@ const nextConfig: NextConfig = {
       { source: "/posts/:id", destination: "/admin/posts/:id" },
       { source: "/pages/:id", destination: "/admin/pages/:id" },
       { source: "/categories/:id", destination: "/admin/categories/:id" },
+      { source: "/accounts/:id", destination: "/admin/accounts/:id" },
     ];
   },
 

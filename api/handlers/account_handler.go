@@ -115,7 +115,7 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"allowed": false,
 				"status":  account.Status,
-				"message": "Tài khoản chưa được kích hoạt hoặc đã bị khóa.",
+				"message": "The account is either not activated or has been locked.",
 			})
 			return
 		}

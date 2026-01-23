@@ -31748,3 +31748,8 @@ body.admin-bar #trp-floater-ls.trp-top-left {
     font-weight: 400 !important;
     color: var(--bs-card-color);
 }
+
+/* Center excerpt in post header only (do not affect other pages) */
+.post-wrapper .entry-header .entry-excerpt p {
+  text-align: center !important;
+}

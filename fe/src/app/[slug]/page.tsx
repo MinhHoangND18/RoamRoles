@@ -9,6 +9,7 @@ import { PageModel, PostApiResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
 import "@/css/all.min.css";
 import AdScript from '../ADS/AdScript';
+import RelatedPosts from '@/components/RelatedPosts';
 
 interface ApiError {
   message: string;
@@ -119,12 +120,21 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
   notFound();
 }
 
+
 function PostContent({ post }: { post: PostApiResponse }) {
-  // const processedDescrip = transformContent(post.descrip || "");
   const processedTitle = transformContent(post.title || "");
-  const processedExcerpt = transformContent(post.excerpt || "");
+  const rawExcerpt = transformContent(post.excerpt || "");
   const processedContent = transformContent(post.content || "");
   const processedNav = transformContent(post.post_navigation || "");
+
+
+  const upperExcerptMatch = rawExcerpt.match(/<h6[^>]*>[\s\S]*?<\/h6>/i);
+  const upperExcerpt = upperExcerptMatch ? upperExcerptMatch[0] : "";
+
+  const lowerExcerptMatch = rawExcerpt.match(/<div class="entry-excerpt"[^>]*>[\s\S]*?<\/div>/i);
+  const lowerExcerpt = lowerExcerptMatch ? lowerExcerptMatch[0] : "";
+
+  const fallbackExcerpt = (!upperExcerpt && !lowerExcerpt) ? rawExcerpt : "";
 
   return (
     <main id="main" className="container">
@@ -139,16 +149,29 @@ function PostContent({ post }: { post: PostApiResponse }) {
                   dangerouslySetInnerHTML={{ __html: processedDescrip }}
                 />
               )} */}
+              {upperExcerpt && (
+                <div
+                  className="upper-excerpt-wrapper mb-2 text-center"
+                  dangerouslySetInnerHTML={{ __html: upperExcerpt }}
+                />
+              )}
+
               {processedTitle && (
                 <div
                   className="post-header-title"
                   dangerouslySetInnerHTML={{ __html: processedTitle }}
                 />
               )}
-              {processedExcerpt && (
+              {lowerExcerpt && (
+                <div
+                  className="lower-excerpt-wrapper mt-3 text-center"
+                  dangerouslySetInnerHTML={{ __html: lowerExcerpt }}
+                />
+              )}
+              {fallbackExcerpt && (
                 <div
                   className="mt-3"
-                  dangerouslySetInnerHTML={{ __html: processedExcerpt }}
+                  dangerouslySetInnerHTML={{ __html: fallbackExcerpt }}
                 />
               )}
               <div className="advertisement" style={{ marginBottom: "15px" }}>
@@ -176,6 +199,13 @@ function PostContent({ post }: { post: PostApiResponse }) {
             />
           </article>
 
+          {post.category_id && (
+            <>
+              <hr className="mt-5" />
+              <RelatedPosts currentPost={post} />
+            </>
+          )}
+
           {processedNav && (
             <>
               <hr className="mt-5" />
@@ -193,8 +223,8 @@ function PageContent({ page, brand }: { page: PageModel; brand: Brand }) {
 
   return (
     <main id="main" className="container">
-      <div 
-        id={`post-${page.id}`} 
+      <div
+        id={`post-${page.id}`}
         className={`content post-${page.id} page type-page status-publish hentry`}
       >
         <p style={{ margin: '30px' }} className="gb-headline gb-headline-ebd47fe1">
