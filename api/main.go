@@ -45,6 +45,7 @@ func main() {
 	r.HandleFunc("/api/pages/check-slug", handlers.CheckPageSlugUniqueness(DB)).Methods("GET")
 	r.HandleFunc("/api/pages", handlers.GetPages(DB)).Methods("GET")
 	r.HandleFunc("/api/pages", handlers.CreatePage(DB)).Methods("POST")
+	r.HandleFunc("/api/posts/{id:[0-9]+}/related", handlers.GetRelatedPosts(DB)).Methods("GET")
 	r.HandleFunc("/api/pages/{slug}", handlers.GetPageBySlug(DB)).Methods("GET")
 	r.HandleFunc("/api/pages/{slug}", handlers.UpdatePageBySlug(DB)).Methods("PUT")
 
@@ -53,6 +54,7 @@ func main() {
 	r.HandleFunc("/api/categories/handle", handlers.HandleCategory(DB)).Methods("POST")
 	r.HandleFunc("/api/categories/handle/{id:[0-9]+}", handlers.HandleCategory(DB)).Methods("POST")
 	r.HandleFunc("/api/categories/{slug}/posts", handlers.GetPostsByCategorySlug(DB)).Methods("GET")
+	
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),

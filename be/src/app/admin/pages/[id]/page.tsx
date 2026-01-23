@@ -5,6 +5,8 @@ import { Editor } from "@tinymce/tinymce-react";
 import { Save, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 import { Page } from "@/types";
+import type { Editor as TinyMCEEditor } from "tinymce";
+
 import {
   getPage,
   createPage,
@@ -86,7 +88,8 @@ function EditPageContent() {
     if (!page) return;
 
     if (!isNewPage && originalPage) {
-      const hasTitleChanged = displayTitle !== extractTitleText(originalPage.title);
+      const hasTitleChanged =
+        displayTitle !== extractTitleText(originalPage.title);
       const hasContentChanged = page.content !== originalPage.content;
       const hasStatusChanged = page.status !== originalPage.status;
 
@@ -167,18 +170,20 @@ function EditPageContent() {
                     setDisplayTitle(newTitleText);
                     if (isNewPage) {
                       setPage((prev) =>
-                        prev ? { ...prev, title: newTitleText } : null
+                        prev ? { ...prev, title: newTitleText } : null,
                       );
                     }
                   }}
                   onBlur={() => {
                     if (isNewPage) {
                       const baseSlug = generateSlug(displayTitle);
-                      setPage((prev) => (prev ? { ...prev, slug: baseSlug } : null));
+                      setPage((prev) =>
+                        prev ? { ...prev, slug: baseSlug } : null,
+                      );
                     }
                   }}
                   className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                placeholder="Enter title..."
+                  placeholder="Enter title..."
                 />
               </div>
 
@@ -203,11 +208,12 @@ function EditPageContent() {
                     apiKey="vb3rf5t71lcc6x2a1imujbsh6uea23dz7zqhe6b2q1it3q8u"
                     value={page?.content}
                     init={{
-                      height: 500,
+                      height: 600,
                       menubar: false,
-                      border_width: 0,
-                      outline: false,
+                      branding: false,
                       help_accessibility: false,
+                      auto_focus: false,
+                      toolbar_mode: "wrap",
                       plugins: [
                         "advlist",
                         "autolink",
@@ -234,13 +240,48 @@ function EditPageContent() {
                         "align lineheight | checklist numlist bullist indent outdent | " +
                         "emoticons charmap | removeformat | code fullscreen preview",
                       content_style:
-                        "body { font-family:Inter, sans-serif; font-size:16px; border:0; }",
+                        "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
                       skin: "oxide",
-                      promotion: false,
-                      branding: false,
+                      setup: (editor: TinyMCEEditor) => {
+                        editor.on("ExecCommand", (e: { command: string }) => {
+                          if (e.command === "mceCodeEditor") {
+                            let attempts = 0;
+                            const forceScrollTop = setInterval(() => {
+                              const textarea = document.querySelector(
+                                ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
+                              ) as HTMLTextAreaElement;
+
+                              if (textarea) {
+                                textarea.setSelectionRange(0, 0);
+                                textarea.scrollTop = 0;
+                                textarea.focus();
+
+                                if (textarea.scrollTop === 0 || attempts > 10) {
+                                  clearInterval(forceScrollTop);
+                                }
+                              }
+                              attempts++;
+                            }, 50); 
+                          }
+                        });
+
+                        editor.on("OpenWindow", () => {
+                          setTimeout(() => {
+                            const textarea = document.querySelector(
+                              ".tox-textarea",
+                            ) as HTMLTextAreaElement;
+                            if (textarea) {
+                              textarea.scrollTop = 0;
+                              textarea.setSelectionRange(0, 0);
+                            }
+                          }, 200);
+                        });
+                      },
                     }}
-                    onEditorChange={(content) =>
-                      setPage((prev) => (prev ? { ...prev, content } : null))
+                    onEditorChange={(content: string) =>
+                      setPage((prev) =>
+                        prev ? { ...prev, content: content } : null,
+                      )
                     }
                   />
                 </div>

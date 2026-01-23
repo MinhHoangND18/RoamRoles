@@ -1,4 +1,4 @@
-// app/[slug]/page.tsx
+
 import React from 'react';
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -142,29 +142,30 @@ function PostContent({ post }: { post: PostApiResponse }) {
       <div className="row">
         <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
           <article className="post-wrapper">
-            <header className="entry-header mb-4 text-center">
-              {/* {processedDescrip && (
-                <div
-                  className="mb-2"
-                  dangerouslySetInnerHTML={{ __html: processedDescrip }}
-                />
-              )} */}
+            <header className="entry-header mb-4 text-center d-flex flex-column align-items-center">
+
+              {/* EXCERPT TRÊN TITLE */}
               {upperExcerpt && (
                 <div
-                  className="upper-excerpt-wrapper mb-2 text-center"
+                  className="upper-excerpt-wrapper mb-2 w-100"
+                  style={{ textAlign: 'center' }}
                   dangerouslySetInnerHTML={{ __html: upperExcerpt }}
                 />
               )}
 
+              {/* TITLE CHÍNH */}
               {processedTitle && (
                 <div
-                  className="post-header-title"
+                  className="post-header-title w-100 text-center"
                   dangerouslySetInnerHTML={{ __html: processedTitle }}
                 />
               )}
+
+              {/* EXCERPT DƯỚI TITLE */}
               {lowerExcerpt && (
                 <div
-                  className="lower-excerpt-wrapper mt-3 text-center"
+                  className="lower-excerpt-wrapper mt-3 w-100"
+                  style={{ textAlign: 'center' }}
                   dangerouslySetInnerHTML={{ __html: lowerExcerpt }}
                 />
               )}
