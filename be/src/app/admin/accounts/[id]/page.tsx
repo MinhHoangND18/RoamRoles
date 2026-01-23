@@ -22,7 +22,7 @@ export default function EditAccountPage() {
         setAccount({
           id: 0, 
           account: "",
-          status: "active",
+          status: "pending",
         });
         setLoading(false);
         return;
@@ -51,13 +51,13 @@ export default function EditAccountPage() {
     
     try {
       if (isNewAccount) {
-        await createAccount(account);
+        const newAccount = await createAccount(account);
         toast.success("Account created!");
+        router.push(`/accounts/${newAccount.id}`);
       } else {
         await updateAccount(accountId, account);
         toast.success("Account updated!");
       }
-      router.push("/admin?menu=accounts");
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
@@ -80,12 +80,10 @@ export default function EditAccountPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8 lg:p-12">
-      {/* Decorative elements */}
       <div className="fixed top-0 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl -z-10"></div>
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl -z-10"></div>
       
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
+      <div className=" mx-auto">
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => router.back()}
@@ -100,9 +98,7 @@ export default function EditAccountPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Header Card */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 shadow-xl">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
@@ -119,10 +115,8 @@ export default function EditAccountPage() {
               </div>
             </div>
 
-            {/* Form Card */}
             <div className="bg-white/80 backdrop-blur-sm p-8 shadow-xl border border-white/20">
               <div className="space-y-6">
-                {/* Email Input */}
                 <div className="group">
                   <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                     <Mail className="w-4 h-4" />
@@ -155,11 +149,33 @@ export default function EditAccountPage() {
             <div className="sticky top-8 space-y-6">
               {/* Status Card */}
               <div className="bg-white/80 backdrop-blur-sm p-6 shadow-xl border border-white/20">
-                <h3 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wide">
+                <h3 className="text-center font-bold text-slate-700 mb-4 uppercase tracking-wide">
                   Action
                 </h3>
                 
 
+
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                    Status
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={account.status}
+                      onChange={(e) => setAccount({ ...account, status: e.target.value })}
+                      className="w-full bg-white border-2 border-slate-200 px-4 py-3 text-slate-700 font-medium shadow-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 appearance-none"
+                    >
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Save Button */}
                 <button

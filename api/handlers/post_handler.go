@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -45,6 +46,23 @@ type PostResponse struct {
 	Category       *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
 }
 
+// Pagination metadata
+type PaginationMeta struct {
+	CurrentPage int   `json:"current_page"`
+	TotalPages  int   `json:"total_pages"`
+	TotalPosts  int64 `json:"total_posts"`
+	PerPage     int   `json:"per_page"`
+	HasNext     bool  `json:"has_next"`
+	HasPrev     bool  `json:"has_prev"`
+}
+
+// Category posts response
+type CategoryPostsResponse struct {
+	Category   CategoryModel  `json:"category"`
+	Posts      []PostModel    `json:"posts"`
+	Pagination PaginationMeta `json:"pagination"`
+}
+
 func GetPostById(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
@@ -86,7 +104,7 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 func GetPosts(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		post := []PostModel{}
-		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Find(&post).Error
+		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Where("status = ?", "active").Find(&post).Error
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -209,7 +227,7 @@ func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
 		typeParam := r.URL.Query().Get("type")
 
 		post := PostModel{}
-		query := db.Model(&PostModel{}).Preload("Type").Where("slug = ?", slug)
+		query := db.Model(&PostModel{}).Preload("Type").Where("slug = ?", slug).Where("status = ?", "active")
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -233,25 +251,37 @@ func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(post)
 	}
-	
 }
 
 func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
-		categorySlug := params["slug"]
-
-		pageStr := r.URL.Query().Get("page")
-		page, err := strconv.Atoi(pageStr)
-		if err != nil || page < 1 {
-			page = 1
+		slug := params["slug"]
+		if slug == "" {
+			http.Error(w, "Category slug is required", http.StatusBadRequest)
+			return
 		}
 
-		limit := 10
-		offset := (page - 1) * limit
+		pageParam := r.URL.Query().Get("page")
+		page := 1
+		if pageParam != "" {
+			parsedPage, err := strconv.Atoi(pageParam)
+			if err == nil && parsedPage > 0 {
+				page = parsedPage
+			}
+		}
+
+		perPageParam := r.URL.Query().Get("per_page")
+		perPage := 10 
+		if perPageParam != "" {
+			parsedPerPage, err := strconv.Atoi(perPageParam)
+			if err == nil && parsedPerPage > 0 && parsedPerPage <= 100 {
+				perPage = parsedPerPage
+			}
+		}
 
 		var category CategoryModel
-		if err := db.Where("slug = ?", categorySlug).First(&category).Error; err != nil {
+		if err := db.Where("slug = ?", slug).First(&category).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				http.Error(w, "Category not found", http.StatusNotFound)
 				return
@@ -261,37 +291,44 @@ func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var totalPosts int64
-		db.Model(&PostModel{}).Where("category_id = ? AND status = ?", category.ID, "active").Count(&totalPosts)
+		if err := db.Model(&PostModel{}).
+			Where("category_id = ?", category.ID).
+			Where("status = ?", "active").
+			Count(&totalPosts).Error; err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		totalPages := int(math.Ceil(float64(totalPosts) / float64(perPage)))
+		if page > totalPages && totalPages > 0 {
+			page = totalPages
+		}
+
+		offset := (page - 1) * perPage
 
 		var posts []PostModel
-		err = db.Model(&PostModel{}).
+		if err := db.Model(&PostModel{}).
 			Preload("Type").
 			Preload("Category").
-			Where("category_id = ? AND status = ?", category.ID, "active").
-			Order("created_at DESC").
-			Limit(limit).
+			Where("category_id = ?", category.ID).
+			Where("status = ?", "active").
+			Order("id DESC").
+			Limit(perPage).
 			Offset(offset).
-			Find(&posts).Error
-
-		if err != nil {
+			Find(&posts).Error; err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		totalPages := int((totalPosts + int64(limit) - 1) / int64(limit))
-		hasNext := page < totalPages
-		hasPrev := page > 1
-
-		response := map[string]interface{}{
-			"category": category,
-			"posts":    posts,
-			"pagination": map[string]interface{}{
-				"current_page": page,
-				"total_pages":  totalPages,
-				"total_posts":  totalPosts,
-				"per_page":     limit,
-				"has_next":     hasNext,
-				"has_prev":     hasPrev,
+		response := CategoryPostsResponse{
+			Category: category,
+			Posts:    posts,
+			Pagination: PaginationMeta{
+				CurrentPage: page,
+				TotalPages:  totalPages,
+				TotalPosts:  totalPosts,
+				PerPage:     perPage,
+				HasNext:     page < totalPages,
+				HasPrev:     page > 1,
 			},
 		}
 

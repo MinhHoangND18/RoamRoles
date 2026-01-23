@@ -131,7 +131,6 @@ function EditPostContent() {
 
     setSaving(true);
 
-    // Create a mutable copy of the post to update the title
     const updatedPost = { ...post };
 
     if (!isNewPost && originalPost && originalPost.title) {
@@ -183,7 +182,7 @@ function EditPostContent() {
       }
 
       setSaving(false);
-      toast.success("Database updated successfully!");
+      toast.success("Post updated successfully!");
       setOriginalPost(post);
 
       if (isNewPost) {

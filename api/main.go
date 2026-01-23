@@ -63,4 +63,6 @@ func main() {
 	sv := fmt.Sprintf("%v:%v", "127.0.0.1", cf.Port)
 	log.Println(" Server running at http://", sv)
 	log.Fatal(http.ListenAndServe(sv, corsHandler(r)))
+	log.Printf("Listening on http://%s", sv)
+
 }

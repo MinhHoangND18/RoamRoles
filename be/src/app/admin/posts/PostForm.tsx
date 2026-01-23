@@ -209,7 +209,7 @@ function PostFormContent() {
               />
             </div>
             <div className="relative" ref={categoryRef}>
-                <button className="flex items-center justify-between w-full md:w-40 bg-white border border-slate-200  py-4 px-4 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all"
+                <button onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="flex items-center justify-between w-full md:w-40 bg-white border border-slate-200  py-4 px-4 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all"
               >
                 <span className="text-left">{selectedCategoryName}</span>
                 <ChevronDown
@@ -265,7 +265,7 @@ function PostFormContent() {
                     }}
                     className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
                   >
-                    All Statuses
+                    All Status
                   </li>
                   {statusOptions.map((status) => (
                     <li

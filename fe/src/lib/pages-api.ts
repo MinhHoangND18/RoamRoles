@@ -4,7 +4,7 @@ import { PageModel } from '@/types/api';
 export async function fetchAllPages(): Promise<PageModel[]> {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/pages`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 0 },
     });
 
     if (!response.ok) {
@@ -22,7 +22,7 @@ export async function fetchAllPages(): Promise<PageModel[]> {
 export async function fetchPageBySlug(slug: string): Promise<PageModel | null> {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/pages/${slug}`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 0 },
     });
 
     if (!response.ok) {

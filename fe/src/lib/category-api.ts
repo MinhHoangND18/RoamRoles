@@ -2,14 +2,10 @@ import { api } from './api-client';
 import { getCategoryPostsEndpoint, getCategoryBySlugEndpoint } from '@/constants/api-endpoints';
 import { CategoryPostsResponse, CategoryModel } from '@/types/api';
 
-/**
- * Fetch category with posts and pagination
- */
 export async function fetchCategoryWithPosts(
   slug: string,
   page: number = 1
 ): Promise<CategoryPostsResponse | null> {
-  // Validate slug
   if (!slug || slug === 'undefined') {
     console.error('Invalid slug provided:', slug);
     throw new Error('Invalid category slug');
@@ -18,7 +14,12 @@ export async function fetchCategoryWithPosts(
   try {
     const url = getCategoryPostsEndpoint(slug, page);
     const data: CategoryPostsResponse = await api.get(url);
-    return data || null;
+
+    if (!data || !data.category || !data.posts) {
+      return null;
+    }
+    
+    return data;
   } catch (error: unknown) {
     const status = (error as { status?: number })?.status;
 
@@ -30,9 +31,7 @@ export async function fetchCategoryWithPosts(
     throw error;
   }
 }
-/**
- * Fetch category info only (without posts)
- */
+
 export async function fetchCategoryBySlug(slug: string): Promise<CategoryModel | null> {
   try {
     const url = getCategoryBySlugEndpoint(slug);

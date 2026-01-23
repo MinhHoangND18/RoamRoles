@@ -14,6 +14,18 @@ interface CategoryContentProps {
 
 export default function CategoryContent({ data, slug, currentPage }: CategoryContentProps) {
     const router = useRouter();
+    
+    // Validation: Đảm bảo data có đủ thông tin
+    if (!data || !data.category || !data.posts || !data.pagination) {
+        return (
+            <main id="main" className="container py-2 px-lg-5" style={{ maxWidth: '910px' }}>
+                <div className="alert alert-warning">
+                    Unable to load category data. Please try again later.
+                </div>
+            </main>
+        );
+    }
+
     const { category, posts, pagination } = data;
 
     const handlePageChange = (newPage: number) => {
@@ -23,16 +35,6 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
 
     return (
         <>
-            <style jsx>{`
-                .custom-card-title {
-                    font-size: 24px !important;
-                    font-family: "Source Sans 3", sans-serif !important;
-                    color: #CFBAE2 !important;
-                    line-height: 1.4 !important;
-                    text-align: left !important;
-                }
-            `}</style>
-
             <main id="main" className="container py-2 px-lg-5" style={{ maxWidth: '910px' }}>
                 {/* Header */}
                 <header className="page-header mb-2">
@@ -67,7 +69,7 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                                                     alt={post.title}
                                                     className="w-100"
                                                     style={{
-                                                        height: "200px",
+                                                        width: "233px",
                                                         objectFit: "cover",
                                                         borderRadius: "0px"
                                                     }}
@@ -80,27 +82,17 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
 
                                     <div className="card-body d-flex flex-column p-3 pt-0">
                                         {/* Title */}
-                                        <h5
-                                            className="card-title mb-2 custom-card-title"
-                                            style={{
-                                                display: "-webkit-box",
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: "vertical",
-                                                overflow: "hidden"
-                                            }}
-                                        >
+                                        <p className="category-card-title">
                                             <a
                                                 href={`/${post.slug}`}
-                                                className="text-decoration-none"
-                                                style={{ color: "#cfbae2" }}
                                                 dangerouslySetInnerHTML={{ __html: processedTitle }}
                                                 suppressHydrationWarning
                                             />
-                                        </h5>
+                                        </p>
 
                                         {/* Excerpt */}
                                         <div
-                                            className="card-text text-muted mb-3 flex-grow-1"
+                                            className="card-text text-muted mb-3 flex-grow-1 category-card-description"
                                             dangerouslySetInnerHTML={{ __html: processedExcerpt }}
                                             suppressHydrationWarning
                                             style={{
@@ -109,7 +101,8 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                                                 display: "-webkit-box",
                                                 WebkitLineClamp: 3,
                                                 WebkitBoxOrient: "vertical",
-                                                overflow: "hidden"
+                                                overflow: "hidden",
+                                                textAlign: "left" 
                                             }}
                                         />
 

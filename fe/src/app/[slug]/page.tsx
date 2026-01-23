@@ -120,7 +120,9 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
 }
 
 function PostContent({ post }: { post: PostApiResponse }) {
-  // const processedDescrip = transformContent(post.descrip || "");
+  console.log('Debug Navigation:', post.post_navigation);
+
+
   const processedTitle = transformContent(post.title || "");
   const processedExcerpt = transformContent(post.excerpt || "");
   const processedContent = transformContent(post.content || "");
@@ -176,6 +178,7 @@ function PostContent({ post }: { post: PostApiResponse }) {
             />
           </article>
 
+
           {processedNav && (
             <>
               <hr className="mt-5" />
@@ -193,8 +196,8 @@ function PageContent({ page, brand }: { page: PageModel; brand: Brand }) {
 
   return (
     <main id="main" className="container">
-      <div 
-        id={`post-${page.id}`} 
+      <div
+        id={`post-${page.id}`}
         className={`content post-${page.id} page type-page status-publish hentry`}
       >
         <p style={{ margin: '30px' }} className="gb-headline gb-headline-ebd47fe1">
