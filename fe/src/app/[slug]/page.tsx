@@ -120,9 +120,6 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
 }
 
 function PostContent({ post }: { post: PostApiResponse }) {
-  console.log('Debug Navigation:', post.post_navigation);
-
-
   const processedTitle = transformContent(post.title || "");
   const processedExcerpt = transformContent(post.excerpt || "");
   const processedContent = transformContent(post.content || "");

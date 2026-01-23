@@ -18,7 +18,7 @@ type PostModel struct {
 	Excerpt        string         `gorm:"column:excerpt" json:"excerpt"`
 	TitleHeader    string         `gorm:"column:title_header" json:"title_header"`
 	Status         string         `gorm:"column:status" json:"status"`
-	PostNavigation string         `gorm:"-" json:"post_navigation"`
+	PostNavigation string         `gorm:"column:post_navigation" json:"post_navigation"`
 	ThumbnailURL   string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
 	TypeID         int64          `gorm:"column:type_id" json:"type_id"`
 	Type           TypeModel      `json:"type"`
@@ -46,7 +46,6 @@ type PostResponse struct {
 	Category       *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
 }
 
-// Pagination metadata
 type PaginationMeta struct {
 	CurrentPage int   `json:"current_page"`
 	TotalPages  int   `json:"total_pages"`
@@ -56,7 +55,6 @@ type PaginationMeta struct {
 	HasPrev     bool  `json:"has_prev"`
 }
 
-// Category posts response
 type CategoryPostsResponse struct {
 	Category   CategoryModel  `json:"category"`
 	Posts      []PostModel    `json:"posts"`
