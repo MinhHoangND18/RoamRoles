@@ -1,10 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CategoryPostsResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
-import "@/css/all.min.css";
 
 interface CategoryContentProps {
     data: CategoryPostsResponse;
@@ -15,15 +14,57 @@ interface CategoryContentProps {
 export default function CategoryContent({ data, slug, currentPage }: CategoryContentProps) {
     const router = useRouter();
     const { category, posts, pagination } = data;
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        setIsReady(true);
+    }, []);
 
     const handlePageChange = (newPage: number) => {
         router.push(`/category/${slug}?page=${newPage}`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    // Loading spinner overlay
+    if (!isReady) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '600px',
+                width: '100%'
+            }}>
+                <div style={{
+                    width: '50px',
+                    height: '50px',
+                    border: '5px solid #f3f3f3',
+                    borderTop: '5px solid #482d70',
+                    borderRadius: '50%',
+                    animation: 'spin 0.2s linear infinite'
+                }} />
+                <style jsx>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
     return (
         <>
-            <main id="main" className="container py-2 px-lg-5" style={{ maxWidth: '910px' }}>
+            <main
+                id="main"
+                className="container py-2 px-lg-5"
+                style={{
+                    maxWidth: '910px',
+                    minHeight: '600px', // ← Prevent layout shift
+                    opacity: isReady ? 1 : 0,
+                    transition: 'opacity 0.2s ease-in' // ← Smooth fade-in
+                }}
+            >
                 {/* Header */}
                 <header className="page-header mb-2">
                     <p className="entry-title gb-headline gb-headline-ebd47fe1">

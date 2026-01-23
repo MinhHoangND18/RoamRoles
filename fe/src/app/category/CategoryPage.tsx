@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { fetchCategoryWithPosts } from "@/lib/category-api";
 import { CategoryPostsResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
-import CategoryContent from '@/app/category/CategoryContent';
+import CategoryContent from './CategoryContent';
+import "@/css/all.min.css"; // ← Move import here
 
 interface ApiError {
   message: string;

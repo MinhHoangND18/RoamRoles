@@ -7,6 +7,7 @@ import { Source_Sans_3 } from "next/font/google";
 import Script from "next/script";
 import { headers } from "next/headers";
 import { Suspense } from "react";
+import "@/css/all.min.css";
 
 const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
 
@@ -39,6 +40,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
+      <head>
+        {/* <link
+          rel="preload"
+          href="/css/all.min.css"
+          as="style"
+        /> */}
+      </head>
       <body className={sourceSans3.className}>
         <ThemeRegistry>
           <Box
@@ -56,6 +64,7 @@ export default function RootLayout({
             <Footer />
           </Box>
         </ThemeRegistry>
+        
         <Script
           src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
           strategy="afterInteractive"
