@@ -3,6 +3,14 @@ import { API_CONFIG } from "@/lib/api/config";
 
 const API_BASE_URL = `${API_CONFIG.BASE_URL}/api`;
 
+export const getPosts = async (): Promise<Post[]> => {
+  const res = await fetch(`${API_BASE_URL}/posts`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+  return res.json();
+};
+
 export const getTypes = async (): Promise<Type[]> => {
   const res = await fetch(`${API_BASE_URL}/types`);
   if (!res.ok) {

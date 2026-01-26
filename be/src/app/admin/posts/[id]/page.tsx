@@ -17,6 +17,7 @@ import {
   getTypes,
   checkSlugUniqueness as apiCheckSlug,
   getPost,
+  getPosts,
   createPost,
   updatePost,
 } from "@/lib/api/posts";
@@ -42,24 +43,30 @@ function EditPostContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [isRecommendOpen, setIsRecommendOpen] = useState(false);
+  const recommendDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
+        recommendDropdownRef.current &&
+        !recommendDropdownRef.current.contains(event.target as Node)
       ) {
-        setIsCategoryOpen(false);
+        setIsRecommendOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   const [displayTitle, setDisplayTitle] = useState("");
-
+  const getCleanTitle = (htmlTitle: string | undefined): string => {
+    if (!htmlTitle) return "";
+    return htmlTitle
+      .replace(/<[^>]*>/g, "")
+      .replace(/[“”""]/g, "")
+      .trim();
+  };
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -70,13 +77,15 @@ function EditPostContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesData, categoriesData] = await Promise.all([
+        const [typesData, categoriesData, allPostsData] = await Promise.all([
           getTypes(),
           getCategories(),
+          getPosts(),
         ]);
 
         setTypes(typesData);
         setCategories(categoriesData);
+        setAllPosts(allPostsData);
 
         if (isNewPost) {
           setPost({
@@ -88,6 +97,9 @@ function EditPostContent() {
             slug: "",
             type_id: 1,
             category_id: null,
+            recommend_post_id: null,
+            title_header: "",
+            show_survey: false,
           } as Post);
           setDisplayTitle("");
           setLoading(false);
@@ -158,7 +170,7 @@ function EditPostContent() {
     if (isNewPost) {
       finalPayload = {
         title: updatedPost.title,
-        title_header: displayTitle,
+        title_header: updatedPost.title_header,
         excerpt: updatedPost.excerpt,
         descrip: updatedPost.descrip,
         content: updatedPost.content,
@@ -166,15 +178,19 @@ function EditPostContent() {
         slug: updatedPost.slug,
         type_id: updatedPost.type_id,
         category_id: updatedPost.category_id,
+        recommend_post_id: updatedPost.recommend_post_id,
+        show_survey: updatedPost.show_survey,
       };
     } else {
       finalPayload = {
         title: updatedPost.title,
-        title_header: displayTitle,
+        title_header: updatedPost.title_header,
         excerpt: updatedPost.excerpt,
         content: updatedPost.content,
         status: updatedPost.status,
         category_id: updatedPost.category_id,
+        recommend_post_id: updatedPost.recommend_post_id,
+        show_survey: updatedPost.show_survey,
       };
     }
 
@@ -408,7 +424,7 @@ function EditPostContent() {
                                 }
                               }
                               attempts++;
-                            }, 50); 
+                            }, 50);
                           }
                         });
 
@@ -431,6 +447,77 @@ function EditPostContent() {
                       )
                     }
                   />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="title_header"
+                  className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1"
+                >
+                  Title Header
+                </label>
+                <input
+                  id="title_header"
+                  type="text"
+                  value={post.title_header || ""}
+                  onChange={(e) =>
+                    setPost((prev) =>
+                      prev ? { ...prev, title_header: e.target.value } : null,
+                    )
+                  }
+                  className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                  placeholder="Enter Title Header..."
+                />
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                  Thumbnail URL
+                </label>
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Ô nhập link */}
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={post.thumbnail_url || ""}
+                      onChange={(e) =>
+                        setPost((prev) =>
+                          prev
+                            ? { ...prev, thumbnail_url: e.target.value }
+                            : null,
+                        )
+                      }
+                      className="w-full border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                      placeholder="e.g. 07/image-name.jpg"
+                    />
+                    <p className="mt-1 text-[10px] text-slate-400 italic">
+                      Enter the corresponding path (number/abc.jpg) or absolute
+                      link.{" "}
+                    </p>
+                  </div>
+
+                  <div className="w-full md:w-32 h-20 bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                    {post.thumbnail_url ? (
+                      <img
+                        src={
+                          post.thumbnail_url.startsWith("http")
+                            ? post.thumbnail_url
+                            : `/images/${post.thumbnail_url}`
+                        }
+                        alt="Thumbnail Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://placehold.co/100x100?text=Error";
+                        }}
+                      />
+                    ) : (
+                      <span className="text-[10px] text-slate-300">
+                        No Image
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -479,6 +566,37 @@ function EditPostContent() {
                   </button>
                 </div>
 
+                <div className="flex items-center justify-between px-1">
+                  <label
+                    htmlFor="survey-toggle"
+                    className="text-sm font-bold text-slate-600"
+                  >
+                    Show Survey
+                  </label>
+                  <button
+                    id="survey-toggle"
+                    onClick={() =>
+                      setPost((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              show_survey: !prev.show_survey,
+                            }
+                          : null,
+                      )
+                    }
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
+                      post.show_survey ? "bg-blue-500" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
+                        post.show_survey ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 <div className="relative" ref={categoryDropdownRef}>
                   <button
                     onClick={() => setIsCategoryOpen(!isCategoryOpen)}
@@ -520,6 +638,70 @@ function EditPostContent() {
                           {category.title}
                         </li>
                       ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="relative" ref={recommendDropdownRef}>
+                  <button
+                    onClick={() => setIsRecommendOpen(!isRecommendOpen)}
+                    className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
+                  >
+                    <span className="text-left truncate pr-2">
+                      {post.recommend_post_id
+                        ? getCleanTitle(
+                            allPosts.find(
+                              (p) => p.id === post.recommend_post_id,
+                            )?.title,
+                          ) || "Select Post"
+                        : "No Recommendation"}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform text-slate-400 ${
+                        isRecommendOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {isRecommendOpen && (
+                    <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm max-h-60 overflow-y-auto">
+                      <li
+                        onClick={() => {
+                          setPost((prev) =>
+                            prev ? { ...prev, recommend_post_id: null } : null,
+                          );
+                          setIsRecommendOpen(false);
+                        }}
+                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
+                      >
+                        No Recommendation
+                      </li>
+                      {allPosts
+                        .filter((p) => p.id !== post.id)
+                        .map((p) => (
+                          <li
+                            key={p.id}
+                            onClick={() => {
+                              setPost((prev) =>
+                                prev
+                                  ? { ...prev, recommend_post_id: p.id }
+                                  : null,
+                              );
+                              setIsRecommendOpen(false);
+                            }}
+                            className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${
+                              post.recommend_post_id === p.id
+                                ? "bg-blue-50 text-blue-600 font-bold"
+                                : ""
+                            }`}
+                          >
+                            <div className="text-[13px] line-clamp-1">
+                              {getCleanTitle(p.title) || p.slug}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-normal">
+                              ID: {p.id} - Slug: {p.slug}
+                            </div>
+                          </li>
+                        ))}
                     </ul>
                   )}
                 </div>

@@ -30,3 +30,19 @@ export async function fetchAllPosts(): Promise<PostApiResponse[] | null> {
     return null;
   }
 }
+
+
+export async function fetchRecommendedPost(postId: number): Promise<PostApiResponse | null> {
+  try {
+    const endpoint = `/api/posts/recommend_post/${postId}`;
+    const response: { recommend_post_id: number | null; recommend_post: PostApiResponse | null } = await api.get(endpoint);
+    return response.recommend_post || null;
+  } catch (error: unknown) {
+    const status = (error as { status?: number })?.status;
+    if (status === 404) {
+      return null;
+    }
+    console.error('Error fetching recommended post:', error);
+    return null;
+  }
+}

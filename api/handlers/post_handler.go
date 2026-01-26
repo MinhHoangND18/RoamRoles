@@ -11,19 +11,22 @@ import (
 )
 
 type PostModel struct {
-	ID             int64          `json:"id"`
-	Slug           string         `gorm:"column:slug" json:"slug"`
-	Content        string         `gorm:"column:content" json:"content"`
-	Title          string         `gorm:"column:title" json:"title"`
-	Excerpt        string         `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader    string         `gorm:"column:title_header" json:"title_header"`
-	Status         string         `gorm:"column:status" json:"status"`
-	PostNavigation string         `gorm:"column:post_navigation" json:"post_navigation"`
-	ThumbnailURL   string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
-	TypeID         int64          `gorm:"column:type_id" json:"type_id"`
-	Type           TypeModel      `json:"type"`
-	CategoryID     *int64         `gorm:"column:category_id" json:"category_id"`
-	Category       *CategoryModel `json:"category"`
+	ID              int64          `json:"id"`
+	Slug            string         `gorm:"column:slug" json:"slug"`
+	Content         string         `gorm:"column:content" json:"content"`
+	Title           string         `gorm:"column:title" json:"title"`
+	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader     string         `gorm:"column:title_header" json:"title_header"`
+	Status          string         `gorm:"column:status" json:"status"`
+	PostNavigation  string         `gorm:"column:post_navigation" json:"post_navigation"`
+	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
+	TypeID          int64          `gorm:"column:type_id" json:"type_id"`
+	Type            TypeModel      `json:"type"`
+	CategoryID      *int64         `gorm:"column:category_id" json:"category_id"`
+	Category        *CategoryModel `json:"category"`
+	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id"`
+	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post"`
+	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey"`
 }
 
 func (p PostModel) TableName() string {
@@ -31,19 +34,22 @@ func (p PostModel) TableName() string {
 }
 
 type PostResponse struct {
-	ID             int64          `json:"id"`
-	Slug           string         `json:"slug"`
-	Content        string         `json:"content"`
-	Title          string         `gorm:"column:title" json:"title"`
-	Excerpt        string         `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader    string         `gorm:"column:title_header" json:"title_header"`
-	Status         string         `gorm:"column:status" json:"status"`
-	PostNavigation string         `json:"post_navigation"`
-	ThumbnailURL   string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
-	TypeID         int64          `gorm:"column:type_id" json:"type_id"`
-	Type           TypeModel      `gorm:"foreignKey:TypeID" json:"type"`
-	CategoryID     *int64         `gorm:"column:category_id" json:"category_id"`
-	Category       *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
+	ID              int64          `json:"id"`
+	Slug            string         `json:"slug"`
+	Content         string         `json:"content"`
+	Title           string         `gorm:"column:title" json:"title"`
+	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
+	TitleHeader     string         `gorm:"column:title_header" json:"title_header"`
+	Status          string         `gorm:"column:status" json:"status"`
+	PostNavigation  string         `json:"post_navigation"`
+	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
+	TypeID          int64          `gorm:"column:type_id" json:"type_id"`
+	Type            TypeModel      `gorm:"foreignKey:TypeID" json:"type"`
+	CategoryID      *int64         `gorm:"column:category_id" json:"category_id"`
+	Category        *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
+	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id"`
+	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post"`
+	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey"`
 }
 
 type PaginationMeta struct {
@@ -73,7 +79,7 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 		typeParam := r.URL.Query().Get("type")
 
 		post := PostModel{}
-		query := db.Model(&PostModel{}).Preload("Type").Where("id = ?", id)
+		query := db.Model(&PostModel{}).Preload("Type").Preload("RecommendPost").Where("id = ?", id)
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -102,7 +108,7 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 func GetPosts(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		post := []PostModel{}
-		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Find(&post).Error
+		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Preload("RecommendPost").Find(&post).Error
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -225,7 +231,7 @@ func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
 		typeParam := r.URL.Query().Get("type")
 
 		post := PostModel{}
-		query := db.Model(&PostModel{}).Preload("Type").Where("slug = ?", slug).Where("status = ?", "active")
+		query := db.Model(&PostModel{}).Preload("Type").Preload("RecommendPost").Where("slug = ?", slug).Where("status = ?", "active")
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -270,7 +276,7 @@ func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 		}
 
 		perPageParam := r.URL.Query().Get("per_page")
-		perPage := 10 
+		perPage := 10
 		if perPageParam != "" {
 			parsedPerPage, err := strconv.Atoi(perPageParam)
 			if err == nil && parsedPerPage > 0 && parsedPerPage <= 100 {
@@ -341,5 +347,41 @@ func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func GetRecommendPost(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		id, err := strconv.ParseInt(params["id"], 10, 64)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		var result struct {
+			RecommendPostID *int64     `json:"recommend_post_id"`
+			RecommendPost   *PostModel `json:"recommend_post"`
+		}
+
+		err = db.Model(&PostModel{}).
+			Select("recommend_post_id").
+			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
+			}).
+			Where("id = ?", id).
+			First(&result).Error
+
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				http.Error(w, "Post not found", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
 	}
 }
