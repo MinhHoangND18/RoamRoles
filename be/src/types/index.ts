@@ -27,6 +27,10 @@ export interface Post {
   type?: Type;
   category_id?: number | null;
   category?: Category | null;
+  recommend_post_id?: number | null;
+  thumbnail_url?: string;
+  show_survey: boolean;
+
 }
 
 export interface Account {

@@ -10,6 +10,9 @@ import { transformContent } from "@/lib/content-utils";
 import "@/css/all.min.css";
 import AdScript from '../ADS/AdScript';
 import RelatedPosts from '@/components/RelatedPosts';
+// import SurveyPopup from '@/components/SurveyPopup'
+import RecommendedPost from '@/components/RecommendPost';
+
 
 interface ApiError {
   message: string;
@@ -136,9 +139,12 @@ function PostContent({ post }: { post: PostApiResponse }) {
 
   const fallbackExcerpt = (!upperExcerpt && !lowerExcerpt) ? rawExcerpt : "";
 
+
   return (
     <main id="main" className="container">
       <AdScript />
+      {/* <SurveyPopup /> */}
+
       <div className="row">
         <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
           <article className="post-wrapper">
@@ -199,6 +205,7 @@ function PostContent({ post }: { post: PostApiResponse }) {
               dangerouslySetInnerHTML={{ __html: processedContent }}
             />
           </article>
+          <RecommendedPost postId={post.id} />
 
           {post.category_id && (
             <>

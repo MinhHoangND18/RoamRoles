@@ -85,7 +85,7 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
 
                 {/* Posts Grid */}
                 <div className="row">
-                    {posts.filter((post: PostApiResponse) => post.status === 'active').map((post) => {
+                    {posts.filter((post: PostApiResponse)  => post.status === 'active').map((post) => {
                         const processedTitle = transformContent(post.title || "");
                         const processedExcerpt = transformContent(post.excerpt || "");
 

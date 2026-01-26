@@ -24,11 +24,10 @@ export default function Sidebar() {
 
   // SỬA LỖI TẠI ĐÂY: 
   useEffect(() => {
-    // Chỉ set lại false nếu nó đang là true để tránh render thừa
     if (isMobileOpen) {
       const timer = setTimeout(() => {
         setIsMobileOpen(false);
-      }, 0); // Đưa vào hàng đợi để tránh gọi setState đồng bộ
+      }, 0); 
       
       return () => clearTimeout(timer);
     }

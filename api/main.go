@@ -23,6 +23,11 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 	r := mux.NewRouter()
+	DB.AutoMigrate(
+		&handlers.SurveyQuestion{},
+		&handlers.SurveyOption{},
+		&handlers.SurveyResponse{},
+	)
 
 	r.HandleFunc("/api/posts", handlers.GetPosts(DB)).Methods("GET")
 	r.HandleFunc("/api/posts", handlers.CreatePost(DB)).Methods("POST")
@@ -30,6 +35,7 @@ func main() {
 	r.HandleFunc("/api/posts/{id:[0-9]+}", handlers.GetPostById(DB)).Methods("GET")
 	r.HandleFunc("/api/posts/{id:[0-9]+}", handlers.UpdatePostById(DB)).Methods("PUT")
 	r.HandleFunc("/api/posts/{slug}", handlers.GetPostBySlug(DB)).Methods("GET")
+	r.HandleFunc("/api/posts/recommend_post/{id}", handlers.GetRecommendPost(DB)).Methods("GET")
 
 	r.HandleFunc("/api/types", handlers.GetTypes(DB)).Methods("GET")
 	r.HandleFunc("/api/types/{slug}", handlers.GetTypeBySlug(DB)).Methods("GET")
@@ -54,7 +60,17 @@ func main() {
 	r.HandleFunc("/api/categories/handle", handlers.HandleCategory(DB)).Methods("POST")
 	r.HandleFunc("/api/categories/handle/{id:[0-9]+}", handlers.HandleCategory(DB)).Methods("POST")
 	r.HandleFunc("/api/categories/{slug}/posts", handlers.GetPostsByCategorySlug(DB)).Methods("GET")
-	
+
+	// Public routes (for client)
+	r.HandleFunc("/api/survey/questions", handlers.GetSurveyQuestions(DB)).Methods("GET")
+	r.HandleFunc("/api/survey/responses", handlers.SubmitSurveyResponse(DB)).Methods("POST")
+
+	// Admin routes
+	r.HandleFunc("/api/admin/survey/questions", handlers.GetAllSurveyQuestions(DB)).Methods("GET")
+	r.HandleFunc("/api/admin/survey/questions", handlers.HandleSurveyQuestion(DB)).Methods("POST")
+	r.HandleFunc("/api/admin/survey/questions/{id:[0-9]+}", handlers.HandleSurveyQuestion(DB)).Methods("POST")
+	r.HandleFunc("/api/admin/survey/questions/{id:[0-9]+}", handlers.DeleteSurveyQuestion(DB)).Methods("DELETE")
+	r.HandleFunc("/api/admin/survey/statistics", handlers.GetSurveyStatistics(DB)).Methods("GET")
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),
