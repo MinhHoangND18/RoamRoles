@@ -13,12 +13,12 @@ export async function fetchCategoryWithPosts(
 
   try {
     const url = getCategoryPostsEndpoint(slug, page);
-    const data: CategoryPostsResponse = await api.get(url);
+    const data: CategoryPostsResponse = await api.get(url, { cache: 'no-store' });
 
     if (!data || !data.category || !data.posts) {
       return null;
     }
-    
+
     return data;
   } catch (error: unknown) {
     const status = (error as { status?: number })?.status;

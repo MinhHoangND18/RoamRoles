@@ -136,10 +136,7 @@ function PostFormContent() {
       ) {
         setIsStatusOpen(false);
       }
-      if (
-        rowsRef.current &&
-        !rowsRef.current.contains(event.target as Node)
-      ) {
+      if (rowsRef.current && !rowsRef.current.contains(event.target as Node)) {
         setIsRowsOpen(false);
       }
     };
@@ -150,21 +147,71 @@ function PostFormContent() {
     };
   }, [isCategoryOpen, isStatusOpen, isRowsOpen]);
 
-  const filteredPosts = posts
+  const getCleanTitle = (htmlTitle: string | undefined): string => {
+    if (!htmlTitle) return "";
+    const match = htmlTitle.match(
+      /<span class="gb-headline-text">(.*?)<\/span>/,
+    );
+    if (match && match[1]) {
+      return match[1].replace(/[“”]/g, "").trim();
+    }
+    return htmlTitle.replace(/<[^>]*>/g, "").trim();
+  };
+
+  const getUniquePosts = (postsToFilter: Post[]): Post[] => {
+    const postsByTitle = new Map<string, Post[]>();
+
+    postsToFilter.forEach((post) => {
+      const title = getCleanTitle(post.title);
+      if (!postsByTitle.has(title)) {
+        postsByTitle.set(title, []);
+      }
+      postsByTitle.get(title)!.push(post);
+    });
+
+    const result: Post[] = [];
+    for (const postGroup of postsByTitle.values()) {
+      if (postGroup.length <= 1) {
+        result.push(...postGroup);
+        continue;
+      }
+
+const slugs = new Set(postGroup.map(p => p.slug));
+if (slugs.size > 1) {
+  const postToKeep = postGroup.reduce((best, current) => {
+    if (current.status === 'active' && best.status !== 'active') return current;
+    if (current.status === best.status && current.id > best.id) return current;
+    return best;
+  }, postGroup[0]);
+  result.push(postToKeep);
+} else {
+  result.push(...postGroup);
+}
+    }
+    return result;
+  };
+
+  const filteredPosts = getUniquePosts(posts)
     .filter((post) => post.type?.slug === "post")
     .filter((post: Post) => {
-      const matchesSearch = (post.title_header || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const cleanTitle = getCleanTitle(post.title).toLowerCase();
+      const searchLower = searchQuery.toLowerCase();
+
+      const matchesSearch =
+        cleanTitle.includes(searchLower) ||
+        (post.slug && post.slug.toLowerCase().includes(searchLower));
+
       const matchesCategory = selectedCategory
         ? selectedCategory === "0"
           ? !post.category?.id
           : post.category?.id === parseInt(selectedCategory, 10)
         : true;
+
       const matchesStatus = selectedStatus
         ? (selectedStatus === "1" && post.status === "active") ||
           (selectedStatus === "2" && post.status === "inactive")
         : true;
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
 
@@ -213,7 +260,9 @@ function PostFormContent() {
               />
             </div>
             <div className="relative" ref={categoryRef}>
-                <button onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="flex items-center justify-between w-full md:w-40 bg-white border border-slate-200  py-4 px-4 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all"
+              <button
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="flex items-center justify-between w-full md:w-40 bg-white border border-slate-200  py-4 px-4 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all"
               >
                 <span className="text-left">{selectedCategoryName}</span>
                 <ChevronDown
@@ -344,26 +393,7 @@ function PostFormContent() {
                             </td>
                             <td className="px-10 py-6">
                               <span className="text-[15px] font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
-                                {(() => {
-                                  const htmlTitle = post.title || "";
-                                  const match = htmlTitle.match(
-                                    /<span class="gb-headline-text">(.*?)<\/span>/,
-                                  );
-
-                                  let displayTitle = "";
-
-                                  if (match && match[1]) {
-                                    displayTitle = match[1]
-                                      .replace(/[“”]/g, "")
-                                      .trim();
-                                  } else {
-                                    displayTitle = htmlTitle
-                                      .replace(/<[^>]*>/g, "")
-                                      .trim();
-                                  }
-
-                                  return displayTitle || "(No title)";
-                                })()}
+                                {getCleanTitle(post.title) || "(No title)"}
                               </span>
                             </td>
                             <td className="px-9 py-6 text-slate-500 font-medium text-center">

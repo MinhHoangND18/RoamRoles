@@ -31996,19 +31996,12 @@ body.admin-bar #trp-floater-ls.trp-top-left {
 .post-wrapper .entry-header .entry-excerpt p {
   text-align: center !important;
 }
-.home-post-title {
-  color: var(--base-3);
-  font-size: 24px;
-  height: 100%;
-  margin-bottom: 5px;
-}
-
 /* Override cho RelatedPosts */
 .home-post-title.related-post .gb-headline-text {
   font-size: 24px;
   font-weight: 500;
   text-transform: none;
-  line-height: 1.1em;
+  line-height: 1.05em;
   max-width: 100%;
   display: -webkit-box;
   -webkit-line-clamp: 3;
