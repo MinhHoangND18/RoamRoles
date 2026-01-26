@@ -10,6 +10,5 @@ export const checkSlugUniquenessEndpoint = (slug: string) => `/api/posts/check-s
 export const getCategoriesEndpoint = () => `/api/categories`;
 export const getCategoryBySlugEndpoint = (slug: string) => `/api/categories/${slug}`;
 
-export const getCategoryPostsEndpoint = (slug: string, page: number = 1) => 
-  `/api/categories/${slug}/posts?page=${page}`;
+export const getCategoryPostsEndpoint = (slug: string, page: number = 1) => `/api/categories/${slug}/posts?page=${page}&status=active`;
 

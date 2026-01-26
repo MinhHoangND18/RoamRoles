@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Save, ArrowLeft, Loader2, User, Mail, Shield, CheckCircle2, XCircle } from "lucide-react";
+import { Save, ArrowLeft, Loader2, User, Mail, Shield, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { Account } from "@/types";
 import { getAccountById, createAccount, updateAccount } from "@/lib/api/accounts";
@@ -15,6 +15,25 @@ export default function EditAccountPage() {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(!isNewAccount);
   const [saving, setSaving] = useState(false);
+
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsStatusOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -127,8 +146,9 @@ export default function EditAccountPage() {
                       type="email"
                       value={account.account}
                       onChange={(e) => setAccount({ ...account, account: e.target.value })}
-                      className="w-full bg-white border-2 border-slate-200 px-4 py-4 text-slate-700 font-medium shadow-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 placeholder:text-slate-400"
+                      className="w-full bg-white border-2 border-slate-200 px-4 py-4 text-slate-700 font-medium shadow-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 placeholder:text-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                       placeholder="example@gmail.com"
+                      disabled={!isNewAccount}
                     />
                     {account.account && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -155,25 +175,40 @@ export default function EditAccountPage() {
                 
 
 
-                <div className="mb-6">
+                <div className="mb-6" ref={statusDropdownRef}>
                   <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
                     Status
                   </label>
                   <div className="relative">
-                    <select
-                      value={account.status}
-                      onChange={(e) => setAccount({ ...account, status: e.target.value })}
-                      className="w-full bg-white border-2 border-slate-200 px-4 py-3 text-slate-700 font-medium shadow-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 appearance-none"
+                    <button
+                      onClick={() => setIsStatusOpen(!isStatusOpen)}
+                      className="flex items-center justify-between w-full bg-white border-2 border-slate-200 px-4 py-3 text-slate-700 font-medium shadow-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300"
                     >
-                      <option value="active">Active</option>
-                      <option value="pending">Pending</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                      </svg>
-                    </div>
+                      <span className="text-left">
+                        {account.status.charAt(0).toUpperCase() + account.status.slice(1)}
+                      </span>
+                      <ChevronDown
+                        className={`w-5 h-5 transition-transform text-slate-400 ${
+                          isStatusOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                    {isStatusOpen && (
+                      <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm">
+                        {(["active", "pending", "inactive"] as const).map((status) => (
+                          <li
+                            key={status}
+                            onClick={() => {
+                              setAccount((prev) => (prev ? { ...prev, status: status } : null));
+                              setIsStatusOpen(false);
+                            }}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
+                          >
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
 

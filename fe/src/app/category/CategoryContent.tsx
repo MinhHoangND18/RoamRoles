@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { CategoryPostsResponse } from '@/types/api';
+import { CategoryPostsResponse, PostApiResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
 // import "@/css/all.min.css";
 
@@ -85,7 +85,7 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
 
                 {/* Posts Grid */}
                 <div className="row">
-                    {posts.map((post) => {
+                    {posts.filter((post: PostApiResponse) => post.status === 'active').map((post) => {
                         const processedTitle = transformContent(post.title || "");
                         const processedExcerpt = transformContent(post.excerpt || "");
 

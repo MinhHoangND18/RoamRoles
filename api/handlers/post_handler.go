@@ -102,7 +102,7 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 func GetPosts(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		post := []PostModel{}
-		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Where("status = ?", "active").Find(&post).Error
+		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Find(&post).Error
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -291,7 +291,7 @@ func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 		var totalPosts int64
 		if err := db.Model(&PostModel{}).
 			Where("category_id = ?", category.ID).
-			Where("status = ?", "active").
+			// Where("status = ?", "active").
 			Count(&totalPosts).Error; err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -308,7 +308,7 @@ func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 			Preload("Type").
 			Preload("Category").
 			Where("category_id = ?", category.ID).
-			Where("status = ?", "active").
+			// Where("status = ?", "active").
 			Order("id DESC").
 			Limit(perPage).
 			Offset(offset).
