@@ -10,9 +10,10 @@ import {
     Save,
     X
 } from 'lucide-react'
-import toast from 'react-hot-toast'
 
-const API_BASE_URL = 'http://127.0.0.1:8088/api/admin/survey/questions'
+import toast from 'react-hot-toast'
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = `${BASE_URL}/api/admin/survey/questions`;
 
 type Option = {
     id?: number
@@ -52,7 +53,6 @@ export default function SurveyAdminPage() {
             const res = await fetch(API_BASE_URL)
             if (!res.ok) throw new Error('Failed to fetch')
             const data = await res.json()
-            // Sắp xếp theo thứ tự
             data.sort((a: Question, b: Question) => a.order - b.order)
             setQuestions(data)
         } catch (error) {

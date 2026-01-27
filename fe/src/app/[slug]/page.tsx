@@ -86,7 +86,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
   if (post) {
     return {
-      title: post.title_header || post.slug.split('-').join(' ').toUpperCase(),
+      title: post.title || post.slug.split('-').join(' ').toUpperCase(),
     };
   }
 
@@ -94,8 +94,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
   if (page) {
     return {
-      title: `${page.title_header || page.title} - ${brand.name}`,
-      description: page.title || `${page.title_header} on ${brand.name}`,
+      title: `${page.title} - ${brand.name}`,
+      description: page.title || `${page.title} on ${brand.name}`,
     };
   }
 

@@ -6,7 +6,9 @@ export default function SurveyForm({ onSuccess }: { onSuccess: () => void }) {
   const [options, setOptions] = useState<string[]>([''])
 
   const submit = async () => {
-    await fetch('http://127.0.0.1:PORT/api/admin/survey/questions', {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    await fetch(`${baseUrl}/api/admin/survey/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

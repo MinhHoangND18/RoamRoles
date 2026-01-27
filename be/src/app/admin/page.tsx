@@ -65,7 +65,7 @@ function AdminPageContent() {
   };
 
   const filteredPosts = posts.filter((post: Post) => {
-    const matchesSearch = (post.title_header || "")
+    const matchesSearch = (post.title || "")
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     if (activeCategory)
@@ -221,7 +221,7 @@ function AdminPageContent() {
                                 <span className="text-[15px] font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
                                   {(() => {
                                     const title =
-                                      post.title_header || "(No title)";
+                                      post.title || "(No title)";
                                     return title.includes(":")
                                       ? title
                                           .split(":")

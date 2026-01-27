@@ -17,7 +17,6 @@ export interface PostApiResponse {
   slug: string;
   content: string;
   title: string;
-  title_header: string;
   excerpt: string;
   post_navigation: string;
   thumbnail_url: string;
@@ -27,6 +26,7 @@ export interface PostApiResponse {
   category_id: number | null;
   category: CategoryModel | null;
   created_at: string;
+  show_survey: boolean;
 }
 
 export interface PageModel {

@@ -1,4 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+interface Question {
+  id: string;
+  question: string;
+  options: string[];
+}
 
 export default function SurveyPopup() {
   const [showPopup, setShowPopup] = useState(false);
@@ -6,6 +12,45 @@ export default function SurveyPopup() {
   const [answers, setAnswers] = useState({});
   const [isSearching, setIsSearching] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/survey/questions`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setQuestions(data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch survey questions", error);
+        setQuestions([
+          {
+            id: 'unemployed',
+            question: 'Are you unemployed?',
+            options: ['Yes', 'No']
+          },
+          {
+            id: 'household',
+            question: 'How many people live with you?',
+            options: ['I live alone', 'One person', 'Two people or more']
+          },
+          {
+            id: 'salary',
+            question: 'How much would you like to earn per month?',
+            options: ['R5,000', 'R6,000', 'R7,000']
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   const handleArticleClick = () => {
     setShowPopup(true);
@@ -15,22 +60,18 @@ export default function SurveyPopup() {
     setShowResult(false);
   };
 
-  const handleAnswer = (value) => {
+  const handleAnswer = (value: string) => {
     const newAnswers = {
       ...answers,
       [questions[currentQuestion].id]: value
     };
     setAnswers(newAnswers);
 
-    // Chuyển sang câu hỏi tiếp theo sau 300ms
     setTimeout(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
       } else {
-        // Hiển thị màn hình searching
         setIsSearching(true);
-        
-        // Sau 2 giây chuyển sang màn hình kết quả
         setTimeout(() => {
           setIsSearching(false);
           setShowResult(true);
@@ -44,12 +85,26 @@ export default function SurveyPopup() {
     setShowPopup(false);
   };
 
-  const progressPercentage = ((currentQuestion + 1) / questions.length) * 100;
+  const progressPercentage = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-8">
       {/* Bài viết mẫu */}
       <div className="max-w-4xl mx-auto">
+        <div 
+          onClick={handleArticleClick}
+          className="bg-white rounded-2xl shadow-lg p-8 cursor-pointer hover:shadow-xl transition-shadow"
+        >
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            Click to Start Survey
+          </h1>
+          <p className="text-gray-600 mb-4">
+            We would like to know more about you. Click here to answer a few quick questions.
+          </p>
+          <div className="text-teal-700 font-semibold text-lg">
+            👆 Click here to begin
+          </div>
+        </div>
 
         {/* Hiển thị kết quả */}
         {Object.keys(answers).length > 0 && !showPopup && (
@@ -105,6 +160,7 @@ export default function SurveyPopup() {
                 </div>
               ) : (
                 /* Câu hỏi */
+                questions.length > 0 ? (
                 <>
                   <h2 className="text-2xl font-semibold text-gray-800 mb-8 text-center">
                     {questions[currentQuestion].question}
@@ -122,6 +178,11 @@ export default function SurveyPopup() {
                     ))}
                   </div>
                 </>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    {loading ? 'Loading questions...' : 'No questions available.'}
+                  </div>
+                )
               )}
             </div>
           </div>

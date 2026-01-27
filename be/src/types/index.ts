@@ -16,7 +16,6 @@ export interface Category {
 export interface Post {
   id: number;
   title: string;
-  title_header?: string;
   excerpt: string;
   descrip: string;
   content: string;

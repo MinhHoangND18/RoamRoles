@@ -16,7 +16,6 @@ type PostModel struct {
 	Content         string         `gorm:"column:content" json:"content"`
 	Title           string         `gorm:"column:title" json:"title"`
 	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader     string         `gorm:"column:title_header" json:"title_header"`
 	Status          string         `gorm:"column:status" json:"status"`
 	PostNavigation  string         `gorm:"column:post_navigation" json:"post_navigation"`
 	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
@@ -39,7 +38,6 @@ type PostResponse struct {
 	Content         string         `json:"content"`
 	Title           string         `gorm:"column:title" json:"title"`
 	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
-	TitleHeader     string         `gorm:"column:title_header" json:"title_header"`
 	Status          string         `gorm:"column:status" json:"status"`
 	PostNavigation  string         `json:"post_navigation"`
 	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`

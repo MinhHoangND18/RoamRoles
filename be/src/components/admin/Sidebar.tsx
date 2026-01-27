@@ -11,7 +11,8 @@ import {
   Users,
   FolderOpen,
   Menu, 
-  X,    
+  X,
+  ClipboardList,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -101,6 +102,7 @@ export default function Sidebar() {
                   { name: "Posts", path: "/posts", icon: FileText },
                   { name: "Pages", path: "/pages", icon: Book },
                   { name: "Categories", path: "/categories", icon: FolderOpen }, 
+                  { name: "Survey", path: "/survey", icon: ClipboardList },
                 ].map((item) => (
                   <li key={item.path}>
                     <Link
