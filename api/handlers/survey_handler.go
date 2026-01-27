@@ -1,4 +1,3 @@
-// handlers/survey_handler.go
 package handlers
 
 import (
@@ -42,8 +41,8 @@ type SurveyResponse struct {
 	QuestionID int64     `gorm:"column:question_id;not null" json:"question_id"`
 	OptionID   int64     `gorm:"column:option_id;not null" json:"option_id"`
 	UserIP     string    `gorm:"column:user_ip" json:"user_ip"`
-	SessionID  string    `gorm:"column:session_id" json:"session_id"`
-	CreatedAt  time.Time `gorm:"column:created_at" json:"created_at"`
+	SessionID  string    `gorm:"type:varchar(191);primaryKey" json:"session_id"`
+	CreatedAt  time.Time `gorm:"type:datetime;column:created_at" json:"created_at"`
 }
 
 func (SurveyResponse) TableName() string {
@@ -104,14 +103,10 @@ func HandleSurveyQuestion(db *gorm.DB) http.HandlerFunc {
 		}
 
 		if idParam != "" && idParam != "0" {
-			// Update existing question
 			id, _ := strconv.ParseInt(idParam, 10, 64)
 			question.ID = id
-
-			// Delete old options
 			db.Where("question_id = ?", id).Delete(&SurveyOption{})
 
-			// Update question
 			result := db.Model(&SurveyQuestion{}).Where("id = ?", id).Updates(map[string]interface{}{
 				"question": question.Question,
 				"active":   question.Active,
@@ -123,7 +118,6 @@ func HandleSurveyQuestion(db *gorm.DB) http.HandlerFunc {
 				return
 			}
 
-			// Create new options
 			for i := range question.Options {
 				question.Options[i].QuestionID = id
 				if err := db.Create(&question.Options[i]).Error; err != nil {
@@ -158,10 +152,8 @@ func DeleteSurveyQuestion(db *gorm.DB) http.HandlerFunc {
 		params := mux.Vars(r)
 		id := params["id"]
 
-		// Delete options first
 		db.Where("question_id = ?", id).Delete(&SurveyOption{})
 
-		// Delete question
 		if result := db.Delete(&SurveyQuestion{}, id); result.Error != nil {
 			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
 			return
@@ -180,33 +172,33 @@ func SubmitSurveyResponse(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		// Get user IP
 		userIP := r.Header.Get("X-Forwarded-For")
 		if userIP == "" {
 			userIP = r.RemoteAddr
 		}
 
-		// Save responses
+		var responses []SurveyResponse
+
 		for questionIDStr, answer := range submitReq.Answers {
 			questionID, _ := strconv.ParseInt(questionIDStr, 10, 64)
 
-			// Find option by text
 			var option SurveyOption
 			db.Where("question_id = ? AND text = ?", questionID, answer).First(&option)
 
-			if option.ID == 0 {
-				continue // Skip if option not found
+			if option.ID != 0 {
+				responses = append(responses, SurveyResponse{
+					QuestionID: questionID,
+					OptionID:   option.ID,
+					UserIP:     userIP,
+					SessionID:  submitReq.SessionID,
+					CreatedAt:  time.Now(),
+				})
 			}
+		}
 
-			response := SurveyResponse{
-				QuestionID: questionID,
-				OptionID:   option.ID,
-				UserIP:     userIP,
-				SessionID:  submitReq.SessionID,
-			}
+		if len(responses) > 0 {
 
-			if err := db.Create(&response).Error; err != nil {
+			if err := db.Create(&responses).Error; err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}

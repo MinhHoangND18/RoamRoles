@@ -53,7 +53,6 @@ function EditCategoryContent() {
           setCategory({
             id: 0,
             title: "",
-            title_header: "",
             slug: "",
             status: "active",
           } as Category);

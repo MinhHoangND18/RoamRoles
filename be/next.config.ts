@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
       { source: "/accounts/:id", destination: "/admin/accounts/:id" },
 
       { source: "/survey", destination: "/admin/survey" },
-
+      { source: "/contacts", destination: "/admin/contacts" },
       
     ];
   },

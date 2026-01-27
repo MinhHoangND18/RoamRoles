@@ -104,8 +104,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
   if (page) {
     return {
-      title: `${page.title} - ${brand.name}`,
-      description: page.title || `${page.title} on ${brand.name}`,
+      title: getCleanTitle(page.title),
+
     };
   }
 
@@ -113,6 +113,10 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     title: `Not Found - ${brand.name}`,
   };
 }
+const getPlainText = (html: string): string => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, "").trim();
+};
 
 export default async function DynamicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -135,7 +139,7 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
 
 
 function PostContent({ post }: { post: PostApiResponse }) {
-  const processedTitle = transformContent(post.title || "");
+  const cleanTitle = getPlainText(post.title || "");
   const rawExcerpt = transformContent(post.excerpt || "");
   const processedContent = transformContent(post.content || "");
   const processedNav = transformContent(post.post_navigation || "");
@@ -171,12 +175,21 @@ function PostContent({ post }: { post: PostApiResponse }) {
                   />
                 )}
 
-                {/* TITLE CHÍNH */}
-                {processedTitle && (
-                  <div
-                    className="post-header-title w-100 text-center"
-                    dangerouslySetInnerHTML={{ __html: processedTitle }}
-                  />
+                {/* TITLE  */}
+                {cleanTitle && (
+                  <h4
+                    className="w-100 text-center mb-4"
+                    style={{
+                      color: '#000000DE',       
+                      fontSize: '26px',       
+                      fontFamily: "'Poppins', sans-serif", 
+                      fontWeight: 600,             
+                      lineHeight: '1.4',        
+                      letterSpacing: '1.5px'
+                    }}
+                  >
+                    {cleanTitle}
+                  </h4>
                 )}
 
                 {/* EXCERPT DƯỚI TITLE */}

@@ -17,30 +17,29 @@ type ContactRequest struct {
 	Message   string `json:"message"`
 }
 
-type User struct {
-	ID int64 `gorm:"primaryKey"`
+type ContactModel struct {
+	ID int64 `gorm:"primaryKey;autoIncrement" json:"id"`
 
-	FirstName string `gorm:"column:first_name;type:varchar(100)"`
-	LastName  string `gorm:"column:last_name;type:varchar(100)"`
-	Email     string `gorm:"column:email;type:varchar(255)"`
-	Message   string `gorm:"column:message;type:text"`
+	FirstName string `gorm:"column:first_name;type:varchar(100)" json:"first_name"`
+	LastName  string `gorm:"column:last_name;type:varchar(100)" json:"last_name"`
+	Email     string `gorm:"column:email;type:varchar(255)" json:"email"`
+	Message   string `gorm:"column:message;type:text" json:"message"`
 
-	Status string `gorm:"column:status;type:enum('new','contacted');default:'new'"`
+	Status string `gorm:"column:status;type:enum('new','contacted');default:'new'" json:"status"`
 
-	IP        string `gorm:"column:ip;type:varchar(45)"`
-	IPVersion string `gorm:"column:ip_version;type:enum('ipv4','ipv6')"`
-	UserAgent string `gorm:"column:user_agent;type:text"`
-	Browser   string `gorm:"column:browser;type:varchar(50)"`
-	OS        string `gorm:"column:os;type:varchar(50)"`
-	Device    string `gorm:"column:device;type:enum('desktop','mobile','tablet','bot','unknown')"`
+	IP        string `gorm:"column:ip;type:varchar(45)" json:"ip"`
+	IPVersion string `gorm:"column:ip_version;type:enum('ipv4','ipv6')" json:"ip_version"`
+	UserAgent string `gorm:"column:user_agent;type:text" json:"user_agent"`
+	Browser   string `gorm:"column:browser;type:varchar(50)" json:"browser"`
+	OS        string `gorm:"column:os;type:varchar(50)" json:"os"`
+	Device    string `gorm:"column:device;type:enum('desktop','mobile','tablet','bot','unknown')" json:"device"`
 
-	CountryCode string `gorm:"column:country_code;type:char(2)"`
-	Country     string `gorm:"column:country;type:varchar(50)"`
-	City        string `gorm:"column:city;type:varchar(100)"`
-	Timezone    string `gorm:"column:timezone;type:varchar(50)"`
+	Referer string `gorm:"column:referer;type:text" json:"referer"`
+	Domain  string `gorm:"column:domain;type:text" json:"domain"`
+}
 
-	Referer string `gorm:"column:referer;type:text"`
-	Domain  string `gorm:"column:domain;type:text"`
+func (ContactModel) TableName() string {
+	return "contacts"
 }
 
 // ===== Helpers =====
@@ -122,7 +121,7 @@ func ContactHandler(db *gorm.DB) http.HandlerFunc {
 		referer := r.Header.Get("Referer")
 		domain := r.Host
 
-		user := User{
+		contact := ContactModel{
 			FirstName: req.FirstName,
 			LastName:  req.LastName,
 			Email:     req.Email,
@@ -137,16 +136,11 @@ func ContactHandler(db *gorm.DB) http.HandlerFunc {
 			OS:        osName,
 			Device:    device,
 
-			CountryCode: "",
-			Country:     "",
-			City:        "",
-			Timezone:    "",
-
 			Referer: referer,
 			Domain:  domain,
 		}
 
-		if err := db.Create(&user).Error; err != nil {
+		if err := db.Create(&contact).Error; err != nil {
 			http.Error(w, "Failed to save contact", http.StatusInternalServerError)
 			return
 		}
@@ -154,7 +148,20 @@ func ContactHandler(db *gorm.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"message": "Contact saved",
-			"data":    user,
+			"data":    contact,
 		})
+	}
+}
+
+func GetContacts(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var contacts []ContactModel
+		if err := db.Order("id DESC").Find(&contacts).Error; err != nil {
+			http.Error(w, "Failed to fetch contacts", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(contacts)
 	}
 }
