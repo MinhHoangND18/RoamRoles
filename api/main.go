@@ -27,6 +27,7 @@ func main() {
 		&handlers.SurveyQuestion{},
 		&handlers.SurveyOption{},
 		&handlers.SurveyResponse{},
+		&handlers.ContactModel{},
 	)
 
 	r.HandleFunc("/api/posts", handlers.GetPosts(DB)).Methods("GET")
@@ -47,6 +48,7 @@ func main() {
 	r.HandleFunc("/api/accounts/{id:[0-9]+}", handlers.UpdateAccount(DB)).Methods("PUT")
 
 	r.HandleFunc("/api/contact", handlers.ContactHandler(DB)).Methods("POST")
+	r.HandleFunc("/api/contacts", handlers.GetContacts(DB)).Methods("GET")
 
 	r.HandleFunc("/api/pages/check-slug", handlers.CheckPageSlugUniqueness(DB)).Methods("GET")
 	r.HandleFunc("/api/pages", handlers.GetPages(DB)).Methods("GET")

@@ -98,7 +98,7 @@ function EditPostContent() {
             type_id: 1,
             category_id: null,
             recommend_post_id: null,
-            // title_header: "",
+
             show_survey: false,
           } as Post);
           setDisplayTitle("");
@@ -170,7 +170,6 @@ function EditPostContent() {
     if (isNewPost) {
       finalPayload = {
         title: updatedPost.title,
-        // title_header: updatedPost.title_header,
         excerpt: updatedPost.excerpt,
         descrip: updatedPost.descrip,
         content: updatedPost.content,
@@ -184,7 +183,6 @@ function EditPostContent() {
     } else {
       finalPayload = {
         title: updatedPost.title,
-        // title_header: updatedPost.title_header,
         excerpt: updatedPost.excerpt,
         content: updatedPost.content,
         status: updatedPost.status,
@@ -450,26 +448,7 @@ function EditPostContent() {
                 </div>
               </div>
 
-              {/* <div>
-                <label
-                  htmlFor="title_header"
-                  className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1"
-                >
-                  Title Header
-                </label>
-                <input
-                  id="title_header"
-                  type="text"
-                  value={post.title_header || ""}
-                  onChange={(e) =>
-                    setPost((prev) =>
-                      prev ? { ...prev, title_header: e.target.value } : null,
-                    )
-                  }
-                  className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                  placeholder="Enter Title Header..."
-                />
-              </div> */}
+      
 
               <div className="mt-6">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">

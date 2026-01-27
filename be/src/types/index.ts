@@ -7,7 +7,6 @@ export interface Type {
 export interface Category {
   id: number;
   title: string;
-  title_header?: string;
   slug: string;
   status: "active" | "inactive";
 }
@@ -42,7 +41,17 @@ export interface Page {
   id: number;
   slug: string;
   title: string;
-  title_header?: string;
   content: string;
   status: "active" | "inactive";
+}
+
+export interface Contact {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  message: string;
+  status: string;
+  ip: string;
+  created_at?: string;
 }

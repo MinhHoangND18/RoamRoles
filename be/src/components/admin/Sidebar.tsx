@@ -10,16 +10,17 @@ import {
   ChevronDown,
   Users,
   FolderOpen,
-  Menu, 
+  Menu,
   X,
   ClipboardList,
+  Mail,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   const [isContentOpen, setIsContentOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -28,8 +29,8 @@ export default function Sidebar() {
     if (isMobileOpen) {
       const timer = setTimeout(() => {
         setIsMobileOpen(false);
-      }, 0); 
-      
+      }, 0);
+
       return () => clearTimeout(timer);
     }
   }, [pathname, searchParams]);
@@ -76,11 +77,10 @@ export default function Sidebar() {
             <li>
               <Link
                 href="/accounts"
-                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-bold transition-colors ${
-                  pathname.startsWith("/accounts")
-                    ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
-                    : "text-slate-600 hover:bg-slate-50"
-                }`}
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-bold transition-colors ${pathname.startsWith("/accounts")
+                  ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                  : "text-slate-600 hover:bg-slate-50"
+                  }`}
               >
                 <Users className="w-4 h-4" /> Accounts
               </Link>
@@ -101,17 +101,17 @@ export default function Sidebar() {
                 {[
                   { name: "Posts", path: "/posts", icon: FileText },
                   { name: "Pages", path: "/pages", icon: Book },
-                  { name: "Categories", path: "/categories", icon: FolderOpen }, 
+                  { name: "Categories", path: "/categories", icon: FolderOpen },
                   { name: "Survey", path: "/survey", icon: ClipboardList },
+                  { name: "Contacts", path: "/contacts", icon: Mail },
                 ].map((item) => (
                   <li key={item.path}>
                     <Link
                       href={item.path}
-                      className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${
-                        pathname.startsWith(item.path)
-                          ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
-                          : "text-slate-600 hover:bg-slate-50"
-                      }`}
+                      className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${pathname.startsWith(item.path)
+                        ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                        : "text-slate-600 hover:bg-slate-50"
+                        }`}
                     >
                       <item.icon className="w-4 h-4" /> {item.name}
                     </Link>
