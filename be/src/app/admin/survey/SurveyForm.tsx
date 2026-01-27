@@ -1,14 +1,13 @@
 'use client'
 import { useState } from 'react'
+import { API_CONFIG } from '@/lib/api/config'
 
 export default function SurveyForm({ onSuccess }: { onSuccess: () => void }) {
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState<string[]>([''])
 
   const submit = async () => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-
-    await fetch(`${baseUrl}/api/admin/survey/questions`, {
+    await fetch(`${API_CONFIG.BASE_URL}/api/admin/survey/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

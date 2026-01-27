@@ -19,11 +19,10 @@ export default async function RecommendedPost({ postId }: RecommendedPostProps) 
   const processedExcerpt = transformContent(recommendedPost.excerpt || "");
 
   return (
-    <div 
-      className="d-sm-block py-3 mx-auto px-3 my-5" 
-      style={{ 
-        borderTop: '1px solid rgb(204, 204, 204)', 
-        // borderBottom: '1px solid rgb(204, 204, 204)' 
+    <div
+      className="d-sm-block py-3 mx-auto px-3 my-5"
+      style={{
+        borderTop: '1px solid rgb(204, 204, 204)',
       }}
     >
       {/* Headline centralizado */}
@@ -32,7 +31,7 @@ export default async function RecommendedPost({ postId }: RecommendedPostProps) 
           Recommended Content
         </h6>
       </div>
-      
+
       <div className="row">
         <div className="col-lg-5 col-md-5 col-sm-12 mb-4 mb-lg-0">
           {recommendedPost.thumbnail_url && (
@@ -54,24 +53,24 @@ export default async function RecommendedPost({ postId }: RecommendedPostProps) 
             </div>
           )}
         </div>
-        
+
         <div className="col-lg-7 col-md-7 col-sm-12 d-flex flex-column justify-content-between">
           <div>
-            <h3 
+            <h3
               className="text-gray-900 text-3xl title-font font-medium mb-1"
               dangerouslySetInnerHTML={{ __html: processedTitle }}
             />
-            <div 
+            <div
               className="d-block text-justify py-3"
               dangerouslySetInnerHTML={{ __html: processedExcerpt }}
             />
           </div>
-          
+
           <div className="mt-auto d-flex flex-column align-items-end">
-            <Link 
-              className="d-inline-block text-center text-white border-0 py-2 px-8 text-lg focus:outline-none rounded bg-green-700 hover:bg-green-800 btn-block" 
+            <Link
+              className="d-inline-block text-center text-white border-0 py-2 px-8 text-lg focus:outline-none rounded bg-green-700 hover:bg-green-800 btn-block"
               href={`/${recommendedPost.slug}`}
-              data-analytics-label="recommendedPostButton" 
+              data-analytics-label="recommendedPostButton"
               data-action="analytics#trackCTA"
             >
               See more jobs

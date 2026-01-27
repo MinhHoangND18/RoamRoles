@@ -60,7 +60,7 @@ func GetSurveyQuestions(db *gorm.DB) http.HandlerFunc {
 		var questions []SurveyQuestion
 		err := db.Preload("Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("survey_options.order ASC")
-		}).Where("active = ?", true).Order("\"order\" ASC").Find(&questions).Error
+		}).Where("active = ?", true).Order("`order` ASC").Find(&questions).Error
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -78,7 +78,7 @@ func GetAllSurveyQuestions(db *gorm.DB) http.HandlerFunc {
 		var questions []SurveyQuestion
 		err := db.Preload("Options", func(db *gorm.DB) *gorm.DB {
 			return db.Order("survey_options.order ASC")
-		}).Order("\"order\" ASC").Find(&questions).Error
+		}).Order("`order` ASC").Find(&questions).Error
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -132,7 +132,7 @@ func HandleSurveyQuestion(db *gorm.DB) http.HandlerFunc {
 			// Create new question
 			// Get max order
 			var maxOrder int
-			db.Model(&SurveyQuestion{}).Select("COALESCE(MAX(\"order\"), 0)").Scan(&maxOrder)
+			db.Model(&SurveyQuestion{}).Select("COALESCE(MAX(`order`), 0)").Scan(&maxOrder)
 			question.Order = maxOrder + 1
 
 			if err := db.Create(&question).Error; err != nil {

@@ -8,6 +8,7 @@ import Script from "next/script";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import "@/css/all.min.css";
+//import "./globals.css";
 
 const sourceSans3 = Source_Sans_3({ subsets: ["latin"] });
 
@@ -64,7 +65,7 @@ export default function RootLayout({
             <Footer />
           </Box>
         </ThemeRegistry>
-        
+
         <Script
           src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
           strategy="afterInteractive"

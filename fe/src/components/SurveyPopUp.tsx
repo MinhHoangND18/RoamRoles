@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { SurveyQuestion, SubmitSurveyRequest } from '@/types/survey-api';
+import { API_CONFIG } from '@/constants/app-config';
 
 export default function SurveyPopup() {
   const [showPopup, setShowPopup] = useState(false);
@@ -11,7 +12,7 @@ export default function SurveyPopup() {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+  const API_URL = API_CONFIG.BASE_URL;
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -31,7 +32,7 @@ export default function SurveyPopup() {
       }
     };
     fetchQuestions();
-  }, [API_URL]);
+  }, []);
 
   const handleAnswer = async (value: string) => {
     const questionId = questions[currentQuestion].id;
@@ -100,7 +101,7 @@ export default function SurveyPopup() {
                 <div className="spinner-grow" style={{ width: '0.9rem', height: '0.9rem', color: '#0d7a70', animationDelay: '0.6s', animationDuration: '0.75s' }} role="status"></div>
               </div>
 
-    
+
               <style>{`
                   @keyframes pulse-fade {
                     0%, 100% { opacity: 1; }
