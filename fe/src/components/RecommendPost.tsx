@@ -23,7 +23,7 @@ export default async function RecommendedPost({ postId }: RecommendedPostProps) 
       className="d-sm-block py-3 mx-auto px-3 my-5" 
       style={{ 
         borderTop: '1px solid rgb(204, 204, 204)', 
-        borderBottom: '1px solid rgb(204, 204, 204)' 
+        // borderBottom: '1px solid rgb(204, 204, 204)' 
       }}
     >
       {/* Headline centralizado */}
@@ -36,7 +36,7 @@ export default async function RecommendedPost({ postId }: RecommendedPostProps) 
       <div className="row">
         <div className="col-lg-5 col-md-5 col-sm-12 mb-4 mb-lg-0">
           {recommendedPost.thumbnail_url && (
-            <div className="post-thumbnail p-3">
+            <div className="post-thumbnail p-1">
               <a href={`/${recommendedPost.slug}`}>
                 <img
                   alt={recommendedPost.title || 'Recommended post'}
@@ -44,8 +44,8 @@ export default async function RecommendedPost({ postId }: RecommendedPostProps) 
                   style={{
                     width: "233px",
                     objectFit: "cover",
-                    borderRadius: "0px",
-                    height: '190px'
+                    borderRadius: "8px",
+                    height: '200px',
                   }}
                   src={`/images/${recommendedPost.thumbnail_url}`}
                   loading="lazy"

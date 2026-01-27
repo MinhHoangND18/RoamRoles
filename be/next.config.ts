@@ -30,6 +30,10 @@ const nextConfig: NextConfig = {
       { source: "/pages/:id", destination: "/admin/pages/:id" },
       { source: "/categories/:id", destination: "/admin/categories/:id" },
       { source: "/accounts/:id", destination: "/admin/accounts/:id" },
+
+      { source: "/survey", destination: "/admin/survey" },
+
+      
     ];
   },
 
