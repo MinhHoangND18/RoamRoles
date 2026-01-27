@@ -10,7 +10,7 @@ import { transformContent } from "@/lib/content-utils";
 import "@/css/all.min.css";
 import AdScript from '../ADS/AdScript';
 import RelatedPosts from '@/components/RelatedPosts';
-// import SurveyPopup from '@/components/SurveyPopup'
+import SurveyPopup from '@/components/SurveyPopUp';
 import RecommendedPost from '@/components/RecommendPost';
 
 
@@ -43,13 +43,23 @@ const fetchWithRetry = async <T,>(
         return null;
       }
       if (i === maxRetries - 1) {
-        console.error(`Failed to fetch ${type} "${slug}" after ${maxRetries} attempts`);
+        console.error(
+          `Failed to fetch ${type} "${slug}" after ${maxRetries} attempts`,
+        );
         return null;
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
   return null;
+};
+const getCleanTitle = (htmlTitle: string | undefined): string => {
+  if (!htmlTitle) return "";
+  const match = htmlTitle.match(/<span class="gb-headline-text">(.*?)<\/span>/);
+  if (match && match[1]) {
+    return match[1].replace(/[“”]/g, "").trim();
+  }
+  return htmlTitle.replace(/<[^>]*>/g, "").trim();
 };
 
 export async function generateStaticParams() {
@@ -86,7 +96,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
   if (post) {
     return {
-      title: post.title || post.slug.split('-').join(' ').toUpperCase(),
+      title: getCleanTitle(post.title),
     };
   }
 
@@ -137,92 +147,95 @@ function PostContent({ post }: { post: PostApiResponse }) {
   const lowerExcerptMatch = rawExcerpt.match(/<div class="entry-excerpt"[^>]*>[\s\S]*?<\/div>/i);
   const lowerExcerpt = lowerExcerptMatch ? lowerExcerptMatch[0] : "";
 
-  const fallbackExcerpt = (!upperExcerpt && !lowerExcerpt) ? rawExcerpt : "";
+  const fallbackExcerpt = !upperExcerpt && !lowerExcerpt ? rawExcerpt : "";
 
 
   return (
-    <main id="main" className="container">
-      <AdScript />
-      {/* <SurveyPopup /> */}
+    <>
+      {post.show_survey && <SurveyPopup key={post.id} />}
+      <main id="main" className="container">
+        <AdScript />
 
-      <div className="row">
-        <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
-          <article className="post-wrapper">
-            <header className="entry-header mb-4 text-center d-flex flex-column align-items-center">
 
-              {/* EXCERPT TRÊN TITLE */}
-              {upperExcerpt && (
-                <div
-                  className="upper-excerpt-wrapper mb-2 w-100"
-                  style={{ textAlign: 'center' }}
-                  dangerouslySetInnerHTML={{ __html: upperExcerpt }}
-                />
-              )}
+        <div className="row">
+          <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
+            <article className="post-wrapper">
+              <header className="entry-header mb-4 text-center d-flex flex-column align-items-center">
 
-              {/* TITLE CHÍNH */}
-              {processedTitle && (
-                <div
-                  className="post-header-title w-100 text-center"
-                  dangerouslySetInnerHTML={{ __html: processedTitle }}
-                />
-              )}
+                {/* EXCERPT TRÊN TITLE */}
+                {upperExcerpt && (
+                  <div
+                    className="upper-excerpt-wrapper mb-2 w-100"
+                    style={{ textAlign: 'center' }}
+                    dangerouslySetInnerHTML={{ __html: upperExcerpt }}
+                  />
+                )}
 
-              {/* EXCERPT DƯỚI TITLE */}
-              {lowerExcerpt && (
-                <div
-                  className="lower-excerpt-wrapper mt-3 w-100"
-                  style={{ textAlign: 'center' }}
-                  dangerouslySetInnerHTML={{ __html: lowerExcerpt }}
-                />
-              )}
-              {fallbackExcerpt && (
-                <div
-                  className="mt-3"
-                  dangerouslySetInnerHTML={{ __html: fallbackExcerpt }}
-                />
-              )}
-              <div className="advertisement" style={{ marginBottom: "15px" }}>
-                <p style={{
-                  fontSize: "10px",
-                  textAlign: "center",
-                  marginBottom: "5px"
-                }}>
-                  Advertisement
-                </p>
-                <div
-                  className="ad-place"
-                  se="__element"
-                  data-ad-sizes="responsive"
-                  data-fluid="false"
-                  data-fit-size="true"
-                  data-ad-mode="adsense"
-                ></div>
-              </div>
-            </header>
+                {/* TITLE CHÍNH */}
+                {processedTitle && (
+                  <div
+                    className="post-header-title w-100 text-center"
+                    dangerouslySetInnerHTML={{ __html: processedTitle }}
+                  />
+                )}
 
-            <div
-              className="entry-content mt-5"
-              dangerouslySetInnerHTML={{ __html: processedContent }}
-            />
-          </article>
-          <RecommendedPost postId={post.id} />
+                {/* EXCERPT DƯỚI TITLE */}
+                {lowerExcerpt && (
+                  <div
+                    className="lower-excerpt-wrapper mt-3 w-100"
+                    style={{ textAlign: 'center' }}
+                    dangerouslySetInnerHTML={{ __html: lowerExcerpt }}
+                  />
+                )}
+                {fallbackExcerpt && (
+                  <div
+                    className="mt-3"
+                    dangerouslySetInnerHTML={{ __html: fallbackExcerpt }}
+                  />
+                )}
+                <div className="advertisement" style={{ marginBottom: "15px" }}>
+                  <p style={{
+                    fontSize: "10px",
+                    textAlign: "center",
+                    marginBottom: "5px"
+                  }}>
+                    Advertisement
+                  </p>
+                  <div
+                    className="ad-place"
+                    se="__element"
+                    data-ad-sizes="responsive"
+                    data-fluid="false"
+                    data-fit-size="true"
+                    data-ad-mode="adsense"
+                  ></div>
+                </div>
+              </header>
 
-          {post.category_id && (
-            <>
-              <hr className="mt-5" />
-              <RelatedPosts currentPost={post} />
-            </>
-          )}
+              <div
+                className="entry-content mt-5"
+                dangerouslySetInnerHTML={{ __html: processedContent }}
+              />
+            </article>
+            <RecommendedPost postId={post.id} />
 
-          {processedNav && (
-            <>
-              <hr className="mt-5" />
-              <div dangerouslySetInnerHTML={{ __html: processedNav }} />
-            </>
-          )}
+            {post.category_id && (
+              <>
+                <hr className="mt-5" />
+                <RelatedPosts currentPost={post} />
+              </>
+            )}
+
+            {processedNav && (
+              <>
+                <hr className="mt-5" />
+                <div dangerouslySetInnerHTML={{ __html: processedNav }} />
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 
@@ -242,7 +255,7 @@ function PageContent({ page, brand }: { page: PageModel; brand: Brand }) {
             </svg>
           </span>
           <span className="gb-headline-text">
-            {page.title_header || page.title}
+            {getCleanTitle(page.title)}
           </span>
         </p>
 

@@ -1,77 +1,76 @@
+'use client';
 import React, { useState, useEffect } from 'react';
-
-interface Question {
-  id: string;
-  question: string;
-  options: string[];
-}
+import { SurveyQuestion, SubmitSurveyRequest } from '@/types/survey-api';
 
 export default function SurveyPopup() {
   const [showPopup, setShowPopup] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isSearching, setIsSearching] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+  // Fetch questions from API
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/survey/questions`);
+        const response = await fetch(`${API_URL}/api/survey/questions`);
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
             setQuestions(data);
+            setShowPopup(true);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch survey questions", error);
-        setQuestions([
-          {
-            id: 'unemployed',
-            question: 'Are you unemployed?',
-            options: ['Yes', 'No']
-          },
-          {
-            id: 'household',
-            question: 'How many people live with you?',
-            options: ['I live alone', 'One person', 'Two people or more']
-          },
-          {
-            id: 'salary',
-            question: 'How much would you like to earn per month?',
-            options: ['R5,000', 'R6,000', 'R7,000']
-          }
-        ]);
+        console.error("Survey fetch error:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchQuestions();
-  }, []);
+  }, [API_URL]);
 
-  const handleArticleClick = () => {
-    setShowPopup(true);
-    setCurrentQuestion(0);
-    setAnswers({});
-    setIsSearching(false);
-    setShowResult(false);
-  };
+  useEffect(() => {
+    if (showPopup) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [showPopup]);
 
-  const handleAnswer = (value: string) => {
-    const newAnswers = {
-      ...answers,
-      [questions[currentQuestion].id]: value
-    };
+  // Handle answer selection
+  const handleAnswer = async (value: string) => {
+    const questionId = questions[currentQuestion].id;
+    const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
       } else {
         setIsSearching(true);
+        try {
+          const submitData: SubmitSurveyRequest = {
+            session_id: `session_${Date.now()}`,
+            answers: Object.entries(newAnswers).reduce((acc, [key, val]) => {
+              acc[key] = val;
+              return acc;
+            }, {} as Record<string, string>)
+          };
+          await fetch(`${API_URL}/api/survey/responses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submitData)
+          });
+        } catch (e) {
+          console.error(e);
+        }
+
+        // After 2 seconds, show result screen
         setTimeout(() => {
           setIsSearching(false);
           setShowResult(true);
@@ -85,56 +84,36 @@ export default function SurveyPopup() {
     setShowPopup(false);
   };
 
-  const progressPercentage = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
+  const progressPercentage = questions.length > 0
+    ? ((currentQuestion + 1) / questions.length) * 100
+    : 0;
+
+  if (loading) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 p-8 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-8">
-      {/* Bài viết mẫu */}
-      <div className="max-w-4xl mx-auto">
-        <div 
-          onClick={handleArticleClick}
-          className="bg-white rounded-2xl shadow-lg p-8 cursor-pointer hover:shadow-xl transition-shadow"
-        >
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Click to Start Survey
-          </h1>
-          <p className="text-gray-600 mb-4">
-            We would like to know more about you. Click here to answer a few quick questions.
-          </p>
-          <div className="text-teal-700 font-semibold text-lg">
-            👆 Click here to begin
+    <>
+      {/* Popup Full Screen */}
+      {showPopup && questions.length > 0 && (
+        <div className="fixed inset-0 z-[99999] bg-white flex flex-col">
+          {/* Progress bar */}
+          <div className="h-2 bg-gray-200">
+            <div
+              className="h-full bg-teal-700 transition-all duration-500 ease-out"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
-        </div>
 
-        {/* Hiển thị kết quả */}
-        {Object.keys(answers).length > 0 && !showPopup && (
-          <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              Collected Data:
-            </h3>
-            <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-auto border border-gray-200">
-              {JSON.stringify(answers, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-
-      {/* Popup */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
-            {/* Progress bar */}
-            <div className="h-2 bg-gray-200">
-              <div 
-                className="h-full bg-teal-700 transition-all duration-500 ease-out"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-
-            <div className="p-10">
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="w-full max-w-2xl">
               {isSearching ? (
                 /* Màn hình searching */
-                <div className="text-center py-16">
+                <div className="text-center">
                   <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-teal-700 border-t-transparent mb-6"></div>
                   <h2 className="text-2xl text-teal-600 font-medium">
                     Searching for jobs near you...
@@ -142,12 +121,12 @@ export default function SurveyPopup() {
                 </div>
               ) : showResult ? (
                 /* Màn hình kết quả */
-                <div className="text-center py-12">
+                <div className="text-center">
                   <h2 className="text-3xl font-semibold text-gray-800 mb-8">
                     We found vacancies for you
                   </h2>
                   <button
-                    className="w-full py-4 bg-teal-700 text-white rounded-xl font-semibold text-lg hover:bg-teal-800 transition-colors mb-4"
+                    className="w-full max-w-lg mx-auto block py-4 bg-teal-700 text-white rounded-xl font-semibold text-lg hover:bg-teal-800 transition-colors mb-4"
                   >
                     Find vacancies
                   </button>
@@ -160,34 +139,28 @@ export default function SurveyPopup() {
                 </div>
               ) : (
                 /* Câu hỏi */
-                questions.length > 0 ? (
-                <>
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-8 text-center">
+                <div className="text-center">
+                  <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 mb-12">
                     {questions[currentQuestion].question}
                   </h2>
 
-                  <div className="space-y-3">
-                    {questions[currentQuestion].options.map((option) => (
+                  <div className="space-y-4 max-w-lg mx-auto">
+                    {questions[currentQuestion].options?.map((option) => (
                       <button
-                        key={option}
-                        onClick={() => handleAnswer(option)}
+                        key={option.id}
+                        onClick={() => handleAnswer(option.text)}
                         className="w-full py-4 px-6 bg-teal-700 text-white rounded-xl font-medium text-lg hover:bg-teal-800 transition-colors"
                       >
-                        {option}
+                        {option.text}
                       </button>
                     ))}
                   </div>
-                </>
-                ) : (
-                  <div className="text-center text-gray-500">
-                    {loading ? 'Loading questions...' : 'No questions available.'}
-                  </div>
-                )
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

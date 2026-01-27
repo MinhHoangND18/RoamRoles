@@ -13,19 +13,19 @@ import (
 type PostModel struct {
 	ID              int64          `json:"id"`
 	Slug            string         `gorm:"column:slug" json:"slug"`
-	Content         string         `gorm:"column:content" json:"content"`
+	Content         string         `gorm:"column:content" json:"content,omitempty"`
 	Title           string         `gorm:"column:title" json:"title"`
 	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
 	Status          string         `gorm:"column:status" json:"status"`
 	PostNavigation  string         `gorm:"column:post_navigation" json:"post_navigation"`
 	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
-	TypeID          int64          `gorm:"column:type_id" json:"type_id"`
-	Type            TypeModel      `json:"type"`
+	TypeID          int64          `gorm:"column:type_id" json:"type_id,omitempty"`
+	Type            TypeModel      `json:"type,omitempty"`
 	CategoryID      *int64         `gorm:"column:category_id" json:"category_id"`
 	Category        *CategoryModel `json:"category"`
-	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id"`
-	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post"`
-	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey"`
+	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id,omitempty"`
+	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post,omitempty"`
+	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey,omitempty"`
 }
 
 func (p PostModel) TableName() string {
@@ -45,9 +45,9 @@ type PostResponse struct {
 	Type            TypeModel      `gorm:"foreignKey:TypeID" json:"type"`
 	CategoryID      *int64         `gorm:"column:category_id" json:"category_id"`
 	Category        *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
-	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id"`
-	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post"`
-	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey"`
+	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id,omitempty"`
+	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post,omitempty"`
+	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey,omitempty"`
 }
 
 type PaginationMeta struct {
@@ -77,7 +77,11 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 		typeParam := r.URL.Query().Get("type")
 
 		post := PostModel{}
-		query := db.Model(&PostModel{}).Preload("Type").Preload("RecommendPost").Where("id = ?", id)
+		query := db.Model(&PostModel{}).Preload("Type").
+			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
+			}).
+			Where("id = ?", id)
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -106,7 +110,12 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 func GetPosts(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		post := []PostModel{}
-		err := db.Model(&PostModel{}).Preload("Type").Preload("Category").Preload("RecommendPost").Find(&post).Error
+		err := db.Model(&PostModel{}).Preload("Type").
+			Preload("Category").
+			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
+			}).
+			Find(&post).Error
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
