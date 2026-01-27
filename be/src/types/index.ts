@@ -53,5 +53,7 @@ export interface Contact {
   message: string;
   status: string;
   ip: string;
+  referer?: string;
+  domain?: string;
   created_at?: string;
 }

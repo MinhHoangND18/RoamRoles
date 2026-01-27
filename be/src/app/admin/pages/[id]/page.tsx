@@ -116,8 +116,6 @@ function EditPageContent() {
       updatedPage.title = `<span class="gb-headline-text">${displayTitle}</span>`;
     }
 
-    updatedPage.title_header = displayTitle;
-
     try {
       if (isNewPage) {
         const res = await createPage(updatedPage);
