@@ -1,19 +1,19 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { 
-    Plus, 
-    Edit2, 
-    Trash2, 
-    Loader2, 
-    CheckCircle2, 
+import {
+    Plus,
+    Edit2,
+    Trash2,
+    Loader2,
+    CheckCircle2,
     XCircle,
     Save,
     X
 } from 'lucide-react'
 
 import toast from 'react-hot-toast'
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const API_BASE_URL = `${BASE_URL}/api/admin/survey/questions`;
+import { API_CONFIG } from '@/lib/api/config'
+const API_BASE_URL = `${API_CONFIG.BASE_URL}/api/admin/survey/questions`;
 
 type Option = {
     id?: number
@@ -40,7 +40,7 @@ export default function SurveyAdminPage() {
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingId, setEditingId] = useState<number | null>(null)
-    
+
     // Form State
     const [formData, setFormData] = useState<QuestionFormData>({
         question: '',
@@ -85,11 +85,22 @@ export default function SurveyAdminPage() {
         setIsModalOpen(true)
     }
 
+    const MIN_OPTIONS = 2
+    const MAX_OPTIONS = 5
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         if (!formData.question.trim()) {
             toast.error('Question text is required')
+            return
+        }
+        if (formData.options.length < MIN_OPTIONS) {
+            toast.error(`At least ${MIN_OPTIONS} options are required`)
+            return
+        }
+        if (formData.options.length > MAX_OPTIONS) {
+            toast.error(`Maximum ${MAX_OPTIONS} options allowed`)
             return
         }
         if (formData.options.some(o => !o.text.trim())) {
@@ -98,10 +109,10 @@ export default function SurveyAdminPage() {
         }
 
         try {
-            const url = editingId 
+            const url = editingId
                 ? `${API_BASE_URL}/${editingId}`
                 : API_BASE_URL
-            
+
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -112,7 +123,7 @@ export default function SurveyAdminPage() {
             })
 
             if (!res.ok) throw new Error('Failed to save')
-            
+
             toast.success(editingId ? 'Question updated' : 'Question created')
             setIsModalOpen(false)
             fetchQuestions()
@@ -129,7 +140,7 @@ export default function SurveyAdminPage() {
                 method: 'DELETE'
             })
             if (!res.ok) throw new Error('Failed to delete')
-            
+
             toast.success('Question deleted')
             setQuestions(questions.filter(q => q.id !== id))
         } catch (error) {
@@ -148,8 +159,8 @@ export default function SurveyAdminPage() {
                 })
             })
             if (!res.ok) throw new Error('Failed to update')
-            
-            setQuestions(questions.map(q => 
+
+            setQuestions(questions.map(q =>
                 q.id === question.id ? { ...q, active: !q.active } : q
             ))
             toast.success(`Question ${!question.active ? 'activated' : 'deactivated'}`)
@@ -166,7 +177,7 @@ export default function SurveyAdminPage() {
                         <h1 className="text-3xl font-bold text-slate-800">Survey Management</h1>
                         <p className="text-slate-500 mt-1">Manage questions and options for the user survey</p>
                     </div>
-                    <button 
+                    <button
                         onClick={() => handleOpenModal()}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
                     >
@@ -201,7 +212,7 @@ export default function SurveyAdminPage() {
                                                 )}
                                             </div>
                                             <h3 className="text-lg font-semibold text-slate-800 mb-4">{q.question}</h3>
-                                            
+
                                             <div className="space-y-2">
                                                 {q.options.map((opt) => (
                                                     <div key={opt.id} className="flex items-center gap-3 text-slate-600 bg-slate-50 px-3 py-2 rounded border border-slate-100">
@@ -213,21 +224,21 @@ export default function SurveyAdminPage() {
                                         </div>
 
                                         <div className="flex flex-col gap-2">
-                                            <button 
+                                            <button
                                                 onClick={() => handleOpenModal(q)}
                                                 className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleToggleActive(q)}
                                                 className={`p-2 rounded transition-colors ${q.active ? 'text-slate-400 hover:text-orange-600 hover:bg-orange-50' : 'text-slate-400 hover:text-green-600 hover:bg-green-50'}`}
                                                 title={q.active ? "Deactivate" : "Activate"}
                                             >
                                                 {q.active ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDelete(q.id)}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                                 title="Delete"
@@ -257,7 +268,7 @@ export default function SurveyAdminPage() {
                                     <h2 className="text-xl font-bold text-slate-800">
                                         {editingId ? 'Edit Question' : 'New Question'}
                                     </h2>
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setIsModalOpen(false)}
                                         className="text-slate-400 hover:text-slate-600"
@@ -265,7 +276,7 @@ export default function SurveyAdminPage() {
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>
-                                
+
                                 <div className="p-6 space-y-6">
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -274,7 +285,7 @@ export default function SurveyAdminPage() {
                                         <input
                                             type="text"
                                             value={formData.question}
-                                            onChange={e => setFormData({...formData, question: e.target.value})}
+                                            onChange={e => setFormData({ ...formData, question: e.target.value })}
                                             className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                             placeholder="e.g. What is your primary goal?"
                                             autoFocus
@@ -284,18 +295,20 @@ export default function SurveyAdminPage() {
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
                                             <label className="block text-sm font-bold text-slate-700">
-                                                Options
+                                                Options <span className="font-normal text-slate-400">({formData.options.length}/{MAX_OPTIONS})</span>
                                             </label>
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({
-                                                    ...formData,
-                                                    options: [...formData.options, { text: '', order: formData.options.length + 1 }]
-                                                })}
-                                                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                                            >
-                                                <Plus className="w-3 h-3" /> Add Option
-                                            </button>
+                                            {formData.options.length < MAX_OPTIONS && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({
+                                                        ...formData,
+                                                        options: [...formData.options, { text: '', order: formData.options.length + 1 }]
+                                                    })}
+                                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                                >
+                                                    <Plus className="w-3 h-3" /> Add Option
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="space-y-3">
                                             {formData.options.map((opt, idx) => (
@@ -309,19 +322,20 @@ export default function SurveyAdminPage() {
                                                         onChange={e => {
                                                             const newOptions = [...formData.options]
                                                             newOptions[idx].text = e.target.value
-                                                            setFormData({...formData, options: newOptions})
+                                                            setFormData({ ...formData, options: newOptions })
                                                         }}
                                                         className="flex-1 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                                                         placeholder={`Option ${idx + 1}`}
                                                     />
-                                                    {formData.options.length > 1 && (
+                                                    {formData.options.length > MIN_OPTIONS && (
                                                         <button
                                                             type="button"
                                                             onClick={() => {
                                                                 const newOptions = formData.options.filter((_, i) => i !== idx)
-                                                                setFormData({...formData, options: newOptions})
+                                                                setFormData({ ...formData, options: newOptions })
                                                             }}
                                                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
+                                                            title="Remove option"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -336,7 +350,7 @@ export default function SurveyAdminPage() {
                                             type="checkbox"
                                             id="active-check"
                                             checked={formData.active}
-                                            onChange={e => setFormData({...formData, active: e.target.checked})}
+                                            onChange={e => setFormData({ ...formData, active: e.target.checked })}
                                             className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
                                         />
                                         <label htmlFor="active-check" className="text-sm font-medium text-slate-700">

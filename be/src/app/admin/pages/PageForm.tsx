@@ -231,7 +231,7 @@ function PageFormContent() {
                   <span>Loading...</span>
                 </div>
               ) : (
-                "Add Category"
+                "Add Pages"
               )}
             </button>
           </div>

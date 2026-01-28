@@ -91,12 +91,12 @@ function ContactsContent() {
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 text-[11px] uppercase tracking-[1.5px] font-black">
                                             <th className="px-6 py-5 w-16">ID</th>
-                                            <th className="px-6 py-5 w-48">Name</th>
-                                            <th className="px-6 py-5 w-64">Email</th>
-                                            <th className="px-6 py-5 w-32">Domain</th>
-                                            <th className="px-6 py-5 w-32">Referer</th>
+                                            <th className="px-6 py-5 w-40">Name</th>
+                                            <th className="px-6 py-5 w-48">Email</th>
+                                            <th className="px-6 py-5 w-48">Domain</th>
+                                            <th className="px-6 py-5 w-48">Referer</th>
                                             <th className="px-6 py-5">Message</th>
-                                            <th className="px-6 py-5 w-32 text-right">Status</th>
+                                            <th className="px-6 py-5 w-28 text-right">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -138,8 +138,8 @@ function ContactsContent() {
                                                     <td className="px-6 py-6 text-right">
                                                         <span
                                                             className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${contact.status === "new"
-                                                                    ? "bg-blue-100 text-blue-700"
-                                                                    : "bg-green-100 text-green-700"
+                                                                ? "bg-blue-100 text-blue-700"
+                                                                : "bg-green-100 text-green-700"
                                                                 }`}
                                                         >
                                                             {contact.status || "new"}

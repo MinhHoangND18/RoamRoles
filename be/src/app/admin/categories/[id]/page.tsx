@@ -17,6 +17,7 @@ function EditCategoryContent() {
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [displayTitle, setDisplayTitle] = useState("");
+  const [errors, setErrors] = useState<{ title?: string }>({});
 
   const extractTitleText = (htmlTitle: string) => {
     if (!htmlTitle) return "";
@@ -78,6 +79,14 @@ function EditCategoryContent() {
 
   const handleSave = async () => {
     if (!category) return;
+
+    if (!displayTitle.trim()) {
+      setErrors({ title: "Title is required." });
+      toast.error("Please fill in the title.");
+      return;
+    }
+    setErrors({});
+    
     setSaving(true);
 
     const updatedCategory = { ...category };
@@ -181,6 +190,9 @@ function EditCategoryContent() {
                   className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
                   placeholder="Enter title..."
                 />
+                {errors.title && (
+                  <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                )}
               </div>
 
               <div>
