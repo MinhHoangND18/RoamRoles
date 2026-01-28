@@ -5,7 +5,7 @@ import { fetchCategoryWithPosts } from "@/lib/category-api";
 import { CategoryPostsResponse } from '@/types/api';
 import { transformContent } from "@/lib/content-utils";
 import CategoryContent from '@/app/category/CategoryContent';
-import "@/css/all.min.css"; 
+import "@/css/all.min.css";
 
 interface ApiError {
   message: string;
@@ -44,19 +44,26 @@ const fetchWithRetry = async (
   }
   return null;
 };
-
-export async function generateMetadata(props: { 
+const getCleanTitle = (htmlTitle: string | undefined): string => {
+  if (!htmlTitle) return "";
+  const match = htmlTitle.match(/<span class="gb-headline-text">(.*?)<\/span>/);
+  if (match && match[1]) {
+    return match[1].replace(/[“”]/g, "").trim();
+  }
+  return htmlTitle.replace(/<[^>]*>/g, "").trim();
+};
+export async function generateMetadata(props: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {
   const { slug } = await props.params;
-  
+
   const data = await fetchWithRetry(slug, 1);
-  
+
   if (data) {
     return {
-      title: data.category.title_header || data.category.title,
-      description: `Browse all posts in ${data.category.title}`,
+      title: getCleanTitle(data.category.title),
+     
     };
   }
 
@@ -65,10 +72,10 @@ export async function generateMetadata(props: {
   };
 }
 
-export default async function CategoryPage({ 
+export default async function CategoryPage({
   params,
-  searchParams 
-}: { 
+  searchParams
+}: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {

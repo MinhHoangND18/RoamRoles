@@ -6,7 +6,6 @@ export interface TypeModel {
 export interface CategoryModel {
   id: number;
   title: string;
-  title_header: string;
   slug: string;
   status: "active" | "inactive";
   created_at: string;
