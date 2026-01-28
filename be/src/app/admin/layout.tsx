@@ -13,8 +13,8 @@ export default function AdminLayout({
         <Suspense fallback={<div className="w-64 bg-white border-r border-slate-200 h-screen" />}>
           <Sidebar />
         </Suspense>
-        <main className="flex-1">
-            {children}
+        <main className="flex-1 relative min-h-screen">
+          {children}
         </main>
       </div>
     </div>

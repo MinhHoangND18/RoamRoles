@@ -24,6 +24,7 @@ func main() {
 	}
 	r := mux.NewRouter()
 	DB.AutoMigrate(
+		&handlers.SurveySet{},
 		&handlers.SurveyQuestion{},
 		&handlers.SurveyOption{},
 		&handlers.SurveyResponse{},
@@ -64,16 +65,21 @@ func main() {
 	r.HandleFunc("/api/categories/handle/{id:[0-9]+}", handlers.HandleCategory(DB)).Methods("POST")
 	r.HandleFunc("/api/categories/{slug}/posts", handlers.GetPostsByCategorySlug(DB)).Methods("GET")
 
-	// Public routes (for client)
-	r.HandleFunc("/api/survey/questions", handlers.GetSurveyQuestions(DB)).Methods("GET")
-	r.HandleFunc("/api/survey/responses", handlers.SubmitSurveyResponse(DB)).Methods("POST")
 
-	// Admin routes
-	r.HandleFunc("/api/admin/survey/questions", handlers.GetAllSurveyQuestions(DB)).Methods("GET")
-	r.HandleFunc("/api/admin/survey/questions", handlers.HandleSurveyQuestion(DB)).Methods("POST")
-	r.HandleFunc("/api/admin/survey/questions/{id:[0-9]+}", handlers.HandleSurveyQuestion(DB)).Methods("POST")
-	r.HandleFunc("/api/admin/survey/questions/{id:[0-9]+}", handlers.DeleteSurveyQuestion(DB)).Methods("DELETE")
-	r.HandleFunc("/api/admin/survey/statistics", handlers.GetSurveyStatistics(DB)).Methods("GET")
+	// Admin routes - Survey Sets
+	r.HandleFunc("/api/admin/survey/sets", handlers.GetAllSurveySets(DB)).Methods("GET")
+	r.HandleFunc("/api/admin/survey/sets", handlers.CreateSurveySet(DB)).Methods("POST")
+	r.HandleFunc("/api/admin/survey/sets/{id:[0-9]+}", handlers.UpdateSurveySet(DB)).Methods("PUT")
+	r.HandleFunc("/api/admin/survey/sets/{id:[0-9]+}", handlers.DeleteSurveySet(DB)).Methods("DELETE")
+
+	// Admin routes - Questions
+	r.HandleFunc("/api/admin/survey/sets/{set_id:[0-9]+}/questions", handlers.GetQuestionsBySetID(DB)).Methods("GET")
+	r.HandleFunc("/api/admin/survey/questions", handlers.CreateQuestion(DB)).Methods("POST")
+	r.HandleFunc("/api/admin/survey/questions/{id:[0-9]+}", handlers.UpdateQuestion(DB)).Methods("PUT")
+	r.HandleFunc("/api/admin/survey/questions/{id:[0-9]+}", handlers.DeleteQuestion(DB)).Methods("DELETE")
+
+	// Admin routes - Statistics
+	r.HandleFunc("/api/admin/survey/sets/{set_id:[0-9]+}/statistics", handlers.GetSurveyStatistics(DB)).Methods("GET")
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),

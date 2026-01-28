@@ -101,7 +101,7 @@ function EditPageContent() {
       toast.error("Please fill in all required fields.");
       return;
     }
-    setErrors({}); // Clear errors if validation passes
+    setErrors({}); 
 
     if (!isNewPage && originalPage) {
       const hasTitleChanged =
@@ -135,7 +135,9 @@ function EditPageContent() {
     try {
       if (isNewPage) {
         const res = await createPage(updatedPage);
+        console.log("Created page:", res);
         toast.success("Page created!");
+
         router.replace(`/pages/${res.id}`);
       } else {
         await updatePage(page.slug, updatedPage);

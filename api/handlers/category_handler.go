@@ -13,7 +13,6 @@ type CategoryModel struct {
 	ID          int64  `gorm:"primaryKey;autoIncrement" json:"id"`
 	Slug        string `gorm:"column:slug;unique;not null" json:"slug"`
 	Title       string `gorm:"column:title;not null" json:"title"`
-	TitleHeader string `gorm:"column:title_header" json:"title_header"`
 	Status      string `gorm:"column:status;type:enum('active','inactive');default:'active'" json:"status"`
 }
 
@@ -81,7 +80,11 @@ func HandleCategory(db *gorm.DB) http.HandlerFunc {
 			for {
 				var count int64
 				db.Model(&CategoryModel{}).Where("slug = ?", category.Slug).Count(&count)
-				if count == 0 {
+				var countPage int64
+				db.Model(&PageModel{}).Where("slug = ?", category.Slug).Count(&countPage)
+				var countPost int64
+				db.Model(&PostModel{}).Where("slug = ?", category.Slug).Count(&countPost)
+				if count == 0 && countPage == 0 && countPost == 0 {
 					break
 				}
 				suffix++

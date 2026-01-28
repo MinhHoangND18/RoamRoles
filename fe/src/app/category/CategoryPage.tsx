@@ -63,7 +63,6 @@ export async function generateMetadata(props: {
   if (data) {
     return {
       title: getCleanTitle(data.category.title),
-     
     };
   }
 
