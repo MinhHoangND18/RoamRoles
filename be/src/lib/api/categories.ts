@@ -25,7 +25,6 @@ export async function saveCategory(data: Category, id?: number): Promise<Categor
   const payload = {
     id: data.id,
     title: data.title,
-    title_header: data.title_header,
     slug: data.slug,
     status: data.status,
   };

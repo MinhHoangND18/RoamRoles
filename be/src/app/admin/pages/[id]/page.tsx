@@ -26,6 +26,7 @@ function EditPageContent() {
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [displayTitle, setDisplayTitle] = useState("");
+  const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
 
   const generateSlug = (title: string) => {
     return title
@@ -87,6 +88,21 @@ function EditPageContent() {
   const handleSave = async () => {
     if (!page) return;
 
+    const newErrors: { title?: string; content?: string } = {};
+    if (!displayTitle.trim()) {
+      newErrors.title = "Title is required.";
+    }
+    if (!page.content || !page.content.trim()) {
+      newErrors.content = "Content is required.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    setErrors({}); // Clear errors if validation passes
+
     if (!isNewPage && originalPage) {
       const hasTitleChanged =
         displayTitle !== extractTitleText(originalPage.title);
@@ -116,13 +132,11 @@ function EditPageContent() {
       updatedPage.title = `<span class="gb-headline-text">${displayTitle}</span>`;
     }
 
-    updatedPage.title_header = displayTitle;
-
     try {
       if (isNewPage) {
         const res = await createPage(updatedPage);
         toast.success("Page created!");
-        router.replace(`/admin/pages/${res.id}`);
+        router.replace(`/pages/${res.id}`);
       } else {
         await updatePage(page.slug, updatedPage);
         toast.success("Page updated successfully!");
@@ -185,6 +199,9 @@ function EditPageContent() {
                   className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
                   placeholder="Enter title..."
                 />
+                {errors.title && (
+                  <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                )}
               </div>
 
               <div>
@@ -285,11 +302,14 @@ function EditPageContent() {
                     }
                   />
                 </div>
+                {errors.content && (
+                  <p className="text-red-500 text-xs mt-1">{errors.content}</p>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="md:w-80 space-y-4">
+          <div className="md:w-72 lg:w-80 flex-shrink-0">
             <div className="bg-white border border-slate-200 p-5 shadow-sm sticky top-6">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center border-b pb-3 mb-4">
                 Actions

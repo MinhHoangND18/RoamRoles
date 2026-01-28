@@ -46,6 +46,8 @@ function EditPostContent() {
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [isRecommendOpen, setIsRecommendOpen] = useState(false);
   const recommendDropdownRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -141,6 +143,22 @@ function EditPostContent() {
       toast.error("Cannot save, post data is not available.");
       return;
     }
+
+    const newErrors: { title?: string; content?: string } = {};
+    if (!displayTitle.trim()) {
+      newErrors.title = "Title is required.";
+    }
+    // Ensure post.content is a string before trimming
+    if (typeof post.content !== 'string' || !post.content.trim()) {
+      newErrors.content = "Content is required.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    setErrors({}); // Clear errors if validation passes
 
     setSaving(true);
 
@@ -315,6 +333,9 @@ function EditPostContent() {
                   className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
                   placeholder="Enter Title..."
                 />
+                {errors.title && (
+                  <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                )}
               </div>
 
               <div>
@@ -446,9 +467,10 @@ function EditPostContent() {
                     }
                   />
                 </div>
+                {errors.content && (
+                  <p className="text-red-500 text-xs mt-1">{errors.content}</p>
+                )}
               </div>
-
-      
 
               <div className="mt-6">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
@@ -636,52 +658,92 @@ function EditPostContent() {
                         : "No Recommendation"}
                     </span>
                     <ChevronDown
-                      className={`w-4 h-4 transition-transform text-slate-400 ${
-                        isRecommendOpen ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 transition-transform text-slate-400 ${isRecommendOpen ? "rotate-180" : ""}`}
                     />
                   </button>
+
                   {isRecommendOpen && (
-                    <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm max-h-60 overflow-y-auto">
-                      <li
-                        onClick={() => {
-                          setPost((prev) =>
-                            prev ? { ...prev, recommend_post_id: null } : null,
-                          );
-                          setIsRecommendOpen(false);
-                        }}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
-                      >
-                        No Recommendation
-                      </li>
-                      {allPosts
-                        .filter((p) => p.id !== post.id)
-                        .map((p) => (
-                          <li
-                            key={p.id}
-                            onClick={() => {
-                              setPost((prev) =>
-                                prev
-                                  ? { ...prev, recommend_post_id: p.id }
-                                  : null,
-                              );
-                              setIsRecommendOpen(false);
-                            }}
-                            className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${
-                              post.recommend_post_id === p.id
-                                ? "bg-blue-50 text-blue-600 font-bold"
-                                : ""
-                            }`}
-                          >
-                            <div className="text-[13px] line-clamp-1">
-                              {getCleanTitle(p.title) || p.slug}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-normal">
-                              ID: {p.id} - Slug: {p.slug}
-                            </div>
+                    <div className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg z-20">
+                      <div className="p-2 border-b border-slate-100 bg-slate-50">
+                        <input
+                          type="text"
+                          placeholder="Search by title..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-none"
+                          autoFocus
+                        />
+                      </div>
+
+                      <ul className="max-h-60 overflow-y-auto py-1 font-medium text-sm">
+                        <li
+                          onClick={() => {
+                            setPost((prev) =>
+                              prev
+                                ? { ...prev, recommend_post_id: null }
+                                : null,
+                            );
+                            setIsRecommendOpen(false);
+                            setSearchTerm(""); // Reset search khi chọn
+                          }}
+                          className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 border-b border-slate-50"
+                        >
+                          No Recommendation
+                        </li>
+
+                        {allPosts
+                          .filter((p) => {
+                            const cleanTitle = getCleanTitle(
+                              p.title,
+                            ).toLowerCase();
+                            const searchLower = searchTerm.toLowerCase();
+                            return (
+                              p.id !== post.id && // Không tự gợi ý chính nó
+                              p.status === "active" && // Chỉ lấy bài active
+                              cleanTitle.includes(searchLower) // Lọc theo từ khóa tìm kiếm
+                            );
+                          })
+                          .map((p) => (
+                            <li
+                              key={p.id}
+                              onClick={() => {
+                                setPost((prev) =>
+                                  prev
+                                    ? { ...prev, recommend_post_id: p.id }
+                                    : null,
+                                );
+                                setIsRecommendOpen(false);
+                                setSearchTerm(""); // Reset search khi chọn
+                              }}
+                              className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${
+                                post.recommend_post_id === p.id
+                                  ? "bg-blue-50 text-blue-600 font-bold"
+                                  : ""
+                              }`}
+                            >
+                              <div className="text-[13px] line-clamp-1">
+                                {getCleanTitle(p.title) || p.slug}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-normal">
+                                ID: {p.id} - Slug: {p.slug}
+                              </div>
+                            </li>
+                          ))}
+
+                        {/* Hiển thị khi không tìm thấy kết quả */}
+                        {allPosts.filter(
+                          (p) =>
+                            p.status === "active" &&
+                            getCleanTitle(p.title)
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase()),
+                        ).length === 0 && (
+                          <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
+                            No posts found matching {searchTerm}
                           </li>
-                        ))}
-                    </ul>
+                        )}
+                      </ul>
+                    </div>
                   )}
                 </div>
 
