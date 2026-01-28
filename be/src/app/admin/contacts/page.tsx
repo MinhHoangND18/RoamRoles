@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import {
     Search,
     ChevronRight,
@@ -14,6 +14,26 @@ import toast, { Toaster } from "react-hot-toast";
 
 export const dynamic = "force-dynamic";
 
+function useOnClickOutside(
+    ref: React.RefObject<HTMLElement>,
+    handler: (event: MouseEvent | TouchEvent) => void,
+) {
+    useEffect(() => {
+        const listener = (event: MouseEvent | TouchEvent) => {
+            if (!ref.current || ref.current.contains(event.target as Node)) {
+                return;
+            }
+            handler(event);
+        };
+        document.addEventListener("mousedown", listener);
+        document.addEventListener("touchstart", listener);
+        return () => {
+            document.removeEventListener("mousedown", listener);
+            document.removeEventListener("touchstart", listener);
+        };
+    }, [ref, handler]);
+}
+
 function ContactsContent() {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +41,19 @@ function ContactsContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [isRowsOpen, setIsRowsOpen] = useState(false);
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [statusFilter, setStatusFilter] = useState("all status");
     const [processingId, setProcessingId] = useState<number | null>(null);
+
+    const statusDropdownRef = useRef<HTMLDivElement>(null);
+    const rowsDropdownRef = useRef<HTMLDivElement>(null);
+
+    useOnClickOutside(statusDropdownRef as React.RefObject<HTMLElement>, () =>
+        setIsStatusOpen(false),
+    );
+    useOnClickOutside(rowsDropdownRef as React.RefObject<HTMLElement>, () =>
+        setIsRowsOpen(false),
+    );
 
     const fetchContacts = async (showLoading = true) => {
         if (showLoading) setLoading(true);
@@ -59,15 +91,19 @@ function ContactsContent() {
         }
     };
 
-    const filteredContacts = contacts.filter((contact) => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-            contact.email?.toLowerCase().includes(searchLower) ||
-            contact.first_name?.toLowerCase().includes(searchLower) ||
-            contact.last_name?.toLowerCase().includes(searchLower) ||
-            contact.message?.toLowerCase().includes(searchLower)
+    const filteredContacts = contacts
+        .filter((contact) => {
+            const searchLower = searchQuery.toLowerCase();
+            return (
+                contact.email?.toLowerCase().includes(searchLower) ||
+                contact.first_name?.toLowerCase().includes(searchLower) ||
+                contact.last_name?.toLowerCase().includes(searchLower) ||
+                contact.message?.toLowerCase().includes(searchLower)
+            );
+        })
+        .filter((contact) =>
+            statusFilter === "all status" || (contact.status || "pending").toLowerCase() === statusFilter
         );
-    });
 
     const totalPages = Math.ceil(filteredContacts.length / pageSize);
     const paginatedData = filteredContacts.slice(
@@ -113,6 +149,36 @@ function ContactsContent() {
                                 }}
                                 className="w-full bg-white border border-slate-200 py-4 pl-14 pr-6 text-[15px] shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-medium"
                             />
+                        </div>
+                        <div className="relative" ref={statusDropdownRef}>
+                            <button
+                                onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                className="flex items-center justify-between gap-4 bg-white border border-slate-200 py-4 px-6 text-[15px] shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-medium w-48"
+                            >
+                                <span className="capitalize">{statusFilter}</span>
+                                <ChevronDown
+                                    className={`w-4 h-4 transition-transform ${isStatusOpen ? "rotate-180" : ""}`}
+                                />
+                            </button>
+                            {isStatusOpen && (
+                                <ul className="absolute top-full mt-2 left-0 w-full bg-white border border-slate-100 shadow-2xl py-1 z-20 font-medium text-[15px]">
+                                    {["all status", "pending", "contacted"].map(
+                                        (status) => (
+                                            <li
+                                                key={status}
+                                                onClick={() => {
+                                                    setStatusFilter(status);
+                                                    setIsStatusOpen(false);
+                                                    setCurrentPage(1);
+                                                }}
+                                                className="px-6 py-3 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 capitalize"
+                                            >
+                                                {status}
+                                            </li>
+                                        ),
+                                    )}
+                                </ul>
+                            )}
                         </div>
                     </div>
 
