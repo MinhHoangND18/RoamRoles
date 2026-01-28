@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Loader2 } from "lucide-react";
 import { API_CONFIG } from "@/constants/app-config";
 import toast, { Toaster } from 'react-hot-toast';
+
 import styles from '@/css/contact.module.css';
 
 export default function ContactPage() {
@@ -20,6 +21,8 @@ export default function ContactPage() {
       last_name: formData.get("last_name"),
       email: formData.get("email"),
       message: formData.get("message"),
+      domain: window.location.href,
+      referer: document.referrer || "",
     };
 
     if (!payload.first_name || !payload.last_name || !payload.email || !payload.message) {
@@ -49,7 +52,7 @@ export default function ContactPage() {
       toast.success("Message sent successfully!", {
         position: "top-right",
       });
-      
+
       form.reset();
     } catch (err) {
       console.error("Submit error:", err);
@@ -63,7 +66,7 @@ export default function ContactPage() {
 
   return (
     <main id="main" className="container" style={{ padding: '40px 0' }}>
-      <Toaster /> 
+      <Toaster />
 
       <div className={styles.contentWrapper}>
         <div id="post-83" className="content">

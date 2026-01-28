@@ -1,385 +1,223 @@
-'use client'
-import { useEffect, useState } from 'react'
-import {
-    Plus,
-    Edit2,
-    Trash2,
-    Loader2,
-    CheckCircle2,
-    XCircle,
-    Save,
-    X
-} from 'lucide-react'
+"use client";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { API_CONFIG } from "@/lib/api/config";
+import { SurveySet } from "@/types/survey_question";
+import { Edit, Trash2, Plus, Search, ChevronDown, Loader2 } from "lucide-react";
+import SurveySetForm from "./SurveySetForm";
+import SurveyQuestionsManager from "./SurveyQuestionsManager";
 
-import toast from 'react-hot-toast'
-import { API_CONFIG } from '@/lib/api/config'
-const API_BASE_URL = `${API_CONFIG.BASE_URL}/api/admin/survey/questions`;
-
-type Option = {
-    id?: number
-    text: string
-    order: number
+// Hook để đóng dropdown khi click ra ngoài
+function useOnClickOutside(ref: React.RefObject<HTMLElement>, handler: (event: MouseEvent | TouchEvent) => void) {
+  useEffect(() => {
+    const listener = (event: MouseEvent | TouchEvent) => {
+      if (!ref.current || ref.current.contains(event.target as Node)) return;
+      handler(event);
+    };
+    document.addEventListener("mousedown", listener);
+    document.addEventListener("touchstart", listener);
+    return () => {
+      document.removeEventListener("mousedown", listener);
+      document.removeEventListener("touchstart", listener);
+    };
+  }, [ref, handler]);
 }
 
-type Question = {
-    id: number
-    question: string
-    active: boolean
-    order: number
-    options: Option[]
-}
+export default function SurveyPage() {
+  const [sets, setSets] = useState<SurveySet[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
 
-type QuestionFormData = {
-    question: string
-    active: boolean
-    options: { text: string; order: number }[]
-}
+  const [selectedSet, setSelectedSet] = useState<SurveySet | null>(null);
+  const [showSetForm, setShowSetForm] = useState(false);
+  const [editingSet, setEditingSet] = useState<SurveySet | null>(null);
+  const [showQuestionsManager, setShowQuestionsManager] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-export default function SurveyAdminPage() {
-    const [questions, setQuestions] = useState<Question[]>([])
-    const [loading, setLoading] = useState(true)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingId, setEditingId] = useState<number | null>(null)
+  useOnClickOutside(statusDropdownRef as React.RefObject<HTMLElement>, () => setIsStatusOpen(false));
 
-    // Form State
-    const [formData, setFormData] = useState<QuestionFormData>({
-        question: '',
-        active: true,
-        options: [{ text: '', order: 1 }]
-    })
-
-    const fetchQuestions = async () => {
-        try {
-            const res = await fetch(API_BASE_URL)
-            if (!res.ok) throw new Error('Failed to fetch')
-            const data = await res.json()
-            data.sort((a: Question, b: Question) => a.order - b.order)
-            setQuestions(data)
-        } catch (error) {
-            toast.error('Failed to load questions')
-        } finally {
-            setLoading(false)
-        }
+  const loadSets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/admin/survey/sets`);
+      const data = await res.json();
+      setSets(data || []);
+    } catch (error) {
+      console.error("Failed to load survey sets", error);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    useEffect(() => {
-        fetchQuestions()
-    }, [])
+  useEffect(() => {
+    loadSets();
+  }, [loadSets]);
 
-    const handleOpenModal = (question?: Question) => {
-        if (question) {
-            setEditingId(question.id)
-            setFormData({
-                question: question.question,
-                active: question.active,
-                options: question.options.map(o => ({ text: o.text, order: o.order }))
-            })
-        } else {
-            setEditingId(null)
-            setFormData({
-                question: '',
-                active: true,
-                options: [{ text: '', order: 1 }, { text: '', order: 2 }]
-            })
-        }
-        setIsModalOpen(true)
-    }
+  // Logic lọc dữ liệu
+  const filteredSets = sets.filter((set) => {
+    const matchesSearch = set.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = selectedStatus === "" ? true : (selectedStatus === "active" ? set.active : !set.active);
+    return matchesSearch && matchesStatus;
+  });
 
-    const MIN_OPTIONS = 2
-    const MAX_OPTIONS = 5
+  const handleDeleteSet = async (id: number) => {
+    if (!confirm("Xóa bộ câu hỏi này? Tất cả câu hỏi và responses sẽ bị xóa!")) return;
+    await fetch(`${API_CONFIG.BASE_URL}/api/admin/survey/sets/${id}`, { method: "DELETE" });
+    loadSets();
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+  return (
+    <div className="min-h-screen bg-[#f8fafc] p-6 font-sans">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-10 text-left">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            Survey Management
+          </h1>
+        </header>
 
-        if (!formData.question.trim()) {
-            toast.error('Question text is required')
-            return
-        }
-        if (formData.options.length < MIN_OPTIONS) {
-            toast.error(`At least ${MIN_OPTIONS} options are required`)
-            return
-        }
-        if (formData.options.length > MAX_OPTIONS) {
-            toast.error(`Maximum ${MAX_OPTIONS} options allowed`)
-            return
-        }
-        if (formData.options.some(o => !o.text.trim())) {
-            toast.error('All options must have text')
-            return
-        }
+        {/* Thanh công cụ: Search + Filter + Button (Mẫu tương tự ảnh) */}
+        <div className="flex flex-col md:flex-row gap-4 mb-10">
+          <div className="relative flex-1">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search survey sets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-slate-200 py-4 pl-14 pr-6 text-[15px] shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-medium"
+            />
+          </div>
 
-        try {
-            const url = editingId
-                ? `${API_BASE_URL}/${editingId}`
-                : API_BASE_URL
+          <div className="relative" ref={statusDropdownRef}>
+            <button
+              onClick={() => setIsStatusOpen(!isStatusOpen)}
+              className="flex items-center justify-between w-full md:w-48 bg-white border gap-3 border-slate-200 py-4 px-5 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 transition-all"
+            >
+              <span className="text-slate-700">
+                {selectedStatus === "" ? "All Status" : selectedStatus === "active" ? "Active" : "Inactive"}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isStatusOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isStatusOpen && (
+              <ul className="absolute top-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl py-2 z-20 font-medium text-sm">
+                {["", "active", "inactive"].map((status) => (
+                  <li
+                    key={status}
+                    onClick={() => {
+                      setSelectedStatus(status);
+                      setIsStatusOpen(false);
+                    }}
+                    className="px-5 py-2.5 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 transition-colors"
+                  >
+                    {status === "" ? "All Status" : status.charAt(0).toUpperCase() + status.slice(1)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    options: formData.options.map((o, i) => ({ ...o, order: i + 1 }))
-                })
-            })
-
-            if (!res.ok) throw new Error('Failed to save')
-
-            toast.success(editingId ? 'Question updated' : 'Question created')
-            setIsModalOpen(false)
-            fetchQuestions()
-        } catch (error) {
-            toast.error('Error saving question')
-        }
-    }
-
-    const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure you want to delete this question?')) return
-
-        try {
-            const res = await fetch(`${API_BASE_URL}/${id}`, {
-                method: 'DELETE'
-            })
-            if (!res.ok) throw new Error('Failed to delete')
-
-            toast.success('Question deleted')
-            setQuestions(questions.filter(q => q.id !== id))
-        } catch (error) {
-            toast.error('Error deleting question')
-        }
-    }
-
-    const handleToggleActive = async (question: Question) => {
-        try {
-            const res = await fetch(`${API_BASE_URL}/${question.id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...question,
-                    active: !question.active
-                })
-            })
-            if (!res.ok) throw new Error('Failed to update')
-
-            setQuestions(questions.map(q =>
-                q.id === question.id ? { ...q, active: !q.active } : q
-            ))
-            toast.success(`Question ${!question.active ? 'activated' : 'deactivated'}`)
-        } catch (error) {
-            toast.error('Error updating status')
-        }
-    }
-
-    return (
-        <div className="min-h-screen bg-slate-50 p-8">
-            <div className="max-w-5xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800">Survey Management</h1>
-                        <p className="text-slate-500 mt-1">Manage questions and options for the user survey</p>
-                    </div>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Question
-                    </button>
-                </div>
-
-                {loading ? (
-                    <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    </div>
-                ) : (
-                    <div className="grid gap-6">
-                        {questions.map((q) => (
-                            <div key={q.id} className={`bg-white rounded-xl border shadow-sm transition-all ${!q.active ? 'opacity-75 bg-slate-50' : 'border-slate-200'}`}>
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">
-                                                    Order: {q.order}
-                                                </span>
-                                                {q.active ? (
-                                                    <span className="flex items-center gap-1 text-green-600 text-xs font-bold uppercase tracking-wider">
-                                                        <CheckCircle2 className="w-3 h-3" /> Active
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center gap-1 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                                        <XCircle className="w-3 h-3" /> Inactive
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className="text-lg font-semibold text-slate-800 mb-4">{q.question}</h3>
-
-                                            <div className="space-y-2">
-                                                {q.options.map((opt) => (
-                                                    <div key={opt.id} className="flex items-center gap-3 text-slate-600 bg-slate-50 px-3 py-2 rounded border border-slate-100">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                                        <span className="text-sm font-medium">{opt.text}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col gap-2">
-                                            <button
-                                                onClick={() => handleOpenModal(q)}
-                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleToggleActive(q)}
-                                                className={`p-2 rounded transition-colors ${q.active ? 'text-slate-400 hover:text-orange-600 hover:bg-orange-50' : 'text-slate-400 hover:text-green-600 hover:bg-green-50'}`}
-                                                title={q.active ? "Deactivate" : "Activate"}
-                                            >
-                                                {q.active ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(q.id)}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        {questions.length === 0 && (
-                            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500">No questions found. Create one to get started.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Modal */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                            <form onSubmit={handleSubmit}>
-                                <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                                    <h2 className="text-xl font-bold text-slate-800">
-                                        {editingId ? 'Edit Question' : 'New Question'}
-                                    </h2>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsModalOpen(false)}
-                                        className="text-slate-400 hover:text-slate-600"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
-
-                                <div className="p-6 space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">
-                                            Question Text
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.question}
-                                            onChange={e => setFormData({ ...formData, question: e.target.value })}
-                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                                            placeholder="e.g. What is your primary goal?"
-                                            autoFocus
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <label className="block text-sm font-bold text-slate-700">
-                                                Options <span className="font-normal text-slate-400">({formData.options.length}/{MAX_OPTIONS})</span>
-                                            </label>
-                                            {formData.options.length < MAX_OPTIONS && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData({
-                                                        ...formData,
-                                                        options: [...formData.options, { text: '', order: formData.options.length + 1 }]
-                                                    })}
-                                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                                                >
-                                                    <Plus className="w-3 h-3" /> Add Option
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="space-y-3">
-                                            {formData.options.map((opt, idx) => (
-                                                <div key={idx} className="flex gap-2">
-                                                    <div className="flex items-center justify-center w-8 h-10 bg-slate-100 rounded text-slate-500 text-xs font-bold">
-                                                        {idx + 1}
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        value={opt.text}
-                                                        onChange={e => {
-                                                            const newOptions = [...formData.options]
-                                                            newOptions[idx].text = e.target.value
-                                                            setFormData({ ...formData, options: newOptions })
-                                                        }}
-                                                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                                                        placeholder={`Option ${idx + 1}`}
-                                                    />
-                                                    {formData.options.length > MIN_OPTIONS && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const newOptions = formData.options.filter((_, i) => i !== idx)
-                                                                setFormData({ ...formData, options: newOptions })
-                                                            }}
-                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
-                                                            title="Remove option"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="active-check"
-                                            checked={formData.active}
-                                            onChange={e => setFormData({ ...formData, active: e.target.checked })}
-                                            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-                                        />
-                                        <label htmlFor="active-check" className="text-sm font-medium text-slate-700">
-                                            Active (visible to users)
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsModalOpen(false)}
-                                        className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-lg transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
-                                    >
-                                        <Save className="w-4 h-4" />
-                                        Save Question
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </div>
+          <button
+            onClick={() => { setEditingSet(null); setShowSetForm(true); }}
+            className="bg-blue-600 text-white font-black text-[12px] uppercase tracking-widest py-4 px-8 shadow-md hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" strokeWidth={3} />
+            New Survey Set
+          </button>
         </div>
-    )
+
+        {/* Danh sách Survey Sets */}
+        {!showQuestionsManager && (
+          <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="flex items-center justify-center p-20">
+                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                </div>
+              ) : filteredSets.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-20 text-slate-400">
+                  <p className="font-bold uppercase tracking-widest text-xs mb-2">No Survey Found</p>
+                  <p className="text-sm">Hãy thử thay đổi từ khóa tìm kiếm hoặc tạo bộ mới.</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 text-[11px] uppercase tracking-[1.5px] font-black">
+                      <th className="px-10 py-5 w-24">ID</th>
+                      <th className="px-10 py-5">Survey Name</th>
+                      <th className="px-10 py-5 text-center">Status</th>
+                      <th className="px-10 py-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredSets.map((set) => (
+                      <tr key={set.id} className="hover:bg-slate-50/80 transition-all group">
+                        <td className="px-10 py-6 font-bold text-slate-500 text-[15px]">{set.id}</td>
+                        <td className="px-10 py-6">
+                          <div className="flex flex-col">
+                            <span className="text-[16px] font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                              {set.name}
+                            </span>
+                            <span className="text-[12px] text-slate-400 font-medium">Slug: {set.slug}</span>
+                          </div>
+                        </td>
+                        <td className="px-10 py-6 text-center">
+                          <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${set.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            }`}>
+                            {set.active ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td className="px-10 py-6 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <button
+                              onClick={() => { setSelectedSet(set); setShowQuestionsManager(true); }}
+                              className="bg-slate-100 text-slate-700 font-bold py-2 px-4 text-xs hover:bg-slate-200 transition-all flex items-center gap-2"
+                            >
+                              <Edit className="w-3 h-3" /> Questions
+                            </button>
+                            <button
+                              onClick={() => { setEditingSet(set); setShowSetForm(true); }}
+                              className="p-2 text-blue-500 hover:bg-blue-50 transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSet(set.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal và Manager giữ nguyên logic cũ */}
+        {showSetForm && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+              <SurveySetForm
+                set={editingSet}
+                onSuccess={() => { setShowSetForm(false); setEditingSet(null); loadSets(); }}
+                onCancel={() => { setShowSetForm(false); setEditingSet(null); }}
+              />
+            </div>
+          </div>
+        )}
+
+        {showQuestionsManager && selectedSet && (
+          <SurveyQuestionsManager
+            set={selectedSet}
+            onBack={() => { setShowQuestionsManager(false); setSelectedSet(null); }}
+          />
+        )}
+      </div>
+    </div>
+  );
 }

@@ -1,17 +1,38 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import {
     Search,
     ChevronRight,
     ChevronLeft,
     Loader2,
     ChevronDown,
+    Check,
 } from "lucide-react";
 import { Contact } from "@/types";
-import { getContacts } from "@/lib/api/contacts";
+import { getContacts, updateContactStatus } from "@/lib/api/contacts";
 import toast, { Toaster } from "react-hot-toast";
 
 export const dynamic = "force-dynamic";
+
+function useOnClickOutside(
+    ref: React.RefObject<HTMLElement>,
+    handler: (event: MouseEvent | TouchEvent) => void,
+) {
+    useEffect(() => {
+        const listener = (event: MouseEvent | TouchEvent) => {
+            if (!ref.current || ref.current.contains(event.target as Node)) {
+                return;
+            }
+            handler(event);
+        };
+        document.addEventListener("mousedown", listener);
+        document.addEventListener("touchstart", listener);
+        return () => {
+            document.removeEventListener("mousedown", listener);
+            document.removeEventListener("touchstart", listener);
+        };
+    }, [ref, handler]);
+}
 
 function ContactsContent() {
     const [contacts, setContacts] = useState<Contact[]>([]);
@@ -20,38 +41,89 @@ function ContactsContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [isRowsOpen, setIsRowsOpen] = useState(false);
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [statusFilter, setStatusFilter] = useState("all status");
+    const [processingId, setProcessingId] = useState<number | null>(null);
+
+    const statusDropdownRef = useRef<HTMLDivElement>(null);
+    const rowsDropdownRef = useRef<HTMLDivElement>(null);
+
+    useOnClickOutside(statusDropdownRef as React.RefObject<HTMLElement>, () =>
+        setIsStatusOpen(false),
+    );
+    useOnClickOutside(rowsDropdownRef as React.RefObject<HTMLElement>, () =>
+        setIsRowsOpen(false),
+    );
+
+    const fetchContacts = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
+        try {
+            const data = await getContacts();
+            setContacts(data);
+        } catch (err) {
+            console.error("Failed to fetch contacts", err);
+            toast.error("Failed to load contacts");
+        } finally {
+            if (showLoading) setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const data = await getContacts();
-                setContacts(data);
-            } catch (err) {
-                console.error("Failed to fetch contacts", err);
-                toast.error("Failed to load contacts");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        fetchContacts();
     }, []);
 
-    const filteredContacts = contacts.filter((contact) => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-            contact.email?.toLowerCase().includes(searchLower) ||
-            contact.first_name?.toLowerCase().includes(searchLower) ||
-            contact.last_name?.toLowerCase().includes(searchLower) ||
-            contact.message?.toLowerCase().includes(searchLower)
+    const handleStatusUpdate = async (contactId: number, newStatus: "pending" | "contacted") => {
+        setProcessingId(contactId);
+        try {
+            await updateContactStatus(contactId, newStatus);
+            // Cập nhật local ngay để status hiển thị "contacted" khi ấn nút
+            setContacts((prev) =>
+                prev.map((c) => (c.id === contactId ? { ...c, status: newStatus } : c))
+            );
+            toast.success(`Status updated to ${newStatus}`);
+            await fetchContacts(false);
+        } catch (err) {
+            console.error("Failed to update status", err);
+            toast.error("Failed to update status");
+            fetchContacts(false);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const filteredContacts = contacts
+        .filter((contact) => {
+            const searchLower = searchQuery.toLowerCase();
+            return (
+                contact.email?.toLowerCase().includes(searchLower) ||
+                contact.first_name?.toLowerCase().includes(searchLower) ||
+                contact.last_name?.toLowerCase().includes(searchLower) ||
+                contact.message?.toLowerCase().includes(searchLower)
+            );
+        })
+        .filter((contact) =>
+            statusFilter === "all status" || (contact.status || "pending").toLowerCase() === statusFilter
         );
-    });
 
     const totalPages = Math.ceil(filteredContacts.length / pageSize);
     const paginatedData = filteredContacts.slice(
         (currentPage - 1) * pageSize,
         (currentPage - 1) * pageSize + pageSize
     );
+
+    // Check if contact is new (created within last 24 hours) and has gmail
+    const isNewGmailContact = (contact: Contact): boolean => {
+        if (!contact.created_at) return false;
+
+        const email = contact.email?.toLowerCase() || "";
+        if (!email.includes("gmail")) return false;
+
+        const createdAt = new Date(contact.created_at);
+        const now = new Date();
+        const diffInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+        return diffInHours < 24;
+    };
 
     return (
         <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
@@ -78,6 +150,36 @@ function ContactsContent() {
                                 className="w-full bg-white border border-slate-200 py-4 pl-14 pr-6 text-[15px] shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-medium"
                             />
                         </div>
+                        <div className="relative" ref={statusDropdownRef}>
+                            <button
+                                onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                className="flex items-center justify-between gap-4 bg-white border border-slate-200 py-4 px-6 text-[15px] shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all font-medium w-48"
+                            >
+                                <span className="capitalize">{statusFilter}</span>
+                                <ChevronDown
+                                    className={`w-4 h-4 transition-transform ${isStatusOpen ? "rotate-180" : ""}`}
+                                />
+                            </button>
+                            {isStatusOpen && (
+                                <ul className="absolute top-full mt-2 left-0 w-full bg-white border border-slate-100 shadow-2xl py-1 z-20 font-medium text-[15px]">
+                                    {["all status", "pending", "contacted"].map(
+                                        (status) => (
+                                            <li
+                                                key={status}
+                                                onClick={() => {
+                                                    setStatusFilter(status);
+                                                    setIsStatusOpen(false);
+                                                    setCurrentPage(1);
+                                                }}
+                                                className="px-6 py-3 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 capitalize"
+                                            >
+                                                {status}
+                                            </li>
+                                        ),
+                                    )}
+                                </ul>
+                            )}
+                        </div>
                     </div>
 
                     <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
@@ -96,7 +198,7 @@ function ContactsContent() {
                                             <th className="px-6 py-5 w-48">Domain</th>
                                             <th className="px-6 py-5 w-48">Referer</th>
                                             <th className="px-6 py-5">Message</th>
-                                            <th className="px-6 py-5 w-28 text-right">Status</th>
+                                            <th className="px-6 py-5 text-right w-64">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -124,26 +226,49 @@ function ContactsContent() {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-6 text-[14px] text-slate-600">
-                                                        {contact.email}
+                                                        <span>{contact.email}</span>
+                                                        <br></br>
+                                                        {isNewGmailContact(contact) && (
+                                                            <span className="ml-2 text-[10px] font-black uppercase tracking-widest text-blue-600">
+                                                                (NEW)
+                                                            </span>
+                                                        )}
                                                     </td>
-                                                    <td className="px-6 py-6 text-[14px] text-slate-600 truncate max-w-[150px]" title={contact.domain}>
+                                                    <td className="px-6 py-6 text-[14px] text-slate-600 break-all max-w-[200px]" title={contact.domain}>
                                                         {contact.domain || "-"}
                                                     </td>
-                                                    <td className="px-6 py-6 text-[14px] text-slate-600 truncate max-w-[150px]" title={contact.referer}>
+                                                    <td className="px-6 py-6 text-[14px] text-slate-600 break-all max-w-[200px]" title={contact.referer}>
                                                         {contact.referer || "-"}
                                                     </td>
                                                     <td className="px-6 py-6 text-[14px] text-slate-600 truncate max-w-xs" title={contact.message}>
                                                         {contact.message}
                                                     </td>
-                                                    <td className="px-6 py-6 text-right">
-                                                        <span
-                                                            className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${contact.status === "new"
-                                                                ? "bg-blue-100 text-blue-700"
-                                                                : "bg-green-100 text-green-700"
-                                                                }`}
-                                                        >
-                                                            {contact.status || "new"}
-                                                        </span>
+                                                    <td className="px-6 py-6 text-center">
+                                                        <div className="flex flex-col items-end gap-2">
+                                                            {(contact.status || "pending").toLowerCase() === "pending" && (
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(contact.id, "contacted")}
+                                                                    disabled={processingId === contact.id}
+                                                                    className="bg-emerald-600 text-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:bg-emerald-700 transition-all disabled:opacity-50"
+                                                                >
+                                                                    {processingId === contact.id ? (
+                                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                                    ) : (
+                                                                        <Check className="w-3 h-3" />
+                                                                    )}
+                                                                    CONTACTED
+                                                                </button>
+                                                            )}
+
+                                                            <span
+                                                                className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${(contact.status || "pending").toLowerCase() === "contacted"
+                                                                    ? "bg-green-100 text-green-700"
+                                                                    : "bg-red-100 text-red-700"
+                                                                    }`}
+                                                            >
+                                                                {(contact.status || "pending").toLowerCase()}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))

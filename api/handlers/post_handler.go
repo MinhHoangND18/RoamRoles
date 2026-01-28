@@ -190,8 +190,12 @@ func CreatePost(db *gorm.DB) http.HandlerFunc {
 		for {
 			var count int64
 			db.Model(&PostModel{}).Where("slug = ?", post.Slug).Count(&count)
-
-			if count == 0 {
+			var countPage int64
+			db.Model(&PageModel{}).Where("slug = ?", post.Slug).Count(&countPage)
+			var countCategory int64
+			db.Model(&CategoryModel{}).Where("slug = ?", post.Slug).Count(&countCategory)
+			
+			if count == 0 && countPage == 0 && countCategory == 0 {
 				break
 			}
 			suffix++
