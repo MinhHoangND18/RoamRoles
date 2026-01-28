@@ -82,7 +82,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
   if (post) {
     return {
-      title: post.title_header || post.slug.split('-').join(' ').toUpperCase(),
+      title: post.slug.split('-').join(' ').toUpperCase(),
     };
   }
 
@@ -90,8 +90,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
   if (page) {
     return {
-      title: `${page.title_header || page.title} - ${brand.name}`,
-      description: page.title || `${page.title_header} on ${brand.name}`,
+      title: `${page.title} - ${brand.name}`,
+      description: page.title || `Page on ${brand.name}`,
     };
   }
 
@@ -122,7 +122,6 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
 }
 
 function PostContent({ post }: { post: PostApiResponse }) {
-  const processedDescrip = transformContent(post.descrip || "");
   const processedTitle = transformContent(post.title || "");
   const processedExcerpt = transformContent(post.excerpt || "");
   const processedContent = transformContent(post.content || "");
@@ -135,12 +134,6 @@ function PostContent({ post }: { post: PostApiResponse }) {
         <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
           <article className="post-wrapper">
             <header className="entry-header mb-4 text-center">
-              {processedDescrip && (
-                <div
-                  className="mb-2"
-                  dangerouslySetInnerHTML={{ __html: processedDescrip }}
-                />
-              )}
               {processedTitle && (
                 <div
                   className="post-header-title"
@@ -199,8 +192,8 @@ function PageContent({ page, brand }: { page: PageModel; brand: BrandData }) {
 
   return (
     <main id="main" className="container">
-      <div 
-        id={`post-${page.id}`} 
+      <div
+        id={`post-${page.id}`}
         className={`content post-${page.id} page type-page status-publish hentry`}
       >
         <p style={{ margin: '30px' }} className="gb-headline gb-headline-ebd47fe1">
@@ -210,7 +203,7 @@ function PageContent({ page, brand }: { page: PageModel; brand: BrandData }) {
             </svg>
           </span>
           <span className="gb-headline-text">
-            {page.title_header || page.title}
+            {page.title}
           </span>
         </p>
 

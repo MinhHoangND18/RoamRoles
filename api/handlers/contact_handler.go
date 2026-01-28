@@ -5,7 +5,9 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/mssola/useragent"
 	"gorm.io/gorm"
 )
@@ -15,6 +17,8 @@ type ContactRequest struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Message   string `json:"message"`
+	Domain    string `json:"domain"`
+	Referer   string `json:"referer"`
 }
 
 type ContactModel struct {
@@ -25,7 +29,7 @@ type ContactModel struct {
 	Email     string `gorm:"column:email;type:varchar(255)" json:"email"`
 	Message   string `gorm:"column:message;type:text" json:"message"`
 
-	Status string `gorm:"column:status;type:enum('new','contacted');default:'new'" json:"status"`
+	Status string `gorm:"column:status;type:enum('pending','contacted');default:'pending'" json:"status"`
 
 	IP        string `gorm:"column:ip;type:varchar(45)" json:"ip"`
 	IPVersion string `gorm:"column:ip_version;type:enum('ipv4','ipv6')" json:"ip_version"`
@@ -36,6 +40,8 @@ type ContactModel struct {
 
 	Referer string `gorm:"column:referer;type:text" json:"referer"`
 	Domain  string `gorm:"column:domain;type:text" json:"domain"`
+
+	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 }
 
 func (ContactModel) TableName() string {
@@ -118,8 +124,14 @@ func ContactHandler(db *gorm.DB) http.HandlerFunc {
 		ua := r.Header.Get("User-Agent")
 		browser, osName, device := parseUserAgent(ua)
 
-		referer := r.Header.Get("Referer")
-		domain := r.Host
+		referer := req.Referer
+		if referer == "" {
+			referer = r.Header.Get("Referer")
+		}
+		domain := req.Domain
+		if domain == "" {
+			domain = r.Host
+		}
 
 		contact := ContactModel{
 			FirstName: req.FirstName,
@@ -127,7 +139,7 @@ func ContactHandler(db *gorm.DB) http.HandlerFunc {
 			Email:     req.Email,
 			Message:   req.Message,
 
-			Status: "new",
+			Status: "pending",
 
 			IP:        ip,
 			IPVersion: ipVersion,
@@ -163,5 +175,40 @@ func GetContacts(db *gorm.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(contacts)
+	}
+}
+
+func UpdateContactStatus(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		var contact ContactModel
+		if err := db.First(&contact, id).Error; err != nil {
+			http.Error(w, "Contact not found", http.StatusNotFound)
+			return
+		}
+
+		var req struct {
+			Status string `json:"status"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+			return
+		}
+
+		if req.Status != "pending" && req.Status != "contacted" {
+			http.Error(w, "Invalid status. Must be 'pending' or 'contacted'", http.StatusBadRequest)
+			return
+		}
+
+		contact.Status = req.Status
+		if err := db.Save(&contact).Error; err != nil {
+			http.Error(w, "Failed to update contact", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(contact)
 	}
 }

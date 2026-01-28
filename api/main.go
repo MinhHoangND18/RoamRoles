@@ -49,6 +49,7 @@ func main() {
 
 	r.HandleFunc("/api/contact", handlers.ContactHandler(DB)).Methods("POST")
 	r.HandleFunc("/api/contacts", handlers.GetContacts(DB)).Methods("GET")
+	r.HandleFunc("/api/contacts/{id:[0-9]+}/status", handlers.UpdateContactStatus(DB)).Methods("PUT")
 
 	r.HandleFunc("/api/pages/check-slug", handlers.CheckPageSlugUniqueness(DB)).Methods("GET")
 	r.HandleFunc("/api/pages", handlers.GetPages(DB)).Methods("GET")

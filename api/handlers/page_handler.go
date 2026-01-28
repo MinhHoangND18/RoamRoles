@@ -10,12 +10,11 @@ import (
 )
 
 type PageModel struct {
-	ID          int64  `gorm:"primaryKey" json:"id"`
-	Slug        string `gorm:"column:slug;unique;not null" json:"slug"`
-	Title       string `gorm:"column:title;not null" json:"title"`
-	TitleHeader string `gorm:"column:title_header" json:"title_header"`
-	Content     string `gorm:"column:content;type:longtext" json:"content"`
-	Status      string `gorm:"column:status;type:enum('active','inactive');default:'active'" json:"status"`
+	ID      int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	Slug    string `gorm:"column:slug;unique;not null" json:"slug"`
+	Title   string `gorm:"column:title;not null" json:"title"`
+	Content string `gorm:"column:content;type:longtext" json:"content"`
+	Status  string `gorm:"column:status;type:enum('active','inactive');default:'active'" json:"status"`
 }
 
 func (p PageModel) TableName() string {
@@ -65,7 +64,7 @@ func UpdatePageBySlug(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		slug := params["slug"]
-		
+
 		var payload map[string]interface{}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -102,6 +101,9 @@ func CreatePage(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
+		// Reset ID to 0 to ensure auto-increment works
+		page.ID = 0
+
 		originalSlug := page.Slug
 		suffix := 0
 		for {
@@ -114,7 +116,8 @@ func CreatePage(db *gorm.DB) http.HandlerFunc {
 			page.Slug = originalSlug + "-" + strconv.Itoa(suffix)
 		}
 
-		if err := db.Create(&page).Error; err != nil {
+		// Use Select to explicitly specify columns, excluding ID
+		if err := db.Select("Slug", "Title", "Content", "Status").Create(&page).Error; err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -1,0 +1,4 @@
+{"location":"pages/[id]/page.tsx:beforeCreate","message":"payload before createPage","data":{"slug":"test-test","isNewPage":true},"timestamp":1769574189884,"sessionId":"debug-session","runId":"run1","hypothesisId":"C,E"}
+{"data":{"id":0,"slug":"test-test","title_len":47},"hypothesisId":"A,C","location":"page_handler.go:CreatePage:afterDecode","message":"payload received","runId":"run1","sessionId":"debug-session","timestamp":1769574190202}
+{"data":{"err":"Error 1062 (23000): Duplicate entry '0' for key 'PRIMARY'","page_id":0},"hypothesisId":"A,B,D","location":"page_handler.go:CreatePage:afterCreate","message":"after db.Create","runId":"run1","sessionId":"debug-session","timestamp":1769574190214}
+{"location":"pages/[id]/page.tsx:catch","message":"createPage error","data":{"error":"Error: Failed to create page"},"timestamp":1769574190215,"sessionId":"debug-session","runId":"run1","hypothesisId":"D,E"}
