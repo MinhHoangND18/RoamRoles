@@ -26,7 +26,10 @@ function EditPageContent() {
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [displayTitle, setDisplayTitle] = useState("");
-  const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
+  const [errors, setErrors] = useState<{ title?: string; content?: string }>(
+    {},
+  );
+  const [editorReady, setEditorReady] = useState(isNewPage);
 
   const generateSlug = (title: string) => {
     return title
@@ -49,6 +52,10 @@ function EditPageContent() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setPage(null);
+      setEditorReady(isNewPage);
+
       try {
         if (isNewPage) {
           setPage({
@@ -101,7 +108,7 @@ function EditPageContent() {
       toast.error("Please fill in all required fields.");
       return;
     }
-    setErrors({}); 
+    setErrors({});
 
     if (!isNewPage && originalPage) {
       const hasTitleChanged =
@@ -110,7 +117,7 @@ function EditPageContent() {
       const hasStatusChanged = page.status !== originalPage.status;
 
       if (!hasTitleChanged && !hasContentChanged && !hasStatusChanged) {
-        toast.success("Page updated successfully!");
+        toast.success("No changes to save.");
         return;
       }
     }
@@ -135,10 +142,8 @@ function EditPageContent() {
     try {
       if (isNewPage) {
         const res = await createPage(updatedPage);
-        console.log("Created page:", res);
         toast.success("Page created!");
-
-        router.replace(`/pages/${res.id}`);
+        router.replace(`/admin/pages/${res.id}`);
       } else {
         await updatePage(page.slug, updatedPage);
         toast.success("Page updated successfully!");
@@ -151,234 +156,274 @@ function EditPageContent() {
     }
   };
 
-  if (loading) {
+  const showLoader = loading || !editorReady;
+  const loaderStyle = showLoader ? { height: "100vh", overflow: "hidden" } : {};
+
+  if (loading || !page) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#f8fafc]">
-        <div className="flex flex-col items-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+      <div className="relative" style={loaderStyle}>
+        <div className="absolute inset-0 flex justify-center items-center bg-[#f8fafc] z-50">
+          <div className="flex flex-col items-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+          </div>
         </div>
+        <div
+          className="min-h-screen bg-[#f8fafc] p-6 md:p-12"
+          style={{ visibility: "hidden" }}
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-6 md:p-12">
-      <div className=" mx-auto">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-500 mb-8 font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to post
-        </button>
+    <div className="relative" style={loaderStyle}>
+      {showLoader && (
+        <div className="absolute inset-0 flex justify-center items-center bg-[#f8fafc] z-50">
+          <div className="flex flex-col items-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+          </div>
+        </div>
+      )}
+      <div
+        className="min-h-screen bg-[#f8fafc] p-6 md:p-12"
+        style={{ visibility: showLoader ? "hidden" : "visible" }}
+      >
+        <div className=" mx-auto">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-slate-500 mb-8 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to post
+          </button>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-grow space-y-6">
-            <div className="bg-white border border-slate-200 p-8 shadow-sm space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={displayTitle}
-                  onChange={(e) => {
-                    const newTitleText = e.target.value;
-                    setDisplayTitle(newTitleText);
-                    if (isNewPage) {
-                      setPage((prev) =>
-                        prev ? { ...prev, title: newTitleText } : null,
-                      );
-                    }
-                  }}
-                  onBlur={() => {
-                    if (isNewPage) {
-                      const baseSlug = generateSlug(displayTitle);
-                      setPage((prev) =>
-                        prev ? { ...prev, slug: baseSlug } : null,
-                      );
-                    }
-                  }}
-                  className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                  placeholder="Enter title..."
-                />
-                {errors.title && (
-                  <p className="text-red-500 text-xs mt-1">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                  Slug
-                </label>
-                <input
-                  type="text"
-                  value={page?.slug || ""}
-                  readOnly
-                  className="w-full border p-3 text-[16px] shadow-sm focus:outline-none text-slate-900 bg-slate-100 border-slate-200 cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                  Content
-                </label>
-                <div className="editor-wrapper no-border-ui">
-                  <Editor
-                    apiKey="vb3rf5t71lcc6x2a1imujbsh6uea23dz7zqhe6b2q1it3q8u"
-                    value={page?.content}
-                    init={{
-                      height: 600,
-                      menubar: false,
-                      branding: false,
-                      help_accessibility: false,
-                      auto_focus: false,
-                      toolbar_mode: "wrap",
-                      plugins: [
-                        "advlist",
-                        "autolink",
-                        "lists",
-                        "link",
-                        "image",
-                        "charmap",
-                        "preview",
-                        "anchor",
-                        "searchreplace",
-                        "visualblocks",
-                        "code",
-                        "fullscreen",
-                        "insertdatetime",
-                        "media",
-                        "table",
-                        "help",
-                        "wordcount",
-                        "emoticons",
-                      ],
-                      toolbar:
-                        "undo redo | blocks fontfamily fontsize | " +
-                        "bold italic underline strikethrough | link image media table mergetags | " +
-                        "align lineheight | checklist numlist bullist indent outdent | " +
-                        "emoticons charmap | removeformat | code fullscreen preview",
-                      content_style:
-                        "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
-                      skin: "oxide",
-                      setup: (editor: TinyMCEEditor) => {
-                        editor.on("ExecCommand", (e: { command: string }) => {
-                          if (e.command === "mceCodeEditor") {
-                            let attempts = 0;
-                            const forceScrollTop = setInterval(() => {
-                              const textarea = document.querySelector(
-                                ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
-                              ) as HTMLTextAreaElement;
-
-                              if (textarea) {
-                                textarea.setSelectionRange(0, 0);
-                                textarea.scrollTop = 0;
-                                textarea.focus();
-
-                                if (textarea.scrollTop === 0 || attempts > 10) {
-                                  clearInterval(forceScrollTop);
-                                }
-                              }
-                              attempts++;
-                            }, 50); 
-                          }
-                        });
-
-                        editor.on("OpenWindow", () => {
-                          setTimeout(() => {
-                            const textarea = document.querySelector(
-                              ".tox-textarea",
-                            ) as HTMLTextAreaElement;
-                            if (textarea) {
-                              textarea.scrollTop = 0;
-                              textarea.setSelectionRange(0, 0);
-                            }
-                          }, 200);
-                        });
-                      },
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex-grow space-y-6">
+              <div className="bg-white border border-slate-200 p-8 shadow-sm space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={displayTitle}
+                    onChange={(e) => {
+                      const newTitleText = e.target.value;
+                      setDisplayTitle(newTitleText);
+                      if (isNewPage) {
+                        setPage((prev) =>
+                          prev ? { ...prev, title: newTitleText } : null,
+                        );
+                      }
                     }}
-                    onEditorChange={(content: string) =>
-                      setPage((prev) =>
-                        prev ? { ...prev, content: content } : null,
-                      )
-                    }
+                    onBlur={() => {
+                      if (isNewPage) {
+                        const baseSlug = generateSlug(displayTitle);
+                        setPage((prev) =>
+                          prev ? { ...prev, slug: baseSlug } : null,
+                        );
+                      }
+                    }}
+                    className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                    placeholder="Enter title..."
+                  />
+                  {errors.title && (
+                    <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                    Slug
+                  </label>
+                  <input
+                    type="text"
+                    value={page?.slug || ""}
+                    readOnly
+                    className="w-full border p-3 text-[16px] shadow-sm focus:outline-none text-slate-900 bg-slate-100 border-slate-200 cursor-not-allowed"
                   />
                 </div>
-                {errors.content && (
-                  <p className="text-red-500 text-xs mt-1">{errors.content}</p>
-                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                    Content
+                  </label>
+                  <div className="editor-wrapper no-border-ui">
+                    <Editor
+                      apiKey="86ftl32z3817cvzn7pacpxi90chujfeh49xkscb688s08uud"
+                      value={page?.content}
+                      onInit={() => setEditorReady(true)}
+                      init={{
+                        height: 600,
+                        menubar: false,
+                        branding: false,
+                        help_accessibility: false,
+                        toolbar_mode: "wrap",
+                        plugins: [
+                          "advlist",
+                          "autolink",
+                          "lists",
+                          "link",
+                          "image",
+                          "charmap",
+                          "preview",
+                          "anchor",
+                          "searchreplace",
+                          "visualblocks",
+                          "code",
+                          "fullscreen",
+                          "insertdatetime",
+                          "media",
+                          "table",
+                          "help",
+                          "wordcount",
+                          "emoticons",
+                        ],
+                        toolbar:
+                          "undo redo | blocks fontfamily fontsize | " +
+                          "bold italic underline strikethrough | link image media table mergetags | " +
+                          "align lineheight | checklist numlist bullist indent outdent | " +
+                          "emoticons charmap | removeformat | code fullscreen preview",
+                        content_style:
+                          "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
+                        skin: "oxide",
+                        setup: (editor: TinyMCEEditor) => {
+                          editor.on("ExecCommand",
+                            (e: { command: string }) => {
+                              if (e.command === "mceCodeEditor") {
+                                let attempts = 0;
+                                const forceScrollTop = setInterval(() => {
+                                  const textarea = document.querySelector(
+                                    ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
+                                  ) as HTMLTextAreaElement;
+
+                                  if (textarea) {
+                                    textarea.setSelectionRange(0, 0);
+                                    textarea.scrollTop = 0;
+                                    textarea.focus();
+
+                                    if (
+                                      textarea.scrollTop === 0 ||
+                                      attempts > 10
+                                    ) {
+                                      clearInterval(forceScrollTop);
+                                    }
+                                  }
+                                  attempts++;
+                                }, 50);
+                              }
+                            },
+                          );
+
+                          editor.on("OpenWindow", () => {
+                            setTimeout(() => {
+                              const textarea = document.querySelector(
+                                ".tox-textarea",
+                              ) as HTMLTextAreaElement;
+                              if (textarea) {
+                                textarea.scrollTop = 0;
+                                textarea.setSelectionRange(0, 0);
+                              }
+                            }, 200);
+                          });
+                        },
+                      }}
+                      onEditorChange={(content: string) =>
+                        setPage((prev) =>
+                          prev ? { ...prev, content: content } : null,
+                        )
+                      }
+                    />
+                  </div>
+                  {errors.content && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.content}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="md:w-72 lg:w-80 flex-shrink-0">
-            <div className="bg-white border border-slate-200 p-5 shadow-sm sticky top-6">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center border-b pb-3 mb-4">
-                Actions
-              </h3>
-              <div className="flex items-center justify-between mb-6 px-1">
-                <span className="text-sm font-bold text-slate-600">Active</span>
-                <button
-                  onClick={() =>
-                    setPage((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            status:
-                              prev.status === "active" ? "inactive" : "active",
-                          }
-                        : null,
-                    )
-                  }
-                  className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${page?.status === "active" ? "bg-green-500" : "bg-slate-300"}`}
-                >
-                  <span
-                    className={`inline-block w-4 h-4 transform bg-white rounded-full transition ${page?.status === "active" ? "translate-x-6" : "translate-x-1"}`}
-                  />
-                </button>
-              </div>
+            <div className="md:w-72 lg:w-80 flex-shrink-0">
+              <div className="bg-white border border-slate-200 p-5 shadow-sm sticky top-6">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center border-b pb-3 mb-4">
+                  Actions
+                </h3>
+                <div className="flex items-center justify-between mb-6 px-1">
+                  <span className="text-sm font-bold text-slate-600">
+                    Active
+                  </span>
+                  <button
+                    onClick={() =>
+                      setPage((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              status:
+                                prev.status === "active"
+                                  ? "inactive"
+                                  : "active",
+                            }
+                          : null,
+                      )
+                    }
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition ${
+                      page?.status === "active"
+                        ? "bg-green-500"
+                        : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition ${
+                        page?.status === "active"
+                          ? "translate-x-6"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
 
-              <div className="space-y-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold shadow-md transition disabled:opacity-50"
-                >
-                  {saving ? (
-                    <Loader2 className="animate-spin w-4 h-4" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  {saving ? "Saving..." : "Save Page"}
-                </button>
-                <button
-                  onClick={handleOverviewClick}
-                  disabled={
-                    isNewPage ||
-                    originalPage === null ||
-                    originalPage?.status !== "active" ||
-                    previewing
-                  }
-                  className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {previewing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-4 h-4" />
-                  )}
-                  {previewing ? "Opening..." : "Preview Live"}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold shadow-md transition disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <Loader2 className="animate-spin w-4 h-4" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {saving ? "Saving..." : "Save Page"}
+                  </button>
+                  <button
+                    onClick={handleOverviewClick}
+                    disabled={
+                      isNewPage ||
+                      originalPage === null ||
+                      originalPage?.status !== "active" ||
+                      previewing
+                    }
+                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {previewing ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="w-4 h-4" />
+                    )}
+                    {previewing ? "Opening..." : "Preview Live"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <style jsx global>{`
+          .no-border-ui .tox-tinymce {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 0 !important;
+          }
+        `}</style>
       </div>
-      <style jsx global>{`
-        .no-border-ui .tox-tinymce {
-          border: 1px solid #e2e8f0 !important;
-          border-radius: 0 !important;
-        }
-      `}</style>
     </div>
   );
 }

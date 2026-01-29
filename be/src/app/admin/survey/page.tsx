@@ -198,7 +198,7 @@ export default function SurveyPage() {
           </div>
         )}
 
-        {/* Modal và Manager giữ nguyên logic cũ */}
+        {/* Modal và Manager */}
         {showSetForm && (
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">

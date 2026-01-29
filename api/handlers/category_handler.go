@@ -10,10 +10,10 @@ import (
 )
 
 type CategoryModel struct {
-	ID          int64  `gorm:"primaryKey;autoIncrement" json:"id"`
-	Slug        string `gorm:"column:slug;unique;not null" json:"slug"`
-	Title       string `gorm:"column:title;not null" json:"title"`
-	Status      string `gorm:"column:status;type:enum('active','inactive');default:'active'" json:"status"`
+	ID     int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	Slug   string `gorm:"column:slug;type:varchar(255);unique;not null" json:"slug"`
+	Title  string `gorm:"column:title;not null" json:"title"`
+	Status string `gorm:"column:status;type:enum('active','inactive');default:'active'" json:"status"`
 }
 
 func (c CategoryModel) TableName() string {
@@ -57,7 +57,7 @@ func GetCategoryBySlug(db *gorm.DB) http.HandlerFunc {
 func HandleCategory(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
-		idParam := params["id"] 
+		idParam := params["id"]
 
 		var category CategoryModel
 		if err := json.NewDecoder(r.Body).Decode(&category); err != nil {

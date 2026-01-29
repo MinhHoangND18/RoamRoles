@@ -125,25 +125,24 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
   const brand = getBrandData(host);
   const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
   if (post && post.slug && post.id !== 0) {
-    return <PostContent post={post} />;
+    return <PostContent post={post} host={host} />;
   }
 
   // Try fetching Page
   const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
   if (page && page.status === 'active') {
-    return <PageContent page={page} brand={brand} />;
+    return <PageContent page={page} brand={brand} host={host} />;
   }
 
   notFound();
 }
 
 
-function PostContent({ post }: { post: PostApiResponse }) {
+function PostContent({ post, host }: { post: PostApiResponse; host: string | null }) {
   const cleanTitle = getPlainText(post.title || "");
-  const rawExcerpt = transformContent(post.excerpt || "");
-  const processedContent = transformContent(post.content || "");
-  const processedNav = transformContent(post.post_navigation || "");
-
+  const rawExcerpt = transformContent(post.excerpt || "", host);
+  const processedContent = transformContent(post.content || "", host);
+  const processedNav = transformContent(post.post_navigation || "", host);
 
   const upperExcerptMatch = rawExcerpt.match(/<h6[^>]*>[\s\S]*?<\/h6>/i);
   const upperExcerpt = upperExcerptMatch ? upperExcerptMatch[0] : "";
@@ -153,20 +152,22 @@ function PostContent({ post }: { post: PostApiResponse }) {
 
   const fallbackExcerpt = !upperExcerpt && !lowerExcerpt ? rawExcerpt : "";
 
-
   return (
     <>
-      {post.show_survey && <SurveyPopup key={post.id} />}
+      {post.survey_set_id && post.status === 'active' && (
+        <SurveyPopup
+          surveySetId={post.survey_set_id}
+          postId={post.id}
+        />
+      )}
+
       <main id="main" className="container">
         <AdScript />
-
 
         <div className="row">
           <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
             <article className="post-wrapper">
               <header className="entry-header mb-4 text-center d-flex flex-column align-items-center">
-
-                {/* EXCERPT TRÊN TITLE */}
                 {upperExcerpt && (
                   <div
                     className="upper-excerpt-wrapper mb-2 w-100"
@@ -175,16 +176,15 @@ function PostContent({ post }: { post: PostApiResponse }) {
                   />
                 )}
 
-                {/* TITLE  */}
                 {cleanTitle && (
                   <h4
                     className="w-100 text-center mb-4"
                     style={{
-                      color: '#000000DE',       
-                      fontSize: '26px',       
-                      fontFamily: "'Poppins', sans-serif", 
-                      fontWeight: 600,             
-                      lineHeight: '1.4',        
+                      color: '#000000DE',
+                      fontSize: '26px',
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 600,
+                      lineHeight: '1.4',
                       letterSpacing: '1.5px'
                     }}
                   >
@@ -192,7 +192,6 @@ function PostContent({ post }: { post: PostApiResponse }) {
                   </h4>
                 )}
 
-                {/* EXCERPT DƯỚI TITLE */}
                 {lowerExcerpt && (
                   <div
                     className="lower-excerpt-wrapper mt-3 w-100"
@@ -251,9 +250,8 @@ function PostContent({ post }: { post: PostApiResponse }) {
     </>
   );
 }
-
-function PageContent({ page, brand }: { page: PageModel; brand: Brand }) {
-  const processedContent = transformContent(page.content || "");
+function PageContent({ page, brand, host }: { page: PageModel; brand: Brand; host: string | null }) {
+  const processedContent = transformContent(page.content || "", host);
 
   return (
     <main id="main" className="container">

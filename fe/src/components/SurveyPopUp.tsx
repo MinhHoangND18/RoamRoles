@@ -1,9 +1,13 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { SurveyQuestion, SubmitSurveyRequest } from '@/types/survey-api';
-import { API_CONFIG } from '@/constants/app-config';
 
-export default function SurveyPopup() {
+interface SurveyPopupProps {
+  surveySetId: number;
+  postId: number;
+}
+
+export default function SurveyPopup({ surveySetId, postId }: SurveyPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -12,16 +16,26 @@ export default function SurveyPopup() {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = API_CONFIG.BASE_URL;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8088';
 
   useEffect(() => {
+    // Reset tất cả states khi chuyển sang post khác
+    setShowPopup(false);
+    setCurrentQuestion(0);
+    setAnswers({});
+    setIsSearching(false);
+    setShowResult(false);
+    setQuestions([]);
+    setLoading(true);
+
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/survey/questions`);
+        const response = await fetch(`${API_URL}/api/survey/sets/${surveySetId}/questions`);
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
             setQuestions(data);
+            // HIỆN NGAY LẬP TỨC - BỎ TIMEOUT
             setShowPopup(true);
           }
         }
@@ -31,8 +45,18 @@ export default function SurveyPopup() {
         setLoading(false);
       }
     };
+
     fetchQuestions();
-  }, []);
+  }, [API_URL, surveySetId, postId]); 
+
+  const getSessionId = () => {
+    let sessionId = localStorage.getItem('survey_session_id');
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('survey_session_id', sessionId);
+    }
+    return sessionId;
+  };
 
   const handleAnswer = async (value: string) => {
     const questionId = questions[currentQuestion].id;
@@ -45,19 +69,31 @@ export default function SurveyPopup() {
       } else {
         setIsSearching(true);
         try {
+          const sessionId = getSessionId();
           const submitData: SubmitSurveyRequest = {
-            session_id: `session_${Date.now()}`,
+            session_id: sessionId,
             answers: Object.entries(newAnswers).reduce((acc, [key, val]) => {
               acc[key] = val;
               return acc;
             }, {} as Record<string, string>)
           };
+
+          // Add set_id to submission
           await fetch(`${API_URL}/api/survey/responses`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(submitData)
+            body: JSON.stringify({
+              set_id: surveySetId,
+              ...submitData
+            })
           });
-        } catch (e) { console.error(e); }
+
+          // BỎ LƯU LOCALSTORAGE ĐỂ TEST - POPUP SẼ HIỆN LẠI MỖI LẦN
+          // const storageKey = `survey_submitted_${surveySetId}_${postId}`;
+          // localStorage.setItem(storageKey, 'true');
+        } catch (e) {
+          console.error(e);
+        }
 
         setTimeout(() => {
           setIsSearching(false);
@@ -67,7 +103,7 @@ export default function SurveyPopup() {
     }, 300);
   };
 
-  if (!showPopup || questions.length === 0) return null;
+  if (!showPopup || questions.length === 0 || loading) return null;
 
   const progressPercentage = ((currentQuestion + 1) / questions.length) * 100;
 
@@ -101,16 +137,15 @@ export default function SurveyPopup() {
                 <div className="spinner-grow" style={{ width: '0.9rem', height: '0.9rem', color: '#0d7a70', animationDelay: '0.6s', animationDuration: '0.75s' }} role="status"></div>
               </div>
 
-
               <style>{`
-                  @keyframes pulse-fade {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.4; }
-                  }
-                  .searching-text {
-                    animation: pulse-fade 1.5s ease-in-out infinite;
-                  }
-                `}</style>
+                @keyframes pulse-fade {
+                  0%, 100% { opacity: 1; }
+                  50% { opacity: 0.4; }
+                }
+                .searching-text {
+                  animation: pulse-fade 1.5s ease-in-out infinite;
+                }
+              `}</style>
 
               <h4 className="fw-bold searching-text" style={{ color: '#0d7a70', letterSpacing: '0.5px' }}>
                 Searching for jobs near you...

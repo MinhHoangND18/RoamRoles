@@ -10,14 +10,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// ============ MODELS ============
-
 // SurveySet - Bộ câu hỏi
 type SurveySet struct {
 	ID          int64            `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name        string           `gorm:"column:name;not null" json:"name"`
 	Description string           `gorm:"column:description" json:"description"`
-	Slug        string           `gorm:"column:slug;unique;not null" json:"slug"`
+	Slug        string           `gorm:"column:slug;type:varchar(255);unique;not null" json:"slug"`
 	Active      bool             `gorm:"column:active;default:true" json:"active"`
 	CreatedAt   time.Time        `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt   time.Time        `gorm:"column:updated_at" json:"updated_at"`
@@ -62,7 +60,7 @@ type SurveyResponse struct {
 	QuestionID int64     `gorm:"column:question_id;not null" json:"question_id"`
 	OptionID   int64     `gorm:"column:option_id;not null" json:"option_id"`
 	UserIP     string    `gorm:"column:user_ip" json:"user_ip"`
-	SessionID  string    `gorm:"column:session_id;not null" json:"session_id"`
+	SessionID  string    `gorm:"column:session_id;type:varchar(255);not null" json:"session_id"`
 	CreatedAt  time.Time `gorm:"column:created_at" json:"created_at"`
 }
 
@@ -216,11 +214,20 @@ func GetQuestionsBySetID(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-// GetActiveQuestionsBySetID
+// GetActiveQuestionsBySetID - Lấy câu hỏi active của bộ survey (CHỈ KHI survey set cũng active)
 func GetActiveQuestionsBySetID(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		setID, _ := strconv.ParseInt(params["set_id"], 10, 64)
+
+		// Kiểm tra survey set có active không
+		var surveySet SurveySet
+		if err := db.Where("id = ? AND active = ?", setID, true).First(&surveySet).Error; err != nil {
+			// Survey set không tồn tại hoặc đã inactive -> trả về mảng rỗng
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode([]SurveyQuestion{})
+			return
+		}
 
 		var questions []SurveyQuestion
 		err := db.Preload("Options", func(db *gorm.DB) *gorm.DB {
