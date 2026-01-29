@@ -58,3 +58,9 @@ export interface Contact {
   domain?: string;
   created_at?: string;
 }
+export interface ReusableBlock {
+  id: number;
+  title: string;
+  content_json: string;
+  status: "active" | "inactive";
+}

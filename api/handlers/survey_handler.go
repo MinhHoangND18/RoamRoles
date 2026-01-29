@@ -26,7 +26,7 @@ func (SurveySet) TableName() string {
 	return "survey_sets"
 }
 
-// SurveyQuestion - Câu hỏi thuộc bộ
+// SurveyQuestion
 type SurveyQuestion struct {
 	ID        int64          `gorm:"primaryKey;autoIncrement" json:"id"`
 	SetID     int64          `gorm:"column:set_id;not null" json:"set_id"`
@@ -90,9 +90,7 @@ type SubmitSurveyRequest struct {
 	Answers   map[string]interface{} `json:"answers"` // key: question_id, value: option_text
 }
 
-// ============ SURVEY SET HANDLERS ============
-
-// GetAllSurveySets - Lấy tất cả bộ câu hỏi (cho admin)
+// GetAllSurveySets
 func GetAllSurveySets(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var sets []SurveySet
@@ -106,7 +104,7 @@ func GetAllSurveySets(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-// GetActiveSurveySets - Lấy các bộ câu hỏi active (cho client)
+// GetActiveSurveySets
 func GetActiveSurveySets(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var sets []SurveySet
@@ -120,7 +118,7 @@ func GetActiveSurveySets(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-// CreateSurveySet - Tạo bộ câu hỏi mới
+// CreateSurveySet
 func CreateSurveySet(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateSetRequest
@@ -147,7 +145,7 @@ func CreateSurveySet(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-// UpdateSurveySet - Cập nhật bộ câu hỏi
+// UpdateSurveySet
 func UpdateSurveySet(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
@@ -193,7 +191,6 @@ func DeleteSurveySet(db *gorm.DB) http.HandlerFunc {
 }
 
 // GetQuestionsBySetID
-// GetQuestionsBySetID - Lấy tất cả câu hỏi của 1 bộ (cho admin)
 func GetQuestionsBySetID(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
@@ -219,6 +216,13 @@ func GetActiveQuestionsBySetID(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		setID, _ := strconv.ParseInt(params["set_id"], 10, 64)
+
+		var surveySet SurveySet
+		if err := db.Where("id = ? AND active = ?", setID, true).First(&surveySet).Error; err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode([]SurveyQuestion{})
+			return
+		}
 
 		var questions []SurveyQuestion
 		err := db.Preload("Options", func(db *gorm.DB) *gorm.DB {
