@@ -31,7 +31,7 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
 
   const removeOption = (index: number) => {
     if (options.length <= 2) {
-      alert('Phải có ít nhất 2 lựa chọn!')
+      alert('Must have at least 2 options!')
       return
     }
     setOptions(options.filter((_, i) => i !== index))
@@ -46,13 +46,13 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
   const handleSubmit = async () => {
     // Validation
     if (!questionText.trim()) {
-      alert('Vui lòng nhập câu hỏi!')
+      alert('Please enter the question!')
       return
     }
 
     const filledOptions = options.filter(opt => opt.trim())
     if (filledOptions.length < 2) {
-      alert('Phải có ít nhất 2 lựa chọn!')
+      alert('Must have at least 2 options!')
       return
     }
 
@@ -83,7 +83,7 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
         alert(`Error: ${error}`)
       }
     } catch (error) {
-      alert('Có lỗi xảy ra!')
+      alert('An error occurred!')
       console.error(error)
     } finally {
       setLoading(false)
@@ -108,12 +108,12 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
         {/* Question Text */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Câu hỏi <span className="text-red-500">*</span>
+            Question <span className="text-red-500">*</span>
           </label>
           <textarea
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
-            placeholder="Điền câu hỏi ở đây!"
+            placeholder="Enter your question here..."
             rows={3}
             className="w-full border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
@@ -123,9 +123,9 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="block text-sm font-medium text-slate-700">
-              Các lựa chọn <span className="text-red-500">*</span>
+              Options <span className="text-red-500">*</span>
               <span className="text-xs text-slate-500 ml-2">
-                (tối thiểu 2 lựa chọn)
+                (minimum 2 options)
               </span>
             </label>
             <button
@@ -143,7 +143,7 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
                 <div className="text-slate-400 cursor-move">
                   <GripVertical className="w-4 h-4" />
                 </div>
-                
+
                 <div className="flex-1 flex items-center gap-2">
                   <span className="text-sm font-medium text-slate-600 min-w-[24px]">
                     {index + 1}.
@@ -171,7 +171,7 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
           </div>
 
           <p className="text-xs text-slate-500 mt-2">
-            Thứ tự các lựa chọn sẽ được lưu theo vị trí hiện tại
+            Options will be saved in the current order
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default function QuestionForm({ setId, question, onSuccess, onCancel }: P
             className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
           />
           <label htmlFor="question-active" className="text-sm font-medium text-slate-700">
-            Active (hiển thị cho client)
+            Active (visible to clients)
           </label>
         </div>
       </div>

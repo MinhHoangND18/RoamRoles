@@ -3,6 +3,9 @@ import { useEffect, useState, useCallback, Suspense, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Editor } from "@tinymce/tinymce-react";
 import type { Editor as TinyMCEEditor } from "tinymce";
+import { SurveySet } from "@/types/survey_question";
+import { getSurveySets } from "@/lib/api/survey";
+
 import {
   Save,
   ArrowLeft,
@@ -48,6 +51,11 @@ function EditPostContent() {
   const recommendDropdownRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
+  const [editorsReadyCount, setEditorsReadyCount] = useState(0);
+  const [surveySets, setSurveySets] = useState<SurveySet[]>([]);
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const surveyDropdownRef = useRef<HTMLDivElement>(null);
+  const [surveySearchTerm, setSurveySearchTerm] = useState("");
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,10 +65,17 @@ function EditPostContent() {
       ) {
         setIsRecommendOpen(false);
       }
+      if (
+        surveyDropdownRef.current &&
+        !surveyDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSurveyOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   const [displayTitle, setDisplayTitle] = useState("");
   const getCleanTitle = (htmlTitle: string | undefined): string => {
     if (!htmlTitle) return "";
@@ -79,15 +94,17 @@ function EditPostContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesData, categoriesData, allPostsData] = await Promise.all([
+        const [typesData, categoriesData, allPostsData, surveySetsData] = await Promise.all([
           getTypes(),
           getCategories(),
           getPosts(),
+          getSurveySets(),
         ]);
 
         setTypes(typesData);
         setCategories(categoriesData);
         setAllPosts(allPostsData);
+        setSurveySets(surveySetsData || []);
 
         if (isNewPost) {
           setPost({
@@ -101,7 +118,7 @@ function EditPostContent() {
             category_id: null,
             recommend_post_id: null,
 
-            show_survey: false,
+            survey_set_id: null,
           } as Post);
           setDisplayTitle("");
           setLoading(false);
@@ -148,7 +165,6 @@ function EditPostContent() {
     if (!displayTitle.trim()) {
       newErrors.title = "Title is required.";
     }
-    // Ensure post.content is a string before trimming
     if (typeof post.content !== 'string' || !post.content.trim()) {
       newErrors.content = "Content is required.";
     }
@@ -158,7 +174,7 @@ function EditPostContent() {
       toast.error("Please fill in all required fields.");
       return;
     }
-    setErrors({}); // Clear errors if validation passes
+    setErrors({});
 
     setSaving(true);
 
@@ -196,7 +212,7 @@ function EditPostContent() {
         type_id: updatedPost.type_id,
         category_id: updatedPost.category_id,
         recommend_post_id: updatedPost.recommend_post_id,
-        show_survey: updatedPost.show_survey,
+        survey_set_id: updatedPost.survey_set_id,
       };
     } else {
       finalPayload = {
@@ -206,7 +222,7 @@ function EditPostContent() {
         status: updatedPost.status,
         category_id: updatedPost.category_id,
         recommend_post_id: updatedPost.recommend_post_id,
-        show_survey: updatedPost.show_survey,
+        survey_set_id: updatedPost.survey_set_id,
       };
     }
 
@@ -254,17 +270,26 @@ function EditPostContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-[#f8fafc]">
-        <div className="flex flex-col items-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-        </div>
-      </div>
-    );
-  }
+  const showLoader = loading || (editorsReadyCount < 2 && !isNewPost);
+  const loaderStyle = showLoader ? { height: "100vh", overflow: "hidden" } : {};
 
-  if (!post) {
+  if (loading || !post) {
+    if (loading) {
+      return (
+        <div className="relative" style={loaderStyle}>
+          <div className="absolute inset-0 flex justify-center items-center bg-[#f8fafc] z-50">
+            <div className="flex flex-col items-center">
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+            </div>
+          </div>
+          <div
+            className="min-h-screen bg-[#f8fafc] p-6 md:p-12"
+            style={{ visibility: "hidden" }}
+          />
+        </div>
+      );
+    }
+    // If not loading but post is still null, show error
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#f8fafc]">
         <div className="text-center">
@@ -285,524 +310,608 @@ function EditPostContent() {
     post.category_id === null
       ? "No Category"
       : categories.find((c) => c.id === post.category_id)?.title ||
-        "Select Category";
+      "Select Category";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-6 md:p-12">
-      <div className="max-w-full mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-all font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to list
-          </button>
+    <div className="relative" style={loaderStyle}>
+      {showLoader && (
+        <div className="absolute inset-0 flex justify-center items-center bg-[#f8fafc] z-50">
+          <div className="flex flex-col items-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+          </div>
         </div>
+      )}
+      <div
+        className="min-h-screen bg-[#f8fafc] p-6 md:p-12"
+        style={{ visibility: showLoader ? "hidden" : "visible" }}
+      >
+        <div className="max-w-full mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-all font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to list
+            </button>
+          </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-grow">
-            <div className="bg-white border border-slate-200 p-8 shadow-sm space-y-6">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1"
-                >
-                  Title
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  value={displayTitle}
-                  onChange={(e) => {
-                    const newTitleText = e.target.value;
-                    setDisplayTitle(newTitleText);
-                    if (isNewPost) {
-                      setPost((prev) =>
-                        prev ? { ...prev, title: newTitleText } : null,
-                      );
-                    }
-                  }}
-                  onBlur={() => {
-                    if (isNewPost) {
-                      const baseSlug = generateSlug(displayTitle);
-                      setPost((prev) =>
-                        prev ? { ...prev, slug: baseSlug } : null,
-                      );
-                    }
-                  }}
-                  className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                  placeholder="Enter Title..."
-                />
-                {errors.title && (
-                  <p className="text-red-500 text-xs mt-1">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="slug"
-                  className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1"
-                >
-                  Slug
-                </label>
-                <input
-                  id="slug"
-                  type="text"
-                  value={post.slug || ""}
-                  readOnly
-                  className="w-full border p-3 text-[16px] shadow-sm focus:outline-none text-slate-900 bg-slate-100 border-slate-200 cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                  Excerpt
-                </label>
-                <div className="editor-wrapper no-border-ui">
-                  {" "}
-                  <Editor
-                    apiKey="vb3rf5t71lcc6x2a1imujbsh6uea23dz7zqhe6b2q1it3q8u"
-                    value={post.excerpt}
-                    init={{
-                      height: 150,
-                      menubar: false,
-                      branding: false,
-                      plugins: ["code", "wordcount"],
-                      toolbar: "undo redo | bold italic | code",
-                      content_style:
-                        "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
-                    }}
-                    onEditorChange={(content: string) =>
-                      setPost((prev) =>
-                        prev ? { ...prev, excerpt: content } : null,
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                  Content
-                </label>
-                <div className="editor-wrapper no-border-ui">
-                  <Editor
-                    apiKey="vb3rf5t71lcc6x2a1imujbsh6uea23dz7zqhe6b2q1it3q8u"
-                    value={post.content}
-                    init={{
-                      height: 600,
-                      menubar: false,
-                      branding: false,
-                      help_accessibility: false,
-                      auto_focus: false,
-                      toolbar_mode: "wrap",
-                      plugins: [
-                        "advlist",
-                        "autolink",
-                        "lists",
-                        "link",
-                        "image",
-                        "charmap",
-                        "preview",
-                        "anchor",
-                        "searchreplace",
-                        "visualblocks",
-                        "code",
-                        "fullscreen",
-                        "insertdatetime",
-                        "media",
-                        "table",
-                        "help",
-                        "wordcount",
-                        "emoticons",
-                      ],
-                      toolbar:
-                        "undo redo | blocks fontfamily fontsize | " +
-                        "bold italic underline strikethrough | link image media table mergetags | " +
-                        "align lineheight | checklist numlist bullist indent outdent | " +
-                        "emoticons charmap | removeformat | code fullscreen preview",
-                      content_style:
-                        "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
-                      skin: "oxide",
-                      setup: (editor: TinyMCEEditor) => {
-                        editor.on("ExecCommand", (e: { command: string }) => {
-                          if (e.command === "mceCodeEditor") {
-                            let attempts = 0;
-                            const forceScrollTop = setInterval(() => {
-                              const textarea = document.querySelector(
-                                ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
-                              ) as HTMLTextAreaElement;
-
-                              if (textarea) {
-                                textarea.setSelectionRange(0, 0);
-                                textarea.scrollTop = 0;
-                                textarea.focus();
-
-                                if (textarea.scrollTop === 0 || attempts > 10) {
-                                  clearInterval(forceScrollTop);
-                                }
-                              }
-                              attempts++;
-                            }, 50);
-                          }
-                        });
-
-                        editor.on("OpenWindow", () => {
-                          setTimeout(() => {
-                            const textarea = document.querySelector(
-                              ".tox-textarea",
-                            ) as HTMLTextAreaElement;
-                            if (textarea) {
-                              textarea.scrollTop = 0;
-                              textarea.setSelectionRange(0, 0);
-                            }
-                          }, 200);
-                        });
-                      },
-                    }}
-                    onEditorChange={(content: string) =>
-                      setPost((prev) =>
-                        prev ? { ...prev, content: content } : null,
-                      )
-                    }
-                  />
-                </div>
-                {errors.content && (
-                  <p className="text-red-500 text-xs mt-1">{errors.content}</p>
-                )}
-              </div>
-
-              <div className="mt-6">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                  Thumbnail URL
-                </label>
-                <div className="flex flex-col md:flex-row gap-4">
-                  {/* Ô nhập link */}
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={post.thumbnail_url || ""}
-                      onChange={(e) =>
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex-grow">
+              <div className="bg-white border border-slate-200 p-8 shadow-sm space-y-6">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1"
+                  >
+                    Title
+                  </label>
+                  <input
+                    id="title"
+                    type="text"
+                    value={displayTitle}
+                    onChange={(e) => {
+                      const newTitleText = e.target.value;
+                      setDisplayTitle(newTitleText);
+                      if (isNewPost) {
                         setPost((prev) =>
-                          prev
-                            ? { ...prev, thumbnail_url: e.target.value }
-                            : null,
+                          prev ? { ...prev, title: newTitleText } : null,
+                        );
+                      }
+                    }}
+                    onBlur={() => {
+                      if (isNewPost) {
+                        const baseSlug = generateSlug(displayTitle);
+                        setPost((prev) =>
+                          prev ? { ...prev, slug: baseSlug } : null,
+                        );
+                      }
+                    }}
+                    className="w-full border p-3 text-[16px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                    placeholder="Enter Title..."
+                  />
+                  {errors.title && (
+                    <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="slug"
+                    className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1"
+                  >
+                    Slug
+                  </label>
+                  <input
+                    id="slug"
+                    type="text"
+                    value={post.slug || ""}
+                    readOnly
+                    className="w-full border p-3 text-[16px] shadow-sm focus:outline-none text-slate-900 bg-slate-100 border-slate-200 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                    Excerpt
+                  </label>
+                  <div className="editor-wrapper no-border-ui">
+                    {" "}
+                    <Editor
+                      apiKey="86ftl32z3817cvzn7pacpxi90chujfeh49xkscb688s08uud"
+                      value={post.excerpt}
+                      onInit={() => setEditorsReadyCount((count) => count + 1)}
+                      init={{
+                        height: 150,
+                        menubar: false,
+                        branding: false,
+                        plugins: ["code", "wordcount"],
+                        toolbar: "undo redo | bold italic | code",
+                        content_style:
+                          "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
+                      }}
+                      onEditorChange={(content: string) =>
+                        setPost((prev) =>
+                          prev ? { ...prev, excerpt: content } : null,
                         )
                       }
-                      className="w-full border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                      placeholder="e.g. 07/image-name.jpg"
                     />
-                    <p className="mt-1 text-[10px] text-slate-400 italic">
-                      Enter the corresponding path (number/abc.jpg) or absolute
-                      link.{" "}
-                    </p>
                   </div>
+                </div>
 
-                  <div className="w-full md:w-32 h-20 bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
-                    {post.thumbnail_url ? (
-                      <img
-                        src={
-                          post.thumbnail_url.startsWith("http")
-                            ? post.thumbnail_url
-                            : `/images/${post.thumbnail_url}`
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                    Content
+                  </label>
+                  <div className="editor-wrapper no-border-ui">
+                    <Editor
+                      apiKey="86ftl32z3817cvzn7pacpxi90chujfeh49xkscb688s08uud"
+                      value={post.content}
+                      onInit={() => setEditorsReadyCount((count) => count + 1)}
+                      init={{
+                        height: 600,
+                        menubar: false,
+                        branding: false,
+                        help_accessibility: false,
+                        auto_focus: false,
+                        toolbar_mode: "wrap",
+                        plugins: [
+                          "advlist",
+                          "autolink",
+                          "lists",
+                          "link",
+                          "image",
+                          "charmap",
+                          "preview",
+                          "anchor",
+                          "searchreplace",
+                          "visualblocks",
+                          "code",
+                          "fullscreen",
+                          "insertdatetime",
+                          "media",
+                          "table",
+                          "help",
+                          "wordcount",
+                          "emoticons",
+                        ],
+                        toolbar:
+                          "undo redo | blocks fontfamily fontsize | " +
+                          "bold italic underline strikethrough | link image media table mergetags | " +
+                          "align lineheight | checklist numlist bullist indent outdent | " +
+                          "emoticons charmap | removeformat | code fullscreen preview",
+                        content_style:
+                          "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
+                        skin: "oxide",
+                        setup: (editor: TinyMCEEditor) => {
+                          editor.on("ExecCommand", (e: { command: string }) => {
+                            if (e.command === "mceCodeEditor") {
+                              let attempts = 0;
+                              const forceScrollTop = setInterval(() => {
+                                const textarea = document.querySelector(
+                                  ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
+                                ) as HTMLTextAreaElement;
+
+                                if (textarea) {
+                                  textarea.setSelectionRange(0, 0);
+                                  textarea.scrollTop = 0;
+                                  textarea.focus();
+
+                                  if (textarea.scrollTop === 0 || attempts > 10) {
+                                    clearInterval(forceScrollTop);
+                                  }
+                                }
+                                attempts++;
+                              }, 50);
+                            }
+                          });
+
+                          editor.on("OpenWindow", () => {
+                            setTimeout(() => {
+                              const textarea = document.querySelector(
+                                ".tox-textarea",
+                              ) as HTMLTextAreaElement;
+                              if (textarea) {
+                                textarea.scrollTop = 0;
+                                textarea.setSelectionRange(0, 0);
+                              }
+                            }, 200);
+                          });
+                        },
+                      }}
+                      onEditorChange={(content: string) =>
+                        setPost((prev) =>
+                          prev ? { ...prev, content: content } : null,
+                        )
+                      }
+                    />
+                  </div>
+                  {errors.content && (
+                    <p className="text-red-500 text-xs mt-1">{errors.content}</p>
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                    Thumbnail URL
+                  </label>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Ô nhập link */}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={post.thumbnail_url || ""}
+                        onChange={(e) =>
+                          setPost((prev) =>
+                            prev
+                              ? { ...prev, thumbnail_url: e.target.value }
+                              : null,
+                          )
                         }
-                        alt="Thumbnail Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "https://placehold.co/100x100?text=Error";
-                        }}
+                        className="w-full border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                        placeholder="e.g. 07/image-name.jpg"
                       />
-                    ) : (
-                      <span className="text-[10px] text-slate-300">
-                        No Image
-                      </span>
-                    )}
+                      <p className="mt-1 text-[10px] text-slate-400 italic">
+                        Enter the corresponding path (number/abc.jpg) or absolute
+                        link.{" "}
+                      </p>
+                    </div>
+
+                    <div className="w-full md:w-32 h-20 bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                      {post.thumbnail_url ? (
+                        <img
+                          src={
+                            post.thumbnail_url.startsWith("http")
+                              ? post.thumbnail_url
+                              : `/images/${post.thumbnail_url}`
+                          }
+                          alt="Thumbnail Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://placehold.co/100x100?text=Error";
+                          }}
+                        />
+                      ) : (
+                        <span className="text-[10px] text-slate-300">
+                          No Image
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="md:w-72 lg:w-80 flex-shrink-0">
-            <div className="sticky top-12">
-              <div className="bg-white border border-slate-200 shadow-sm p-5 w-full space-y-4">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center border-b pb-3 mb-4">
-                  Actions
-                </h3>
+            <div className="md:w-72 lg:w-80 flex-shrink-0">
+              <div className="sticky top-12">
+                <div className="bg-white border border-slate-200 shadow-sm p-5 w-full space-y-4">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center border-b pb-3 mb-4">
+                    Actions
+                  </h3>
 
-                <div className="flex items-center justify-between px-1">
-                  <label
-                    htmlFor="status-toggle"
-                    className="text-sm font-bold text-slate-600"
-                  >
-                    Active
-                  </label>
-                  <button
-                    id="status-toggle"
-                    onClick={() =>
-                      setPost((prev) =>
-                        prev
-                          ? {
+                  <div className="flex items-center justify-between px-1">
+                    <label
+                      htmlFor="status-toggle"
+                      className="text-sm font-bold text-slate-600"
+                    >
+                      Active
+                    </label>
+                    <button
+                      id="status-toggle"
+                      onClick={() =>
+                        setPost((prev) =>
+                          prev
+                            ? {
                               ...prev,
                               status:
                                 prev.status === "active"
                                   ? "inactive"
                                   : "active",
                             }
-                          : null,
-                      )
-                    }
-                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
-                      post.status === "active" ? "bg-green-500" : "bg-slate-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
-                        post.status === "active"
+                            : null,
+                        )
+                      }
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.status === "active" ? "bg-green-500" : "bg-slate-300"
+                        }`}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${post.status === "active"
                           ? "translate-x-6"
                           : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
+                          }`}
+                      />
+                    </button>
+                  </div>
 
-                <div className="flex items-center justify-between px-1">
-                  <label
-                    htmlFor="survey-toggle"
-                    className="text-sm font-bold text-slate-600"
-                  >
-                    Show Survey
-                  </label>
-                  <button
-                    id="survey-toggle"
-                    onClick={() =>
-                      setPost((prev) =>
-                        prev
-                          ? {
+                  {/* <div className="flex items-center justify-between px-1">
+                    <label
+                      htmlFor="survey-toggle"
+                      className="text-sm font-bold text-slate-600"
+                    >
+                      Show Survey
+                    </label>
+                    <button
+                      id="survey-toggle"
+                      onClick={() =>
+                        setPost((prev) =>
+                          prev
+                            ? {
                               ...prev,
                               show_survey: !prev.show_survey,
                             }
-                          : null,
-                      )
-                    }
-                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
-                      post.show_survey ? "bg-blue-500" : "bg-slate-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
-                        post.show_survey ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
+                            : null,
+                        )
+                      }
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.show_survey ? "bg-green-500" : "bg-slate-300"
+                        }`}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${post.show_survey ? "translate-x-6" : "translate-x-1"
+                          }`}
+                      />
+                    </button>
+                  </div> */}
 
-                <div className="relative" ref={categoryDropdownRef}>
-                  <button
-                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                    className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
-                  >
-                    <span className="text-left">{selectedCategoryName}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform text-slate-400 ${
-                        isCategoryOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isCategoryOpen && (
-                    <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm">
-                      <li
-                        onClick={() => {
-                          setPost((prev) =>
-                            prev ? { ...prev, category_id: null } : null,
-                          );
-                          setIsCategoryOpen(false);
-                        }}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
-                      >
-                        No Category
-                      </li>
-                      {categories.map((category) => (
+                  <div className="relative" ref={categoryDropdownRef}>
+                    <button
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                      className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
+                    >
+                      <span className="text-left">{selectedCategoryName}</span>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform text-slate-400 ${isCategoryOpen ? "rotate-180" : ""
+                          }`}
+                      />
+                    </button>
+                    {isCategoryOpen && (
+                      <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm">
                         <li
-                          key={category.id}
                           onClick={() => {
                             setPost((prev) =>
-                              prev
-                                ? { ...prev, category_id: category.id }
-                                : null,
+                              prev ? { ...prev, category_id: null } : null,
                             );
                             setIsCategoryOpen(false);
                           }}
                           className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
                         >
-                          {category.title}
+                          No Category
                         </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                        {categories.map((category) => (
+                          <li
+                            key={category.id}
+                            onClick={() => {
+                              setPost((prev) =>
+                                prev
+                                  ? { ...prev, category_id: category.id }
+                                  : null,
+                              );
+                              setIsCategoryOpen(false);
+                            }}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
+                          >
+                            {category.title}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
-                <div className="relative" ref={recommendDropdownRef}>
-                  <button
-                    onClick={() => setIsRecommendOpen(!isRecommendOpen)}
-                    className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
-                  >
-                    <span className="text-left truncate pr-2">
-                      {post.recommend_post_id
-                        ? getCleanTitle(
+                  <div className="relative" ref={recommendDropdownRef}>
+                    <button
+                      onClick={() => setIsRecommendOpen(!isRecommendOpen)}
+                      className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
+                    >
+                      <span className="text-left truncate pr-2">
+                        {post.recommend_post_id
+                          ? getCleanTitle(
                             allPosts.find(
                               (p) => p.id === post.recommend_post_id,
                             )?.title,
                           ) || "Select Post"
-                        : "No Recommendation"}
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform text-slate-400 ${isRecommendOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
+                          : "No Recommendation"}
+                      </span>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform text-slate-400 ${isRecommendOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
 
-                  {isRecommendOpen && (
-                    <div className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg z-20">
-                      <div className="p-2 border-b border-slate-100 bg-slate-50">
-                        <input
-                          type="text"
-                          placeholder="Search by title..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-none"
-                          autoFocus
-                        />
-                      </div>
+                    {isRecommendOpen && (
+                      <div className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg z-20">
+                        <div className="p-2 border-b border-slate-100 bg-slate-50">
+                          <input
+                            type="text"
+                            placeholder="Search by title..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-none"
+                            autoFocus
+                          />
+                        </div>
 
-                      <ul className="max-h-60 overflow-y-auto py-1 font-medium text-sm">
-                        <li
-                          onClick={() => {
-                            setPost((prev) =>
-                              prev
-                                ? { ...prev, recommend_post_id: null }
-                                : null,
-                            );
-                            setIsRecommendOpen(false);
-                            setSearchTerm(""); // Reset search khi chọn
-                          }}
-                          className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 border-b border-slate-50"
-                        >
-                          No Recommendation
-                        </li>
+                        <ul className="max-h-60 overflow-y-auto py-1 font-medium text-sm">
+                          <li
+                            onClick={() => {
+                              setPost((prev) =>
+                                prev
+                                  ? { ...prev, recommend_post_id: null }
+                                  : null,
+                              );
+                              setIsRecommendOpen(false);
+                              setSearchTerm("");
+                            }}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 border-b border-slate-50"
+                          >
+                            No Recommendation
+                          </li>
 
-                        {allPosts
-                          .filter((p) => {
-                            const cleanTitle = getCleanTitle(
-                              p.title,
-                            ).toLowerCase();
-                            const searchLower = searchTerm.toLowerCase();
-                            return (
-                              p.id !== post.id && // Không tự gợi ý chính nó
-                              p.status === "active" && // Chỉ lấy bài active
-                              cleanTitle.includes(searchLower) // Lọc theo từ khóa tìm kiếm
-                            );
-                          })
-                          .map((p) => (
-                            <li
-                              key={p.id}
-                              onClick={() => {
-                                setPost((prev) =>
-                                  prev
-                                    ? { ...prev, recommend_post_id: p.id }
-                                    : null,
-                                );
-                                setIsRecommendOpen(false);
-                                setSearchTerm(""); // Reset search khi chọn
-                              }}
-                              className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${
-                                post.recommend_post_id === p.id
+                          {allPosts
+                            .filter((p) => {
+                              const cleanTitle = getCleanTitle(
+                                p.title,
+                              ).toLowerCase();
+                              const searchLower = searchTerm.toLowerCase();
+                              return (
+                                p.id !== post.id &&
+                                p.status === "active" &&
+                                cleanTitle.includes(searchLower)
+                              );
+                            })
+                            .map((p) => (
+                              <li
+                                key={p.id}
+                                onClick={() => {
+                                  setPost((prev) =>
+                                    prev
+                                      ? { ...prev, recommend_post_id: p.id }
+                                      : null,
+                                  );
+                                  setIsRecommendOpen(false);
+                                  setSearchTerm("");
+                                }}
+                                className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${post.recommend_post_id === p.id
                                   ? "bg-blue-50 text-blue-600 font-bold"
                                   : ""
-                              }`}
-                            >
-                              <div className="text-[13px] line-clamp-1">
-                                {getCleanTitle(p.title) || p.slug}
-                              </div>
-                              <div className="text-[10px] text-slate-400 font-normal">
-                                ID: {p.id} - Slug: {p.slug}
-                              </div>
-                            </li>
-                          ))}
+                                  }`}
+                              >
+                                <div className="text-[13px] line-clamp-1">
+                                  {getCleanTitle(p.title) || p.slug}
+                                </div>
+                                <div className="text-[10px] text-slate-400 font-normal">
+                                  ID: {p.id} - Slug: {p.slug}
+                                </div>
+                              </li>
+                            ))}
 
-                        {/* Hiển thị khi không tìm thấy kết quả */}
-                        {allPosts.filter(
-                          (p) =>
-                            p.status === "active" &&
-                            getCleanTitle(p.title)
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase()),
-                        ).length === 0 && (
-                          <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
-                            No posts found matching {searchTerm}
+                          {/* Hiển thị khi không tìm thấy kết quả */}
+                          {allPosts.filter(
+                            (p) =>
+                              p.status === "active" &&
+                              getCleanTitle(p.title)
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase()),
+                          ).length === 0 && (
+                              <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
+                                No posts found matching {searchTerm}
+                              </li>
+                            )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={surveyDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsSurveyOpen(!isSurveyOpen)}
+                      className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
+                    >
+                      <span className="text-left truncate pr-2">
+                        {post?.survey_set_id
+                          ? surveySets.find((s) => s.id === post.survey_set_id)?.name || "Select Survey"
+                          : "No Survey"}
+                      </span>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform text-slate-400 ${isSurveyOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isSurveyOpen && (
+                      <div className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg z-20">
+                        <div className="p-2 border-b border-slate-100 bg-slate-50">
+                          <input
+                            type="text"
+                            placeholder="Search survey set..."
+                            value={surveySearchTerm}
+                            onChange={(e) => setSurveySearchTerm(e.target.value)}
+                            className="w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                            autoFocus
+                          />
+                        </div>
+
+                        <ul className="max-h-60 overflow-y-auto py-1 font-medium text-sm">
+                          <li
+                            onClick={() => {
+                              setPost((prev) =>
+                                prev ? { ...prev, survey_set_id: null } : null
+                              );
+                              setIsSurveyOpen(false);
+                              setSurveySearchTerm("");
+                            }}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 border-b border-slate-50"
+                          >
+                            No Survey
                           </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
+
+                          {surveySets
+                            .filter((s) => {
+                              const searchLower = surveySearchTerm.toLowerCase();
+                              return (
+                                s.active && // Chỉ hiện survey active
+                                (s.name.toLowerCase().includes(searchLower) ||
+                                  s.slug.toLowerCase().includes(searchLower))
+                              );
+                            })
+                            .map((s) => (
+                              <li
+                                key={s.id}
+                                onClick={() => {
+                                  setPost((prev) =>
+                                    prev ? { ...prev, survey_set_id: s.id } : null
+                                  );
+                                  setIsSurveyOpen(false);
+                                  setSurveySearchTerm("");
+                                }}
+                                className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${post?.survey_set_id === s.id
+                                  ? "bg-blue-50 text-blue-600 font-bold"
+                                  : ""
+                                  }`}
+                              >
+                                <div className="text-[13px] line-clamp-1">{s.name}</div>
+                                <div className="text-[10px] text-slate-400 font-normal">
+                                  ID: {s.id} - Slug: {s.slug}
+                                  {s.description && ` - ${s.description}`}
+                                </div>
+                              </li>
+                            ))}
+
+                          {surveySets.filter((s) =>
+                            s.name.toLowerCase().includes(surveySearchTerm.toLowerCase())
+                          ).length === 0 && (
+                              <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
+                                No survey sets found matching {surveySearchTerm}
+                              </li>
+                            )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {saving ? "Saving..." : "Save Content"}
+                  </button>
+
+                  <button
+                    onClick={handleOverviewClick}
+                    disabled={
+                      isNewPost ||
+                      originalPost === null ||
+                      originalPost?.status !== "active" ||
+                      previewing
+                    }
+                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {previewing ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="w-4 h-4" />
+                    )}
+                    {previewing ? "Opening..." : "Preview Live"}
+                  </button>
                 </div>
-
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
-                >
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  {saving ? "Saving..." : "Save Content"}
-                </button>
-
-                <button
-                  onClick={handleOverviewClick}
-                  disabled={
-                    isNewPost ||
-                    originalPost === null ||
-                    originalPost?.status !== "active" ||
-                    previewing
-                  }
-                  className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {previewing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-4 h-4" />
-                  )}
-                  {previewing ? "Opening..." : "Preview Live"}
-                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <style jsx global>{`
+        <style jsx global>{`
         .no-border-ui .tox-tinymce {
           border: 1px solid #e2e8f0 !important;
 
           border-radius: 0 !important;
         }
       `}</style>
+      </div>
     </div>
   );
 }
 
-export default function EditPostPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center items-center min-h-screen bg-[#f8fafc]">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-        </div>
-      }
-    >
-      <EditPostContent />
-    </Suspense>
-  );
-}
+export default EditPostContent;

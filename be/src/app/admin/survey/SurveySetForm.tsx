@@ -45,7 +45,7 @@ export default function SurveySetForm({ set, onSuccess, onCancel }: Props) {
 
   const handleSubmit = async () => {
     if (!name.trim() || !slug.trim()) {
-      alert('Vui lòng nhập tên và slug!')
+      alert('Please enter name and slug!')
       return
     }
 
@@ -76,7 +76,7 @@ export default function SurveySetForm({ set, onSuccess, onCancel }: Props) {
         alert(`Error: ${error}`)
       }
     } catch (error) {
-      alert('Có lỗi xảy ra!')
+      alert('An error occurred!')
       console.error(error)
     } finally {
       setLoading(false)
@@ -100,25 +100,25 @@ export default function SurveySetForm({ set, onSuccess, onCancel }: Props) {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Tên bộ câu hỏi <span className="text-red-500">*</span>
+            Survey Set Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="VD: Nhu cầu tìm việc"
+            placeholder="E.g: Job Requirements Survey"
             className="w-full border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Mô tả
+            Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Mô tả ngắn về bộ câu hỏi này..."
+            placeholder="Brief description about this survey set..."
             rows={3}
             className="w-full border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
@@ -136,7 +136,7 @@ export default function SurveySetForm({ set, onSuccess, onCancel }: Props) {
             className="w-full border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-slate-500 mt-1">
-            URL-friendly identifier (tự động tạo từ tên)
+            URL-friendly identifier (auto-generated from name)
           </p>
         </div>
 
@@ -149,7 +149,7 @@ export default function SurveySetForm({ set, onSuccess, onCancel }: Props) {
             className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
           />
           <label htmlFor="active" className="text-sm font-medium text-slate-700">
-            Active (hiển thị cho client)
+            Active (visible to clients)
           </label>
         </div>
       </div>

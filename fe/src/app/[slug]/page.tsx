@@ -144,7 +144,6 @@ function PostContent({ post }: { post: PostApiResponse }) {
   const processedContent = transformContent(post.content || "");
   const processedNav = transformContent(post.post_navigation || "");
 
-
   const upperExcerptMatch = rawExcerpt.match(/<h6[^>]*>[\s\S]*?<\/h6>/i);
   const upperExcerpt = upperExcerptMatch ? upperExcerptMatch[0] : "";
 
@@ -153,20 +152,22 @@ function PostContent({ post }: { post: PostApiResponse }) {
 
   const fallbackExcerpt = !upperExcerpt && !lowerExcerpt ? rawExcerpt : "";
 
-
   return (
     <>
-      {post.show_survey && <SurveyPopup key={post.id} />}
+      {post.survey_set_id && (
+        <SurveyPopup
+          surveySetId={post.survey_set_id}
+          postId={post.id}
+        />
+      )}
+
       <main id="main" className="container">
         <AdScript />
-
 
         <div className="row">
           <div className="col-md-8 col-sm-12 offset-md-2" suppressHydrationWarning>
             <article className="post-wrapper">
               <header className="entry-header mb-4 text-center d-flex flex-column align-items-center">
-
-                {/* EXCERPT TRÊN TITLE */}
                 {upperExcerpt && (
                   <div
                     className="upper-excerpt-wrapper mb-2 w-100"
@@ -175,16 +176,15 @@ function PostContent({ post }: { post: PostApiResponse }) {
                   />
                 )}
 
-                {/* TITLE  */}
                 {cleanTitle && (
                   <h4
                     className="w-100 text-center mb-4"
                     style={{
-                      color: '#000000DE',       
-                      fontSize: '26px',       
-                      fontFamily: "'Poppins', sans-serif", 
-                      fontWeight: 600,             
-                      lineHeight: '1.4',        
+                      color: '#000000DE',
+                      fontSize: '26px',
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 600,
+                      lineHeight: '1.4',
                       letterSpacing: '1.5px'
                     }}
                   >
@@ -192,7 +192,6 @@ function PostContent({ post }: { post: PostApiResponse }) {
                   </h4>
                 )}
 
-                {/* EXCERPT DƯỚI TITLE */}
                 {lowerExcerpt && (
                   <div
                     className="lower-excerpt-wrapper mt-3 w-100"
@@ -251,7 +250,6 @@ function PostContent({ post }: { post: PostApiResponse }) {
     </>
   );
 }
-
 function PageContent({ page, brand }: { page: PageModel; brand: Brand }) {
   const processedContent = transformContent(page.content || "");
 

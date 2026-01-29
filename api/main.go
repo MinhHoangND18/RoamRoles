@@ -29,6 +29,7 @@ func main() {
 		&handlers.SurveyOption{},
 		&handlers.SurveyResponse{},
 		&handlers.ContactModel{},
+		&handlers.PostModel{},
 	)
 
 	r.HandleFunc("/api/posts", handlers.GetPosts(DB)).Methods("GET")
@@ -65,7 +66,6 @@ func main() {
 	r.HandleFunc("/api/categories/handle/{id:[0-9]+}", handlers.HandleCategory(DB)).Methods("POST")
 	r.HandleFunc("/api/categories/{slug}/posts", handlers.GetPostsByCategorySlug(DB)).Methods("GET")
 
-
 	// Admin routes - Survey Sets
 	r.HandleFunc("/api/admin/survey/sets", handlers.GetAllSurveySets(DB)).Methods("GET")
 	r.HandleFunc("/api/admin/survey/sets", handlers.CreateSurveySet(DB)).Methods("POST")
@@ -80,6 +80,11 @@ func main() {
 
 	// Admin routes - Statistics
 	r.HandleFunc("/api/admin/survey/sets/{set_id:[0-9]+}/statistics", handlers.GetSurveyStatistics(DB)).Methods("GET")
+
+	// Public routes - Survey Sets and Questions
+	r.HandleFunc("/api/survey/sets", handlers.GetActiveSurveySets(DB)).Methods("GET")
+	r.HandleFunc("/api/survey/sets/{set_id:[0-9]+}/questions", handlers.GetActiveQuestionsBySetID(DB)).Methods("GET") // ← THÊM DÒNG NÀY
+	r.HandleFunc("/api/survey/responses", handlers.SubmitSurveyResponse(DB)).Methods("POST")
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),

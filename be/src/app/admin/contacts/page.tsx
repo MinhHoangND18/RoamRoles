@@ -189,16 +189,16 @@ function ContactsContent() {
                                     <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                                 </div>
                             ) : (
-                                <table className="w-full text-left border-collapse table-fixed">
+                                <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 text-[11px] uppercase tracking-[1.5px] font-black">
-                                            <th className="px-6 py-5 w-16">ID</th>
+                                            <th className="px-6 py-5 w-12">ID</th>
                                             <th className="px-6 py-5 w-40">Name</th>
-                                            <th className="px-6 py-5 w-48">Email</th>
-                                            <th className="px-6 py-5 w-48">Domain</th>
-                                            <th className="px-6 py-5 w-48">Referer</th>
+                                            <th className="px-6 py-5 w-44">Email</th>
+                                            <th className="px-6 py-5 w-40">Domain</th>
+                                            <th className="px-6 py-5 w-40">Referer</th>
                                             <th className="px-6 py-5">Message</th>
-                                            <th className="px-6 py-5 text-right w-64">Status</th>
+                                            <th className="px-6 py-5 text-right w-36">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -240,7 +240,7 @@ function ContactsContent() {
                                                     <td className="px-6 py-6 text-[14px] text-slate-600 break-all max-w-[200px]" title={contact.referer}>
                                                         {contact.referer || "-"}
                                                     </td>
-                                                    <td className="px-6 py-6 text-[14px] text-slate-600 truncate max-w-xs" title={contact.message}>
+                                                    <td className="px-6 py-6 text-[14px] text-slate-600 whitespace-pre-wrap break-words min-w-[200px]">
                                                         {contact.message}
                                                     </td>
                                                     <td className="px-6 py-6 text-center">

@@ -25,7 +25,8 @@ type PostModel struct {
 	Category        *CategoryModel `json:"category"`
 	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id,omitempty"`
 	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post,omitempty"`
-	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey,omitempty"`
+	SurveySetID     *int64         `gorm:"column:survey_set_id" json:"survey_set_id,omitempty"`
+	SurveySet       *SurveySet     `gorm:"foreignKey:SurveySetID" json:"survey_set,omitempty"`
 }
 
 func (p PostModel) TableName() string {
@@ -47,7 +48,8 @@ type PostResponse struct {
 	Category        *CategoryModel `gorm:"foreignKey:CategoryID" json:"category"`
 	RecommendPostID *int64         `gorm:"column:recommend_post_id" json:"recommend_post_id,omitempty"`
 	RecommendPost   *PostModel     `gorm:"foreignKey:RecommendPostID" json:"recommend_post,omitempty"`
-	ShowSurvey      bool           `gorm:"column:show_survey" json:"show_survey,omitempty"`
+	SurveySetID     *int64         `gorm:"column:survey_set_id" json:"survey_set_id,omitempty"`
+	SurveySet       *SurveySet     `gorm:"foreignKey:SurveySetID" json:"survey_set,omitempty"`
 }
 
 type PaginationMeta struct {
@@ -81,6 +83,7 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
 				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
 			}).
+			Preload("SurveySet").
 			Where("id = ?", id)
 
 		if typeParam != "" {
@@ -115,6 +118,7 @@ func GetPosts(db *gorm.DB) http.HandlerFunc {
 			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
 				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
 			}).
+			Preload("SurveySet").
 			Find(&post).Error
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -194,7 +198,7 @@ func CreatePost(db *gorm.DB) http.HandlerFunc {
 			db.Model(&PageModel{}).Where("slug = ?", post.Slug).Count(&countPage)
 			var countCategory int64
 			db.Model(&CategoryModel{}).Where("slug = ?", post.Slug).Count(&countCategory)
-			
+
 			if count == 0 && countPage == 0 && countCategory == 0 {
 				break
 			}

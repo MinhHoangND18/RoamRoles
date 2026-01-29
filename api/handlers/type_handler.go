@@ -11,7 +11,7 @@ import (
 type TypeModel struct {
 	ID       int64  `json:"id"`
 	TypeName string `gorm:"column:type_name" json:"type_name"`
-	Slug     string `gorm:"column:slug" json:"slug"`
+	Slug     string `gorm:"column:slug;type:varchar(255)" json:"slug"`
 }
 
 func (p TypeModel) TableName() string {

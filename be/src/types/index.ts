@@ -27,7 +27,8 @@ export interface Post {
   category?: Category | null;
   recommend_post_id?: number | null;
   thumbnail_url?: string;
-  show_survey: boolean;
+  // show_survey: boolean;
+  survey_set_id?: number | null;
 
 }
 

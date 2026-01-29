@@ -62,7 +62,7 @@ export default function SurveyPage() {
   });
 
   const handleDeleteSet = async (id: number) => {
-    if (!confirm("Xóa bộ câu hỏi này? Tất cả câu hỏi và responses sẽ bị xóa!")) return;
+    if (!confirm("Delete this survey set? All questions and responses will be deleted!")) return;
     await fetch(`${API_CONFIG.BASE_URL}/api/admin/survey/sets/${id}`, { method: "DELETE" });
     loadSets();
   };
@@ -137,7 +137,7 @@ export default function SurveyPage() {
               ) : filteredSets.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-20 text-slate-400">
                   <p className="font-bold uppercase tracking-widest text-xs mb-2">No Survey Found</p>
-                  <p className="text-sm">Hãy thử thay đổi từ khóa tìm kiếm hoặc tạo bộ mới.</p>
+                  <p className="text-sm">Try changing your search keywords or create a new survey set.</p>
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse">
@@ -198,9 +198,9 @@ export default function SurveyPage() {
           </div>
         )}
 
-        {/* Modal và Manager giữ nguyên logic cũ */}
+        {/* Modal và Manager */}
         {showSetForm && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
               <SurveySetForm
                 set={editingSet}

@@ -36,7 +36,7 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
   }
 
   const handleDeleteQuestion = async (id: number) => {
-    if (!confirm('Xóa câu hỏi này? Tất cả responses liên quan sẽ bị xóa!')) return
+    if (!confirm('Delete this question? All related responses will be deleted!')) return
 
     await fetch(`${API_CONFIG.BASE_URL}/api/admin/survey/questions/${id}`, {
       method: 'DELETE'
@@ -70,7 +70,7 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
             <ArrowLeft className="w-4 h-4" />
             Back to Survey Sets
           </button>
-          
+
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">{set.name}</h2>
@@ -80,9 +80,8 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
               <div className="flex items-center gap-3 mt-2 text-sm text-slate-500">
                 <span>ID: {set.id}</span>
                 <span>Slug: {set.slug}</span>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  set.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                }`}>
+                <span className={`px-2 py-1 rounded text-xs ${set.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
                   {set.active ? 'Active' : 'Inactive'}
                 </span>
               </div>
@@ -116,8 +115,8 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
           </div>
         ) : questions.length === 0 ? (
           <div className="px-6 py-12 text-center text-slate-400">
-            <p>Chưa có câu hỏi nào</p>
-            <p className="text-sm mt-1">Nhấn Add Question để thêm câu hỏi mới</p>
+            <p>No questions yet</p>
+            <p className="text-sm mt-1">Click Add Question to add a new question</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -149,7 +148,7 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
                             )}
                           </button>
                         </div>
-                        
+
                         <div className="mt-2 space-y-1">
                           {question.options.map((option) => (
                             <div
@@ -181,7 +180,7 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                    
+
                     <button
                       onClick={() => handleDeleteQuestion(question.id)}
                       className="p-2 text-red-600 hover:bg-red-50 transition-colors"
@@ -199,7 +198,7 @@ export default function SurveyQuestionsManager({ set, onBack }: Props) {
 
       {/* Question Form Modal */}
       {showQuestionForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
             <QuestionForm
               setId={set.id}

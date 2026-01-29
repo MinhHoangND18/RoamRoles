@@ -25,7 +25,7 @@ export interface PostApiResponse {
   category_id: number | null;
   category: CategoryModel | null;
   created_at: string;
-  show_survey: boolean;
+  survey_set_id?: number | null;
 }
 
 export interface PageModel {
