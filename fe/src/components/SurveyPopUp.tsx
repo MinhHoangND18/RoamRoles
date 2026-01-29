@@ -19,6 +19,7 @@ export default function SurveyPopup({ surveySetId, postId }: SurveyPopupProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
   useEffect(() => {
+    // Reset tất cả states khi chuyển sang post khác
     setShowPopup(false);
     setCurrentQuestion(0);
     setAnswers({});
@@ -27,26 +28,15 @@ export default function SurveyPopup({ surveySetId, postId }: SurveyPopupProps) {
     setQuestions([]);
     setLoading(true);
 
-    // Check if user already submitted this survey
-    const storageKey = `survey_submitted_${surveySetId}_${postId}`;
-    const hasSubmitted = localStorage.getItem(storageKey);
-    
-    if (hasSubmitted) {
-      setLoading(false);
-      return;
-    }
-
     const fetchQuestions = async () => {
       try {
-        // Gọi API lấy questions theo survey_set_id
         const response = await fetch(`${API_URL}/api/survey/sets/${surveySetId}/questions`);
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
             setQuestions(data);
-            setTimeout(() => {
-              setShowPopup(true);
-            }, 0);
+            // HIỆN NGAY LẬP TỨC - BỎ TIMEOUT
+            setShowPopup(true);
           }
         }
       } catch (error) {
@@ -98,9 +88,9 @@ export default function SurveyPopup({ surveySetId, postId }: SurveyPopupProps) {
             })
           });
 
-          // Mark as submitted
-          const storageKey = `survey_submitted_${surveySetId}_${postId}`;
-          localStorage.setItem(storageKey, 'true');
+          // BỎ LƯU LOCALSTORAGE ĐỂ TEST - POPUP SẼ HIỆN LẠI MỖI LẦN
+          // const storageKey = `survey_submitted_${surveySetId}_${postId}`;
+          // localStorage.setItem(storageKey, 'true');
         } catch (e) {
           console.error(e);
         }
