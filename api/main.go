@@ -83,8 +83,19 @@ func main() {
 
 	// Public routes - Survey Sets and Questions
 	r.HandleFunc("/api/survey/sets", handlers.GetActiveSurveySets(DB)).Methods("GET")
-	r.HandleFunc("/api/survey/sets/{set_id:[0-9]+}/questions", handlers.GetActiveQuestionsBySetID(DB)).Methods("GET") // ← THÊM DÒNG NÀY
+	r.HandleFunc("/api/survey/sets/{set_id:[0-9]+}/questions", handlers.GetActiveQuestionsBySetID(DB)).Methods("GET")
 	r.HandleFunc("/api/survey/responses", handlers.SubmitSurveyResponse(DB)).Methods("POST")
+
+    // Reusable Blocks routes
+	r.HandleFunc("/api/reusable-blocks", handlers.GetReusableBlocks(DB)).Methods("GET")
+	r.HandleFunc("/api/reusable-blocks/{id:[0-9]+}", handlers.GetReusableBlockById(DB)).Methods("GET")
+	r.HandleFunc("/api/reusable-blocks/handle", handlers.HandleReusableBlock(DB)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/reusable-blocks/handle/{id:[0-9]+}", handlers.HandleReusableBlock(DB)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/reusable-blocks/{id:[0-9]+}", handlers.DeleteReusableBlock(DB)).Methods("DELETE")
+
+	// NOTE: Upload functionality moved to separate upload service (port 8089)
+	// See /upload directory for the upload service
+
 
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),

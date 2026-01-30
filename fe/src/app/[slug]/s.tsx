@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -15,6 +16,7 @@ import JobBoxRenderer from "@/components/JobBoxRenderer";
 import { getReusableBlockById } from "@/lib/reusable_blocks";
 import { ReusableBlock } from "@/types/ReusableBlock";
 
+
 interface ApiError {
   message: string;
   status?: number;
@@ -28,7 +30,6 @@ function isApiError(error: unknown): error is ApiError {
     'status' in error
   );
 }
-
 const fetchWithRetry = async <T,>(
   fetchFn: (slug: string) => Promise<T | null>,
   slug: string,
@@ -52,7 +53,6 @@ const fetchWithRetry = async <T,>(
   }
   return null;
 };
-
 const getCleanTitle = (htmlTitle: string | undefined): string => {
   if (!htmlTitle) return "";
   const match = htmlTitle.match(/<span class="gb-headline-text">(.*?)<\/span>/);
@@ -62,9 +62,63 @@ const getCleanTitle = (htmlTitle: string | undefined): string => {
   return htmlTitle.replace(/<[^>]*>/g, "").trim();
 };
 
+export async function generateStaticParams() {
+  try {
+    const [posts, pages] = await Promise.all([
+      fetchAllPosts(),
+      fetchAllPages()
+    ]);
+
+    const postParams = (Array.isArray(posts) && posts ? posts : [])
+      .filter((post) => post?.slug)
+      .map((post) => ({ slug: post.slug }));
+
+    const pageParams = (Array.isArray(pages) && pages ? pages : [])
+      .filter((page) => page?.slug && page?.status === 'active')
+      .map((page) => ({ slug: page.slug }));
+
+    return [...postParams, ...pageParams];
+  } catch (error) {
+    console.error('generateStaticParams error:', error);
+    return [];
+  }
+}
+
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const { slug } = await props.params;
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const brand = getBrandData(host);
+
+  // Try Post first
+  const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
+  if (post) {
+    return {
+      title: getCleanTitle(post.title),
+    };
+  }
+
+  // Try Page
+  const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
+  if (page) {
+    return {
+      title: getCleanTitle(page.title),
+
+    };
+  }
+
+  return {
+    title: `Not Found - ${brand.name}`,
+  };
+}
+const getPlainText = (html: string): string => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, "").trim();
+
+
+};
 async function ContentParser({ htmlContent }: { htmlContent: string }) {
   const regex = /\[block id="(\d+)"\]/g;
-
   interface TextPart {
     type: "text";
     content: string;
@@ -84,17 +138,16 @@ async function ContentParser({ htmlContent }: { htmlContent: string }) {
   while ((match = regex.exec(htmlContent)) !== null) {
     if (match.index > lastIndex) {
       parts.push({
-        type: "text",
-        content: htmlContent.substring(lastIndex, match.index),
+        type: 'text',
+        content: htmlContent.substring(lastIndex, match.index)
       });
     }
 
     const blockId = parseInt(match[1]);
     try {
       const blockData = await getReusableBlockById(blockId);
-      parts.push({ type: "block", data: blockData });
+      parts.push({ type: 'block', data: blockData });
     } catch (e) {
-      console.error(`Failed to load block with id: ${blockId}`, e);
     }
 
     lastIndex = regex.lastIndex;
@@ -102,8 +155,8 @@ async function ContentParser({ htmlContent }: { htmlContent: string }) {
 
   if (lastIndex < htmlContent.length) {
     parts.push({
-      type: "text",
-      content: htmlContent.substring(lastIndex),
+      type: 'text',
+      content: htmlContent.substring(lastIndex)
     });
   }
 
@@ -124,71 +177,32 @@ async function ContentParser({ htmlContent }: { htmlContent: string }) {
   );
 }
 
-export async function generateStaticParams() {
-  try {
-    const [posts, pages] = await Promise.all([
-      fetchAllPosts(),
-      fetchAllPages()
-    ]);
-
-    const postParams = (Array.isArray(posts) && posts ? posts : [])
-      .filter((post) => post?.slug)
-      .map((post) => ({ slug: post.slug }));
-
-    const pageParams = (Array.isArray(pages) && pages ? pages : [])
-      .filter((page) => page?.slug && page?.status === 'active')
-      .map((page) => ({ slug: page.slug }));
-
-    return [...postParams, ...pageParams];
-  } catch (error) {
-    return [];
-  }
-}
-
-export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
-  const { slug } = await props.params;
-  const headerList = await headers();
-  const host = headerList.get("host");
-  const brand = getBrandData(host);
-
-  const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
-  if (post) return { title: getCleanTitle(post.title) };
-
-  const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
-  if (page) return { title: getCleanTitle(page.title) };
-
-  return { title: `Not Found - ${brand.name}` };
-}
-
-const getPlainText = (html: string): string => {
-  if (!html) return "";
-  return html.replace(/<[^>]*>/g, "").trim();
-};
 
 export default async function DynamicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const headerList = await headers();
   const host = headerList.get("host");
   const brand = getBrandData(host);
-
   const post = await fetchWithRetry<PostApiResponse>(fetchPostBySlug, slug, 'post');
   if (post && post.slug && post.id !== 0) {
-    return <PostContent post={post} host={host} />;
+    return <PostContent post={post} />;
   }
 
+  // Try fetching Page
   const page = await fetchWithRetry<PageModel>(fetchPageBySlug, slug, 'page');
   if (page && page.status === 'active') {
-    return <PageContent page={page} brand={brand} host={host} />;
+    return <PageContent page={page} brand={brand} />;
   }
 
   notFound();
 }
 
-function PostContent({ post, host }: { post: PostApiResponse; host: string | null }) {
+
+function PostContent({ post }: { post: PostApiResponse }) {
   const cleanTitle = getPlainText(post.title || "");
-  const rawExcerpt = transformContent(post.excerpt || "", host);
-  const processedContent = transformContent(post.content || "", host);
-  const processedNav = transformContent(post.post_navigation || "", host);
+  const rawExcerpt = transformContent(post.excerpt || "");
+  const processedContent = transformContent(post.content || "");
+  const processedNav = transformContent(post.post_navigation || "");
 
   const upperExcerptMatch = rawExcerpt.match(/<h6[^>]*>[\s\S]*?<\/h6>/i);
   const upperExcerpt = upperExcerptMatch ? upperExcerptMatch[0] : "";
@@ -206,8 +220,10 @@ function PostContent({ post, host }: { post: PostApiResponse; host: string | nul
           postId={post.id}
         />
       )}
+
       <main id="main" className="container">
         <AdScript />
+
         <div className="row">
           <div className="col-md-8 col-sm-12 offset-md-2">
             <article className="post-wrapper">
@@ -243,25 +259,35 @@ function PostContent({ post, host }: { post: PostApiResponse; host: string | nul
                     dangerouslySetInnerHTML={{ __html: lowerExcerpt || "" }}
                   />
                 )}
-
                 {fallbackExcerpt && (
                   <div
                     className="mt-3"
                     dangerouslySetInnerHTML={{ __html: fallbackExcerpt || "" }}
                   />
                 )}
-
                 <div className="advertisement" style={{ marginBottom: "15px" }}>
-                  <p style={{ fontSize: "10px", textAlign: "center", marginBottom: "5px" }}>
+                  <p style={{
+                    fontSize: "10px",
+                    textAlign: "center",
+                    marginBottom: "5px"
+                  }}>
                     Advertisement
                   </p>
-                  <div className="ad-place" data-ad-sizes="responsive" data-fluid="false" data-fit-size="true" data-ad-mode="adsense"></div>
+                  <div
+                    className="ad-place"
+                    se="__element"
+                    data-ad-sizes="responsive"
+                    data-fluid="false"
+                    data-fit-size="true"
+                    data-ad-mode="adsense"
+                  ></div>
                 </div>
               </header>
 
-              <div className="entry-content mt-5">
-                <ContentParser htmlContent={processedContent} />
-              </div>
+              <div
+                className="entry-content mt-5"
+                dangerouslySetInnerHTML={{ __html: processedContent }}
+              />
             </article>
             <RecommendedPost postId={post.id} />
 
@@ -284,13 +310,15 @@ function PostContent({ post, host }: { post: PostApiResponse; host: string | nul
     </>
   );
 }
-
-function PageContent({ page, brand, host }: { page: PageModel; brand: Brand; host: string | null }) {
-  const processedContent = transformContent(page.content || "", host);
+function PageContent({ page }: { page: PageModel; brand: Brand }) {
+  const processedContent = transformContent(page.content || "");
 
   return (
     <main id="main" className="container">
-      <div id={`post-${page.id}`} className={`content post-${page.id} page type-page status-publish hentry`}>
+      <div
+        id={`post-${page.id}`}
+        className={`content post-${page.id} page type-page status-publish hentry`}
+      >
         <p style={{ margin: '30px' }} className="gb-headline gb-headline-ebd47fe1">
           <span className="gb-icon">
             <svg viewBox="0 0 36.7 3" xmlns="http://www.w3.org/2000/svg">

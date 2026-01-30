@@ -12,9 +12,16 @@ import {
   Loader2,
   ExternalLink,
   ChevronDown,
+  Copy,
+  Plus,
+  Box,
+  Search,
+  Eye,
+  X,
+  Pencil,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { Post, Type, Category } from "@/types";
+import { Post, Type, Category, ReusableBlock } from "@/types";
 import { getCategories } from "@/lib/api/categories";
 import {
   getTypes,
@@ -24,6 +31,12 @@ import {
   createPost,
   updatePost,
 } from "@/lib/api/posts";
+import {
+  getReusableBlockById,
+  getReusableBlocks,
+  createOrUpdateReusableBlock
+} from "@/lib/api/reusable_blocks";
+import JobBoxRenderer from "@/components/JobBoxRenderer";
 import { APP_CONFIG } from "@/lib/api/config";
 
 interface ApiError {
@@ -51,14 +64,48 @@ function EditPostContent() {
   const recommendDropdownRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
+
   const [editorsReadyCount, setEditorsReadyCount] = useState(0);
   const [surveySets, setSurveySets] = useState<SurveySet[]>([]);
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
   const surveyDropdownRef = useRef<HTMLDivElement>(null);
   const [surveySearchTerm, setSurveySearchTerm] = useState("");
+  const [reusableBlocks, setReusableBlocks] = useState<ReusableBlock[]>([]);
+  const [isBlockDropdownOpen, setIsBlockDropdownOpen] = useState(false);
+  const [blockSearchTerm, setBlockSearchTerm] = useState("");
+  const blockDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [blockForEditing, setBlockForEditing] = useState<
+    number | "new" | null
+  >(null);
+
+  const loadReusableBlocks = useCallback(async () => {
+    try {
+      const data = await getReusableBlocks();
+      setReusableBlocks(data);
+    } catch (error) {
+      toast.error("Failed to refresh blocks");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadReusableBlocks();
+  }, [loadReusableBlocks]);
+
+  useEffect(() => {
+    getReusableBlocks()
+      .then(setReusableBlocks)
+      .catch(() => toast.error("Failed to load blocks"));
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryOpen(false);
+      }
       if (
         recommendDropdownRef.current &&
         !recommendDropdownRef.current.contains(event.target as Node)
@@ -70,6 +117,12 @@ function EditPostContent() {
         !surveyDropdownRef.current.contains(event.target as Node)
       ) {
         setIsSurveyOpen(false);
+      }
+      if (
+        blockDropdownRef.current &&
+        !blockDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsBlockDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -117,7 +170,6 @@ function EditPostContent() {
             type_id: 1,
             category_id: null,
             recommend_post_id: null,
-
             survey_set_id: null,
           } as Post);
           setDisplayTitle("");
@@ -562,6 +614,7 @@ function EditPostContent() {
               </div>
             </div>
 
+            {/*ACTION */}
             <div className="md:w-72 lg:w-80 flex-shrink-0">
               <div className="sticky top-12">
                 <div className="bg-white border border-slate-200 shadow-sm p-5 w-full space-y-4">
@@ -867,6 +920,107 @@ function EditPostContent() {
                   </div>
 
 
+                  {/* REUSABLE BLOCKS */}
+                 <div className="relative" ref={blockDropdownRef}>
+                    <button
+                      onClick={() =>
+                        setIsBlockDropdownOpen(!isBlockDropdownOpen)
+                      }
+                      className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
+                    >
+                      <div className="text-left truncate pr-2">
+                        <span>ShortCode Blocks</span>
+                      </div>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform text-slate-400 ${isBlockDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isBlockDropdownOpen && (
+                      <div className="absolute top-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 border-b border-slate-100 bg-slate-50">
+                          <div className="relative">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                            <input
+                              type="text"
+                              placeholder="Find block..."
+                              value={blockSearchTerm}
+                              onChange={(e) =>
+                                setBlockSearchTerm(e.target.value)
+                              }
+                              className="w-full pl-7 pr-2 py-1.5 text-xs border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                            />
+                          </div>
+                        </div>
+
+                        <ul className="max-h-60 overflow-y-auto py-1">
+                          {reusableBlocks
+                            .filter((b) =>
+                              b.title
+                                .toLowerCase()
+                                .includes(blockSearchTerm.toLowerCase()),
+                            )
+                            .map((block) => (
+                              <li
+                                key={block.id}
+                                className="px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-blue-50 group transition-colors"
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="text-[13px] font-bold text-slate-700 line-clamp-1">
+                                    {block.title}
+                                  </span>
+
+                                  <div className="flex items-center">
+                                    <button
+                                      onClick={() => setBlockForEditing(block.id)}
+                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                      title="Edit Block"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(
+                                          `[block id="${block.id}"]`,
+                                        );
+                                        toast.success("Copied!");
+                                      }}
+                                      className="ml-1 text-slate-300 hover:text-blue-600 p-1 transition-colors"
+                                      title="Copy Shortcode"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="text-[10px] font-mono text-slate-400 group-hover:text-blue-400 transition-colors">
+                                  [block id= {block.id}]
+                                </div>
+                              </li>
+                            ))}
+
+                          {reusableBlocks.length === 0 && (
+                            <li className="p-4 text-center text-xs text-slate-400 italic">
+                              No blocks found
+                            </li>
+                          )}
+                        </ul>
+
+                        {/* Nút tạo mới */}
+                        <div className="p-2 border-t border-slate-100">
+                          <button
+                            onClick={() => setBlockForEditing("new")}
+                            className="w-full py-2 bg-slate-50 border border-dashed border-slate-300 text-slate-500 text-[11px] font-bold hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center gap-2 transition-all"
+                          >
+                            <Plus className="w-3 h-3" /> Create New
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+
+
                   <button
                     onClick={handleSave}
                     disabled={saving}
@@ -902,13 +1056,287 @@ function EditPostContent() {
             </div>
           </div>
         </div>
+        {blockForEditing !== null && (
+          <QuickEditBlockPopup
+            blockId={blockForEditing === "new" ? undefined : blockForEditing}
+            onClose={() => setBlockForEditing(null)}
+            onSuccess={() => {
+              loadReusableBlocks();
+              setBlockForEditing(null);
+            }}
+          />
+        )}
         <style jsx global>{`
-        .no-border-ui .tox-tinymce {
-          border: 1px solid #e2e8f0 !important;
+          .no-border-ui .tox-tinymce {
+            border: 1px solid #e2e8f0 !important;
 
-          border-radius: 0 !important;
-        }
-      `}</style>
+            border-radius: 0 !important;
+          }
+          .reusable-block-scope .row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+          }
+          .reusable-block-scope .col-lg-5,
+          .reusable-block-scope .col-md-5 {
+            position: relative !important;
+            width: 100% !important;
+            flex: 0 0 41.666667% !important;
+            max-width: 41.666667% !important;
+          }
+          .reusable-block-scope .col-lg-7,
+          .reusable-block-scope .col-md-7 {
+            flex: 0 0 58.333333% !important;
+            max-width: 58.333333% !important;
+          }
+          /* Cố định ảnh không bị to quá mức */
+          .reusable-block-scope img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+}
+function QuickEditBlockPopup({
+  blockId,
+  onClose,
+  onSuccess,
+}: {
+  blockId?: number;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const isNewBlock = !blockId;
+  const [loading, setLoading] = useState(!isNewBlock);
+  const [saving, setSaving] = useState(false);
+  const [content, setContent] = useState({
+    heading: "",
+    company_name: "",
+    badge_text: "",
+    description: "",
+    image_url: "",
+    button_text: "",
+    button_url: "",
+    footer_text: "",
+  });
+
+  useEffect(() => {
+    if (blockId) {
+      setLoading(true);
+      getReusableBlockById(blockId)
+        .then((data) => {
+          if (data.content_json) setContent(JSON.parse(data.content_json));
+          setLoading(false);
+        })
+        .catch(() => {
+          toast.error("Failed to load block data.");
+          setLoading(false);
+        });
+    }
+  }, [blockId]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload: ReusableBlock = {
+        id: blockId || 0,
+        title: content.company_name || "Untitled Block",
+        content_json: JSON.stringify(content),
+        status: "active",
+      };
+
+      await createOrUpdateReusableBlock(payload);
+      toast.success(
+        isNewBlock
+          ? "Block created successfully!"
+          : "Block updated successfully!",
+      );
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error(
+        isNewBlock ? "Failed to create block" : "Failed to save block",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed  inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md">
+      <div className="bg-white w-full max-w-7xl h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-200 rounded-none">
+        {/* Header */}
+        <div className="p-4 border-b flex justify-between items-center bg-white border-gray-300">
+          <div className="flex items-center gap-2">
+            {isNewBlock ? (
+              <Plus className="w-4 h-4 text-blue-500" />
+            ) : (
+              <Pencil className="w-4 h-4 text-blue-500" />
+            )}
+            <span className="font-bold text-slate-700">
+              {isNewBlock
+                ? "Create New Reusable Block"
+                : `Quick Edit: ${content.company_name}`}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-slate-100 rounded-full"
+          >
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+            <div className="p-4 grid grid-cols-4 gap-3 bg-slate-50/50 border-b border-gray-300">
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Heading
+                </label>
+                <input
+                  value={content.heading}
+                  onChange={(e) =>
+                    setContent({ ...content, heading: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Company Name (for Title)
+                </label>
+                <input
+                  value={content.company_name}
+                  onChange={(e) =>
+                    setContent({ ...content, company_name: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Logo URL
+                </label>
+                <input
+                  value={content.image_url}
+                  onChange={(e) =>
+                    setContent({ ...content, image_url: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Badge
+                </label>
+                <input
+                  value={content.badge_text}
+                  onChange={(e) =>
+                    setContent({ ...content, badge_text: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Description
+                </label>
+                <textarea
+                  value={content.description}
+                  onChange={(e) =>
+                    setContent({ ...content, description: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none resize"
+                  rows={1}
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Button Text
+                </label>
+                <input
+                  value={content.button_text}
+                  onChange={(e) =>
+                    setContent({ ...content, button_text: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Button URL
+                </label>
+                <input
+                  value={content.button_url}
+                  onChange={(e) =>
+                    setContent({ ...content, button_url: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                  Footer Text
+                </label>
+                <input
+                  value={content.footer_text}
+                  onChange={(e) =>
+                    setContent({ ...content, footer_text: e.target.value })
+                  }
+                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-0 p-10 bg-[#f8fafc] flex items-center justify-center">
+              <div className="w-full max-w-4xl bg-white shadow-sm border border-slate-100">
+                <JobBoxRenderer
+                  block={
+                    {
+                      id: blockId,
+                      title: content.company_name,
+                      status: "active",
+                      content_json: JSON.stringify(content),
+                    } as ReusableBlock
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t flex justify-end items-center bg-white border-gray-300">
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2 text-sm font-bold text-slate-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 rounded-none"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {saving
+                    ? "SAVING..."
+                    : isNewBlock
+                      ? "CREATE BLOCK"
+                      : "SAVE CHANGES"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
