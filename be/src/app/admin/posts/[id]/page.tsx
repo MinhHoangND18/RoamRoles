@@ -36,6 +36,7 @@ import {
   getReusableBlocks,
   createOrUpdateReusableBlock
 } from "@/lib/api/reusable_blocks";
+import { processThumbnailUrl, isExternalUrl } from "@/lib/api/upload";
 import JobBoxRenderer from "@/components/JobBoxRenderer";
 import { APP_CONFIG } from "@/lib/api/config";
 
@@ -253,6 +254,20 @@ function EditPostContent() {
 
     let finalPayload: Partial<Post>;
 
+    // Process thumbnail URL - download external images to local server
+    let processedThumbnailUrl = updatedPost.thumbnail_url || '';
+    if (processedThumbnailUrl && isExternalUrl(processedThumbnailUrl)) {
+      toast.loading('Downloading external image...', { id: 'download-image' });
+      try {
+        processedThumbnailUrl = await processThumbnailUrl(processedThumbnailUrl);
+        toast.success('Image downloaded successfully!', { id: 'download-image' });
+        // Update the local state
+        setPost((prev) => prev ? { ...prev, thumbnail_url: processedThumbnailUrl } : null);
+      } catch {
+        toast.error('Failed to download image, using original URL', { id: 'download-image' });
+      }
+    }
+
     if (isNewPost) {
       finalPayload = {
         title: updatedPost.title,
@@ -265,6 +280,7 @@ function EditPostContent() {
         category_id: updatedPost.category_id,
         recommend_post_id: updatedPost.recommend_post_id,
         survey_set_id: updatedPost.survey_set_id,
+        thumbnail_url: processedThumbnailUrl,
       };
     } else {
       finalPayload = {
@@ -275,6 +291,7 @@ function EditPostContent() {
         category_id: updatedPost.category_id,
         recommend_post_id: updatedPost.recommend_post_id,
         survey_set_id: updatedPost.survey_set_id,
+        thumbnail_url: processedThumbnailUrl,
       };
     }
 
@@ -921,7 +938,7 @@ function EditPostContent() {
 
 
                   {/* REUSABLE BLOCKS */}
-                 <div className="relative" ref={blockDropdownRef}>
+                  <div className="relative" ref={blockDropdownRef}>
                     <button
                       onClick={() =>
                         setIsBlockDropdownOpen(!isBlockDropdownOpen)
