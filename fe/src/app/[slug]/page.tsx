@@ -207,7 +207,7 @@ function PostContent({ post, host }: { post: PostApiResponse; host: string | nul
         />
       )}
       <main id="main" className="container">
-        <AdScript />
+        <AdScript key={post.id} />
         <div className="row">
           <div className="col-md-8 col-sm-12 offset-md-2">
             <article className="post-wrapper">
@@ -251,11 +251,22 @@ function PostContent({ post, host }: { post: PostApiResponse; host: string | nul
                   />
                 )}
 
-                <div className="advertisement" style={{ marginBottom: "15px" }}>
-                  <p style={{ fontSize: "10px", textAlign: "center", marginBottom: "5px" }}>
+                <div className="advertisement" style={{ marginBottom: "15px", width: "100%", textAlign: "center"}}>
+                  <p style={{
+                    fontSize: "10px",
+                    textAlign: "center",
+                    marginBottom: "5px"
+                  }}>
                     Advertisement
                   </p>
-                  <div className="ad-place" data-ad-sizes="responsive" data-fluid="false" data-fit-size="true" data-ad-mode="adsense"></div>
+                  <div
+                    className="ad-place"
+                    se="__element"
+                    data-ad-sizes="responsive"
+                    data-fluid="false"
+                    data-fit-size="true"
+                    data-ad-mode="adsense"
+                  ></div>
                 </div>
               </header>
 

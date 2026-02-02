@@ -1,7 +1,7 @@
 
 export const brands = {
   "jobzesty.com": {
-    name: "Job Zesty",
+    name: "JobZesty",
     url: "https://jobzesty.com",
   },
   "jobsmatch4u.com": {

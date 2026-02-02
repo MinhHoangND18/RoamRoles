@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Post, Type, Category, ReusableBlock } from "@/types";
+import { processThumbnailUrl, isExternalUrl } from "@/lib/api/upload";
 import { getCategories } from "@/lib/api/categories";
 import {
   getTypes,
@@ -171,6 +172,7 @@ function EditPostContent() {
             category_id: null,
             recommend_post_id: null,
             survey_set_id: null,
+            thumbnail_url: "",
           } as Post);
           setDisplayTitle("");
           setLoading(false);
@@ -252,6 +254,18 @@ function EditPostContent() {
     }
 
     let finalPayload: Partial<Post>;
+    let processedThumbnailUrl = updatedPost.thumbnail_url || '';
+    if (processedThumbnailUrl && isExternalUrl(processedThumbnailUrl)) {
+      toast.loading('Downloading external image...', { id: 'download-image' });
+      try {
+        processedThumbnailUrl = await processThumbnailUrl(processedThumbnailUrl);
+        toast.success('Image downloaded successfully!', { id: 'download-image' });
+        // Update the local state
+        setPost((prev) => prev ? { ...prev, thumbnail_url: processedThumbnailUrl } : null);
+      } catch {
+        toast.error('Failed to download image, using original URL', { id: 'download-image' });
+      }
+    }
 
     if (isNewPost) {
       finalPayload = {
@@ -265,6 +279,7 @@ function EditPostContent() {
         category_id: updatedPost.category_id,
         recommend_post_id: updatedPost.recommend_post_id,
         survey_set_id: updatedPost.survey_set_id,
+        thumbnail_url: processedThumbnailUrl,
       };
     } else {
       finalPayload = {
@@ -275,6 +290,7 @@ function EditPostContent() {
         category_id: updatedPost.category_id,
         recommend_post_id: updatedPost.recommend_post_id,
         survey_set_id: updatedPost.survey_set_id,
+        thumbnail_url: processedThumbnailUrl,
       };
     }
 
@@ -594,7 +610,7 @@ function EditPostContent() {
                           src={
                             post.thumbnail_url.startsWith("http")
                               ? post.thumbnail_url
-                              : `/images/${post.thumbnail_url}`
+                              : `${APP_CONFIG.FRONTEND_URL}${post.thumbnail_url}`
                           }
                           alt="Thumbnail Preview"
                           className="w-full h-full object-cover"
@@ -921,7 +937,7 @@ function EditPostContent() {
 
 
                   {/* REUSABLE BLOCKS */}
-                 <div className="relative" ref={blockDropdownRef}>
+                  <div className="relative" ref={blockDropdownRef}>
                     <button
                       onClick={() =>
                         setIsBlockDropdownOpen(!isBlockDropdownOpen)

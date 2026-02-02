@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -65,6 +68,47 @@ type CategoryPostsResponse struct {
 	Category   CategoryModel  `json:"category"`
 	Posts      []PostModel    `json:"posts"`
 	Pagination PaginationMeta `json:"pagination"`
+}
+
+// Helper: Gọi sang Upload Service để tải ảnh về
+func processThumbnailWithService(thumbnailURL string) string {
+	// 1. Nếu URL rỗng hoặc đã là link nội bộ (chứa domain của mình hoặc đường dẫn tương đối) thì bỏ qua
+	// Bạn có thể thay "jobzestry.com" bằng domain thực tế hoặc check biến môi trường
+	if thumbnailURL == "" || strings.Contains(thumbnailURL, "/uploads/") {
+		return thumbnailURL
+	}
+
+	// 2. Cấu hình request gửi sang Upload Service
+	// Giả sử Upload Service chạy ở localhost:8089 trên cùng server
+	uploadServiceURL := "http://127.0.0.1:8089/api/upload/from-url"
+	
+	requestBody, _ := json.Marshal(map[string]string{
+		"url": thumbnailURL,  
+	})
+
+	resp, err := http.Post(uploadServiceURL, "application/json", bytes.NewBuffer(requestBody))
+	if err != nil {
+		fmt.Printf("Error calling upload service: %v\n", err)
+		return thumbnailURL // Lỗi thì giữ nguyên link cũ
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Upload service returned status: %d\n", resp.StatusCode)
+		return thumbnailURL
+	}
+
+	// 3. Parse kết quả trả về (Giả sử service trả về {"url": "..."} hoặc {"file_path": "..."})
+	var result map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return thumbnailURL
+	}
+
+	// Ưu tiên lấy key "url" hoặc "file_path" tùy theo code của service upload
+	if newURL, ok := result["url"]; ok && newURL != "" {
+		return newURL
+	}
+	return thumbnailURL
 }
 
 func GetPostById(db *gorm.DB) http.HandlerFunc {
@@ -158,6 +202,11 @@ func UpdatePostById(db *gorm.DB) http.HandlerFunc {
 			query = query.Where("type_id = ?", typeID)
 		}
 
+		// Xử lý ảnh nếu có thay đổi thumbnail
+		if url, ok := payload["thumbnail_url"].(string); ok {
+			payload["thumbnail_url"] = processThumbnailWithService(url)
+		}
+
 		result := query.Updates(payload)
 		if result.Error != nil {
 			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
@@ -188,6 +237,9 @@ func CreatePost(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		// Xử lý download ảnh từ link ngoại
+		post.ThumbnailURL = processThumbnailWithService(post.ThumbnailURL)
 
 		originalSlug := post.Slug
 		suffix := 0

@@ -2,7 +2,7 @@
  * Get display-friendly domain name from host
  * Examples: 
  *   "localhost:3000" -> "localhost"
- *   "jobzesty.com" -> "Job Zesty"
+ *   "jobzesty.com" -> "JobZesty"
  *   "example-site.com" -> "Example Site"
  */
 export const getDomainDisplayName = (host: string | null): string => {
@@ -27,21 +27,26 @@ export const getDomainDisplayName = (host: string | null): string => {
     word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
   );
 
-  // Handle camelCase in single words (e.g., "jobzesty" -> "Job Zesty")
+  // Handle brand names in single words (e.g., "jobzesty" -> "JobZesty")
   if (words.length === 1 && words[0].length > 4) {
     // Try to split camelCase-like patterns
     const splitWord = words[0].replace(/([a-z])([A-Z])/g, '$1 $2');
     if (splitWord !== words[0]) {
       return splitWord;
     }
-    // Try common word boundaries
-    const commonSplits = words[0]
-      .replace(/(job|zesty|roam|roles|work|hire|career)/gi, '$1 ')
-      .trim();
-    if (commonSplits !== words[0]) {
-      return commonSplits.split(' ').map(w =>
-        w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-      ).join(' ').trim();
+    // Capitalize brand name components without adding spaces
+    const brandName = words[0]
+      .replace(/(job)(zesty)/gi, 'Job$2')
+      .replace(/(job)(s?)(match)/gi, 'Job$2Match')
+      .replace(/^(.)/, (match) => match.toUpperCase());
+
+    // Apply title case to each recognized word component
+    const capitalized = brandName
+      .replace(/\b(zesty|match|work|hire|career)(\d*)/gi,
+        (match, word, num) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() + num);
+
+    if (capitalized !== words[0]) {
+      return capitalized;
     }
   }
 
