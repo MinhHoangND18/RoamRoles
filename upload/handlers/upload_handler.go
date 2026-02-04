@@ -132,8 +132,8 @@ func UploadFile(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
-		// 1. Parse Multipart Form (Max 10MB)
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
+		// 1. Parse Multipart Form (Max 15MB)
+		if err := r.ParseMultipartForm(15 << 20); err != nil {
 			log.Printf("[UPLOAD ERROR] File too big or invalid form: %v", err)
 			http.Error(w, "File too big", http.StatusBadRequest)
 			return

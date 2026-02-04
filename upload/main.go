@@ -5,10 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"upload-service/config"
 	"upload-service/handlers"
+
+	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 	// API Endpoint
 	r.HandleFunc("/api/upload/from-url", handlers.UploadFromURL(cfg)).Methods("POST")
 	r.HandleFunc("/api/upload/file", handlers.UploadFile(cfg)).Methods("POST")
-	
+
 	// Serve uploaded files
 	// Example: GET /uploads/image-abc123.jpg
 	fileServer := http.FileServer(http.Dir(cfg.UploadDir))
@@ -32,15 +33,11 @@ func main() {
 
 	// 3. CORS
 	c := cors.New(cors.Options{
-        AllowedOrigins: []string{
-            "http://localhost:3001", 
-            "https://jobzesty.com", 
-            "https://upload.jobzesty.com",
-        },
-        AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-        AllowedHeaders:   []string{"Content-Type", "Authorization"},
-        AllowCredentials: true,
-    })
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
 
 	handler := c.Handler(r)
 

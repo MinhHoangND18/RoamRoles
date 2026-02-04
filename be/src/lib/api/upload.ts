@@ -181,14 +181,18 @@ export function getThumbnailDisplayUrl(thumbnailUrl: string): string {
     if (!thumbnailUrl) return '';
     
     // Already a full URL (external or our domain)
-    if (thumbnailUrl.startsWith('http://') || thumbnailUrl.startsWith('https://')) {
+    if (thumbnailUrl.startsWith('http://')) {
+        return thumbnailUrl.replace('http://', 'https://');
+    }
+    
+    if (thumbnailUrl.startsWith('https://')) {
         return thumbnailUrl;
     }
     
     // New server uploads (starts with /uploads/ or uploads/)
     if (thumbnailUrl.startsWith('/uploads/') || thumbnailUrl.startsWith('uploads/')) {
         const cleanPath = thumbnailUrl.startsWith('/') ? thumbnailUrl.substring(1) : thumbnailUrl;
-        return `https://upload.jobzesty.com/${cleanPath}`;
+        return `${UPLOAD_SERVICE_URL}/${cleanPath}`;
     }
     
     // Old images in public/images folder

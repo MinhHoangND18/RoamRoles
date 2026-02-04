@@ -1,6 +1,11 @@
 import { API_CONFIG } from "@/constants/app-config";
 import { ReusableBlock } from "@/types/ReusableBlock";
 
+const BASE_URL_CLEAN = API_CONFIG.BASE_URL.endsWith('/') 
+  ? API_CONFIG.BASE_URL.slice(0, -1) 
+  : API_CONFIG.BASE_URL;
+
+const API_BASE_URL = `${BASE_URL_CLEAN}/api`;
 
 export const getReusableBlocks = async (): Promise<ReusableBlock[]> => {
   const res = await fetch(`${API_BASE_URL}/reusable-blocks`);
@@ -18,11 +23,6 @@ export const getReusableBlockById = async (
   }
   return res.json();
 };
-const BASE_URL_CLEAN = API_CONFIG.BASE_URL.endsWith('/') 
-  ? API_CONFIG.BASE_URL.slice(0, -1) 
-  : API_CONFIG.BASE_URL;
-
-const API_BASE_URL = `${BASE_URL_CLEAN}/api`;
 
 export const createOrUpdateReusableBlock = async (block: ReusableBlock) => {
   const endpoint = block.id && block.id !== 0

@@ -22,7 +22,12 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Post, Type, Category, ReusableBlock } from "@/types";
-import { processThumbnailUrl, isExternalUrl, uploadFile, getThumbnailDisplayUrl } from "@/lib/api/upload";
+import {
+  processThumbnailUrl,
+  isExternalUrl,
+  uploadFile,
+  getThumbnailDisplayUrl,
+} from "@/lib/api/upload";
 import { getCategories } from "@/lib/api/categories";
 import {
   getTypes,
@@ -35,7 +40,7 @@ import {
 import {
   getReusableBlockById,
   getReusableBlocks,
-  createOrUpdateReusableBlock
+  createOrUpdateReusableBlock,
 } from "@/lib/api/reusable_blocks";
 import JobBoxRenderer from "@/components/JobBoxRenderer";
 import { APP_CONFIG } from "@/lib/api/config";
@@ -64,25 +69,26 @@ function EditPostContent() {
   const [isRecommendOpen, setIsRecommendOpen] = useState(false);
   const recommendDropdownRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
+  const [errors, setErrors] = useState<{ title?: string; content?: string }>(
+    {},
+  );
 
   const [editorsReadyCount, setEditorsReadyCount] = useState(0);
   const [surveySets, setSurveySets] = useState<SurveySet[]>([]);
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
   const surveyDropdownRef = useRef<HTMLDivElement>(null);
   const [surveySearchTerm, setSurveySearchTerm] = useState("");
+
+  const [filterType, setFilterType] = useState("all");
   const [reusableBlocks, setReusableBlocks] = useState<ReusableBlock[]>([]);
   const [isBlockDropdownOpen, setIsBlockDropdownOpen] = useState(false);
   const [blockSearchTerm, setBlockSearchTerm] = useState("");
   const blockDropdownRef = useRef<HTMLDivElement>(null);
-
-  const [blockForEditing, setBlockForEditing] = useState<
-    number | "new" | null
-  >(null);
-
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
+  const typeFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [blockForEditing, setBlockForEditing] = useState<number | "new" | null>(
+    null,
+  );
   const loadReusableBlocks = useCallback(async () => {
     try {
       const data = await getReusableBlocks();
@@ -92,44 +98,57 @@ function EditPostContent() {
     }
   }, []);
 
+  useEffect(() => {
+    loadReusableBlocks();
+  }, [loadReusableBlocks]);
+
+  useEffect(() => {
+    getReusableBlocks()
+      .then(setReusableBlocks)
+      .catch(() => toast.error("Failed to load blocks"));
+  }, []);
+
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
+      toast.error("File size must be less than 5MB");
       return;
     }
 
     setUploading(true);
-    toast.loading('Uploading image...', { id: 'upload-image' });
+    toast.loading("Uploading image...", { id: "upload-image" });
 
     try {
       const result = await uploadFile(file);
-      
+
       if (result.success && result.local_path) {
         // Save the local path returned from server
         setPost((prev) =>
           prev ? { ...prev, thumbnail_url: result.local_path } : null,
         );
-        toast.success('Image uploaded successfully!', { id: 'upload-image' });
+        toast.success("Image uploaded successfully!", { id: "upload-image" });
       } else {
-        toast.error(result.error || 'Upload failed', { id: 'upload-image' });
+        toast.error(result.error || "Upload failed", { id: "upload-image" });
       }
     } catch (error) {
-      toast.error('Failed to upload image', { id: 'upload-image' });
+      toast.error("Failed to upload image", { id: "upload-image" });
       console.error(error);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -146,30 +165,6 @@ function EditPostContent() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsCategoryOpen(false);
-      }
-      if (
-        recommendDropdownRef.current &&
-        !recommendDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsRecommendOpen(false);
-      }
-      if (
-        surveyDropdownRef.current &&
-        !surveyDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsSurveyOpen(false);
-      }
-      if (
-        blockDropdownRef.current &&
-        !blockDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsBlockDropdownOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -193,12 +188,13 @@ function EditPostContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesData, categoriesData, allPostsData, surveySetsData] = await Promise.all([
-          getTypes(),
-          getCategories(),
-          getPosts(),
-          getSurveySets(),
-        ]);
+        const [typesData, categoriesData, allPostsData, surveySetsData] =
+          await Promise.all([
+            getTypes(),
+            getCategories(),
+            getPosts(),
+            getSurveySets(),
+          ]);
 
         setTypes(typesData);
         setCategories(categoriesData);
@@ -264,7 +260,7 @@ function EditPostContent() {
     if (!displayTitle.trim()) {
       newErrors.title = "Title is required.";
     }
-    if (typeof post.content !== 'string' || !post.content.trim()) {
+    if (typeof post.content !== "string" || !post.content.trim()) {
       newErrors.content = "Content is required.";
     }
 
@@ -299,16 +295,24 @@ function EditPostContent() {
     }
 
     let finalPayload: Partial<Post>;
-    let processedThumbnailUrl = updatedPost.thumbnail_url || '';
+    let processedThumbnailUrl = updatedPost.thumbnail_url || "";
     if (processedThumbnailUrl && isExternalUrl(processedThumbnailUrl)) {
-      toast.loading('Downloading external image...', { id: 'download-image' });
+      toast.loading("Downloading external image...", { id: "download-image" });
       try {
-        processedThumbnailUrl = await processThumbnailUrl(processedThumbnailUrl);
-        toast.success('Image downloaded successfully!', { id: 'download-image' });
+        processedThumbnailUrl = await processThumbnailUrl(
+          processedThumbnailUrl,
+        );
+        toast.success("Image downloaded successfully!", {
+          id: "download-image",
+        });
         // Update the local state
-        setPost((prev) => prev ? { ...prev, thumbnail_url: processedThumbnailUrl } : null);
+        setPost((prev) =>
+          prev ? { ...prev, thumbnail_url: processedThumbnailUrl } : null,
+        );
       } catch {
-        toast.error('Failed to download image, using original URL', { id: 'download-image' });
+        toast.error("Failed to download image, using original URL", {
+          id: "download-image",
+        });
       }
     }
 
@@ -589,7 +593,10 @@ function EditPostContent() {
                                   textarea.scrollTop = 0;
                                   textarea.focus();
 
-                                  if (textarea.scrollTop === 0 || attempts > 10) {
+                                  if (
+                                    textarea.scrollTop === 0 ||
+                                    attempts > 10
+                                  ) {
                                     clearInterval(forceScrollTop);
                                   }
                                 }
@@ -619,7 +626,9 @@ function EditPostContent() {
                     />
                   </div>
                   {errors.content && (
-                    <p className="text-red-500 text-xs mt-1">{errors.content}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.content}
+                    </p>
                   )}
                 </div>
 
@@ -631,8 +640,13 @@ function EditPostContent() {
                     {/* File Upload & Input */}
                     <div className="flex-1">
                       <div className="mb-3">
-                        <label className="block w-full border-2 border-dashed border-slate-300 hover:border-blue-400 p-4 text-center cursor-pointer rounded transition-colors bg-slate-50 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{ opacity: uploading ? 0.5 : 1, pointerEvents: uploading ? 'none' : 'auto' }}>
+                        <label
+                          className="block w-full border-2 border-dashed border-slate-300 hover:border-blue-400 p-4 text-center cursor-pointer rounded transition-colors bg-slate-50 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{
+                            opacity: uploading ? 0.5 : 1,
+                            pointerEvents: uploading ? "none" : "auto",
+                          }}
+                        >
                           <div className="flex flex-col items-center gap-2">
                             <svg
                               className="w-6 h-6 text-slate-400"
@@ -648,9 +662,11 @@ function EditPostContent() {
                               />
                             </svg>
                             <span className="text-sm font-medium text-slate-600">
-                              {uploading ? 'Uploading...' : 'Click to upload'}
+                              {uploading ? "Uploading..." : "Click to upload"}
                             </span>
-                            <span className="text-xs text-slate-400">PNG, JPG, GIF up to 5MB</span>
+                            <span className="text-xs text-slate-400">
+                              PNG, JPG, GIF up to 5MB
+                            </span>
                           </div>
                           <input
                             ref={fileInputRef}
@@ -665,7 +681,9 @@ function EditPostContent() {
 
                       {/* Or input link */}
                       <div className="relative">
-                        <p className="text-[10px] text-slate-400 italic mb-2">Or enter image path:</p>
+                        <p className="text-[10px] text-slate-400 italic mb-2">
+                          Or enter image path:
+                        </p>
                         <input
                           type="text"
                           value={post.thumbnail_url || ""}
@@ -685,19 +703,26 @@ function EditPostContent() {
                     {/* Thumbnail Preview */}
                     {post.thumbnail_url && (
                       <div className="md:w-48 flex-shrink-0">
-                        <p className="text-[10px] text-slate-400 italic mb-2">Preview:</p>
+                        <p className="text-[10px] text-slate-400 italic mb-2">
+                          Preview:
+                        </p>
                         <div className="relative aspect-video bg-slate-100 border border-slate-200 rounded overflow-hidden">
                           <img
                             src={getThumbnailDisplayUrl(post.thumbnail_url)}
                             alt="Thumbnail preview"
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/landscape-placeholder-svgrepo-com.svg ';
+                              (e.target as HTMLImageElement).src =
+                                "/landscape-placeholder-svgrepo-com.svg ";
                             }}
                           />
                           <button
                             type="button"
-                            onClick={() => setPost((prev) => prev ? { ...prev, thumbnail_url: '' } : null)}
+                            onClick={() =>
+                              setPost((prev) =>
+                                prev ? { ...prev, thumbnail_url: "" } : null,
+                              )
+                            }
                             className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors"
                             title="Remove thumbnail"
                           >
@@ -744,13 +769,15 @@ function EditPostContent() {
                             : null,
                         )
                       }
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.status === "active" ? "bg-green-500" : "bg-slate-300"
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.status === "active"
+                          ? "bg-green-500"
+                          : "bg-slate-300"
                         }`}
                     >
                       <span
                         className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${post.status === "active"
-                          ? "translate-x-6"
-                          : "translate-x-1"
+                            ? "translate-x-6"
+                            : "translate-x-1"
                           }`}
                       />
                     </button>
@@ -902,8 +929,8 @@ function EditPostContent() {
                                   setSearchTerm("");
                                 }}
                                 className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${post.recommend_post_id === p.id
-                                  ? "bg-blue-50 text-blue-600 font-bold"
-                                  : ""
+                                    ? "bg-blue-50 text-blue-600 font-bold"
+                                    : ""
                                   }`}
                               >
                                 <div className="text-[13px] line-clamp-1">
@@ -940,7 +967,8 @@ function EditPostContent() {
                     >
                       <span className="text-left truncate pr-2">
                         {post?.survey_set_id
-                          ? surveySets.find((s) => s.id === post.survey_set_id)?.name || "Select Survey"
+                          ? surveySets.find((s) => s.id === post.survey_set_id)
+                            ?.name || "Select Survey"
                           : "No Survey"}
                       </span>
                       <ChevronDown
@@ -955,7 +983,9 @@ function EditPostContent() {
                             type="text"
                             placeholder="Search survey set..."
                             value={surveySearchTerm}
-                            onChange={(e) => setSurveySearchTerm(e.target.value)}
+                            onChange={(e) =>
+                              setSurveySearchTerm(e.target.value)
+                            }
                             className="w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                             autoFocus
                           />
@@ -965,7 +995,7 @@ function EditPostContent() {
                           <li
                             onClick={() => {
                               setPost((prev) =>
-                                prev ? { ...prev, survey_set_id: null } : null
+                                prev ? { ...prev, survey_set_id: null } : null,
                               );
                               setIsSurveyOpen(false);
                               setSurveySearchTerm("");
@@ -977,7 +1007,8 @@ function EditPostContent() {
 
                           {surveySets
                             .filter((s) => {
-                              const searchLower = surveySearchTerm.toLowerCase();
+                              const searchLower =
+                                surveySearchTerm.toLowerCase();
                               return (
                                 s.active && // Chỉ hiện survey active
                                 (s.name.toLowerCase().includes(searchLower) ||
@@ -989,17 +1020,21 @@ function EditPostContent() {
                                 key={s.id}
                                 onClick={() => {
                                   setPost((prev) =>
-                                    prev ? { ...prev, survey_set_id: s.id } : null
+                                    prev
+                                      ? { ...prev, survey_set_id: s.id }
+                                      : null,
                                   );
                                   setIsSurveyOpen(false);
                                   setSurveySearchTerm("");
                                 }}
                                 className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${post?.survey_set_id === s.id
-                                  ? "bg-blue-50 text-blue-600 font-bold"
-                                  : ""
+                                    ? "bg-blue-50 text-blue-600 font-bold"
+                                    : ""
                                   }`}
                               >
-                                <div className="text-[13px] line-clamp-1">{s.name}</div>
+                                <div className="text-[13px] line-clamp-1">
+                                  {s.name}
+                                </div>
                                 <div className="text-[10px] text-slate-400 font-normal">
                                   ID: {s.id} - Slug: {s.slug}
                                   {s.description && ` - ${s.description}`}
@@ -1008,7 +1043,9 @@ function EditPostContent() {
                             ))}
 
                           {surveySets.filter((s) =>
-                            s.name.toLowerCase().includes(surveySearchTerm.toLowerCase())
+                            s.name
+                              .toLowerCase()
+                              .includes(surveySearchTerm.toLowerCase()),
                           ).length === 0 && (
                               <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
                                 No survey sets found matching {surveySearchTerm}
@@ -1018,7 +1055,6 @@ function EditPostContent() {
                       </div>
                     )}
                   </div>
-
 
                   {/* REUSABLE BLOCKS */}
                   <div className="relative" ref={blockDropdownRef}>
@@ -1035,11 +1071,10 @@ function EditPostContent() {
                         className={`w-4 h-4 transition-transform text-slate-400 ${isBlockDropdownOpen ? "rotate-180" : ""}`}
                       />
                     </button>
-
                     {isBlockDropdownOpen && (
-                      <div className="absolute top-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
-                        <div className="p-2 border-b border-slate-100 bg-slate-50">
-                          <div className="relative">
+                      <div className="absolute bottom-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 border-b border-slate-100 bg-slate-50 flex gap-2">
+                          <div className="relative flex-grow">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                             <input
                               type="text"
@@ -1051,62 +1086,149 @@ function EditPostContent() {
                               className="w-full pl-7 pr-2 py-1.5 text-xs border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                             />
                           </div>
+
+                          <div className="relative" ref={typeFilterDropdownRef}>
+                            <button
+                              onClick={() =>
+                                setIsTypeFilterOpen(!isTypeFilterOpen)
+                              }
+                              className="flex items-center justify-between bg-white border border-slate-200 px-2 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                            >
+                              <span className="text-left whitespace-nowrap">
+                                {{
+                                  all: "All Types",
+                                  job_card: "Job Card",
+                                  feature_list: "Feature List",
+                                  faq_accordion: "FAQ",
+                                }[filterType] || "All Types"}
+                              </span>
+                              <ChevronDown
+                                className={`w-3 h-3 transition-transform text-slate-400 ml-2 ${isTypeFilterOpen ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                            {isTypeFilterOpen && (
+                              <ul className="absolute top-full mt-1 right-0 w-auto bg-white border border-slate-200 shadow-lg py-1 z-30 font-medium text-xs">
+                                {[
+                                  { value: "all", label: "All Types" },
+                                  { value: "job_card", label: "Job Card" },
+                                  {
+                                    value: "feature_list",
+                                    label: "Feature List",
+                                  },
+                                  { value: "faq_accordion", label: "FAQ" },
+                                ].map((option) => (
+                                  <li
+                                    key={option.value}
+                                    onClick={() => {
+                                      setFilterType(option.value);
+                                      setIsTypeFilterOpen(false);
+                                    }}
+                                    className="px-3 py-1.5 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 whitespace-nowrap"
+                                  >
+                                    {option.label}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
                         </div>
 
                         <ul className="max-h-60 overflow-y-auto py-1">
                           {reusableBlocks
-                            .filter((b) =>
-                              b.title
-                                .toLowerCase()
-                                .includes(blockSearchTerm.toLowerCase()),
-                            )
-                            .map((block) => (
-                              <li
-                                key={block.id}
-                                className="px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-blue-50 group transition-colors"
-                              >
-                                <div className="flex justify-between items-start mb-1">
-                                  <span className="text-[13px] font-bold text-slate-700 line-clamp-1">
-                                    {block.title}
-                                  </span>
+                            .filter((b) => {
+                              const blockData = JSON.parse(
+                                b.content_json || "{}",
+                              );
+                              const bType = blockData.type || "job_card";
+                              const searchLower = blockSearchTerm.toLowerCase();
+                              const shortcode = `[block id="${b.id}"]`;
+                              const matchesSearch =
+                                b.title.toLowerCase().includes(searchLower) ||
+                                shortcode.includes(searchLower);
+                              const matchesType =
+                                filterType === "all" || bType === filterType;
+                              return matchesSearch && matchesType;
+                            })
+                            .map((block) => {
+                              const blockData = JSON.parse(
+                                block.content_json || "{}",
+                              );
+                              const blockType = blockData.type || "job_card";
 
-                                  <div className="flex items-center">
-                                    <button
-                                      onClick={() => setBlockForEditing(block.id)}
-                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                      title="Edit Block"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                    </button>
+                              return (
+                                <li
+                                  key={block.id}
+                                  className="px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-blue-50 group transition-colors"
+                                >
+                                  <div className="flex items-center justify-between gap-5">
+                                    <div className="flex items-center gap-2 flex-grow min-w-0">
+                                      <span className="text-[13px] font-bold text-slate-700 truncate">
+                                        {block.title}
+                                      </span>
+                                    </div>
 
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(
-                                          `[block id="${block.id}"]`,
-                                        );
-                                        toast.success("Copied!");
-                                      }}
-                                      className="ml-1 text-slate-300 hover:text-blue-600 p-1 transition-colors"
-                                      title="Copy Shortcode"
-                                    >
-                                      <Copy className="w-3.5 h-3.5" />
-                                    </button>
+                                    <div className="flex items-center shrink-0 ml-auto">
+                                      <button
+                                        onClick={() =>
+                                          setBlockForEditing(block.id)
+                                        }
+                                        className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors rounded-none"
+                                        title="Edit"
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            `[block id="${block.id}"]`,
+                                          );
+                                          toast.success("Copied!");
+                                        }}
+                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors rounded-none"
+                                        title="Copy Shortcode"
+                                      >
+                                        <Copy className="w-3.5 h-3.5 " />
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="text-[10px] font-mono text-slate-400 group-hover:text-blue-400 transition-colors">
-                                  [block id= {block.id}]
-                                </div>
-                              </li>
-                            ))}
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="text-[10px] font-mono text-slate-400 group-hover:text-blue-400 transition-colors mt-0.5">
+                                      [block id={block.id}]
+                                    </div>
 
-                          {reusableBlocks.length === 0 && (
-                            <li className="p-4 text-center text-xs text-slate-400 italic">
-                              No blocks found
-                            </li>
-                          )}
+                                    <div className="flex items-center gap-2 flex-grow min-w-0 justify-end">
+                                      <span
+                                        className={`flex-shrink-0 text-[8px] font-black uppercase px-1.5 py-0.5 ${blockType === "faq_accordion"
+                                            ? "bg-purple-100 text-purple-600 rounded-none"
+                                            : blockType === "feature_list"
+                                              ? "bg-orange-100 text-orange-600 rounded-none"
+                                              : "bg-blue-100 text-blue-600 rounded-none"
+                                          }`}
+                                      >
+                                        {blockType === "faq_accordion"
+                                          ? "FAQ"
+                                          : blockType === "feature_list"
+                                            ? "Feature List"
+                                            : "Job Card"}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-grow min-w-0 justify-end">
+                                      <span
+                                        className={`flex-shrink-0 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-none ${block.status === "active"
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-red-100 text-red-700"
+                                          }`}
+                                      >
+                                        {block.status}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </li>
+                              );
+                            })}
                         </ul>
 
-                        {/* Nút tạo mới */}
                         <div className="p-2 border-t border-slate-100">
                           <button
                             onClick={() => setBlockForEditing("new")}
@@ -1119,8 +1241,6 @@ function EditPostContent() {
                     )}
                   </div>
 
-
-
                   <button
                     onClick={handleSave}
                     disabled={saving || uploading}
@@ -1131,7 +1251,11 @@ function EditPostContent() {
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    {saving ? "Saving..." : uploading ? "Uploading Image..." : "Save Content"}
+                    {saving
+                      ? "Saving..."
+                      : uploading
+                        ? "Uploading Image..."
+                        : "Save Content"}
                   </button>
 
                   <button
@@ -1156,6 +1280,7 @@ function EditPostContent() {
             </div>
           </div>
         </div>
+
         {blockForEditing !== null && (
           <QuickEditBlockPopup
             blockId={blockForEditing === "new" ? undefined : blockForEditing}
@@ -1166,6 +1291,7 @@ function EditPostContent() {
             }}
           />
         )}
+
         <style jsx global>{`
           .no-border-ui .tox-tinymce {
             border: 1px solid #e2e8f0 !important;
@@ -1188,16 +1314,32 @@ function EditPostContent() {
             flex: 0 0 58.333333% !important;
             max-width: 58.333333% !important;
           }
-          /* Cố định ảnh không bị to quá mức */
           .reusable-block-scope img {
             max-width: 100% !important;
             height: auto !important;
-          }
+          }import { ReusableBlock } from './../../../../../../fe/src/types/ReusableBlock';
+
         `}</style>
       </div>
     </div>
   );
 }
+
+const initialBlockContent = {
+  heading: "",
+  company_name: "",
+  badge_text: "",
+  description: "",
+  image_url: "",
+  button_text: "",
+  button_url: "",
+  footer_text: "",
+  type: "job_card",
+  features: [] as string[],
+  items: [] as { q: string; a: string }[],
+  layout: "standard",
+};
+
 function QuickEditBlockPopup({
   blockId,
   onClose,
@@ -1210,16 +1352,109 @@ function QuickEditBlockPopup({
   const isNewBlock = !blockId;
   const [loading, setLoading] = useState(!isNewBlock);
   const [saving, setSaving] = useState(false);
-  const [content, setContent] = useState({
-    heading: "",
-    company_name: "",
-    badge_text: "",
-    description: "",
-    image_url: "",
-    button_text: "",
-    button_url: "",
-    footer_text: "",
-  });
+  const [content, setContent] = useState(initialBlockContent);
+  const [status, setStatus] = useState<"active" | "inactive">("active");
+
+  const [blockType, setBlockType] = useState("job_card");
+
+  // For block image upload
+  const [blockImageUploading, setBlockImageUploading] = useState(false);
+  const blockImageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBlockImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    setBlockImageUploading(true);
+    toast.loading("Uploading image...", { id: "upload-block-image" });
+
+    try {
+      const result = await uploadFile(file);
+
+      if (result.success && result.local_path) {
+        setContent((prev) => ({
+          ...prev,
+          image_url: result.local_path || "",
+        }));
+        toast.success("Image uploaded successfully!", { id: "upload-block-image" });
+      } else {
+        toast.error(result.error || "Upload failed", { id: "upload-block-image" });
+      }
+    } catch (error) {
+      toast.error("Failed to upload image", { id: "upload-block-image" });
+      console.error(error);
+    } finally {
+      setBlockImageUploading(false);
+      if (blockImageInputRef.current) {
+        blockImageInputRef.current.value = "";
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (content.type) setBlockType(content.type);
+  }, [content.type]);
+
+  const handleLayoutChange = (layout: "standard" | "intro") => {
+    if (isNewBlock) {
+      setContent({
+        ...initialBlockContent,
+        type: "job_card",
+        layout: layout,
+      });
+    }
+  };
+
+  const handleTypeChange = (type: string) => {
+    setBlockType(type);
+    const newContent = { ...initialBlockContent, type };
+
+    if (type === "feature_list") {
+      newContent.features = [""];
+    } else if (type === "faq_accordion") {
+      newContent.items = [
+        { q: "", a: "" },
+        { q: "", a: "" },
+      ];
+    }
+    setContent(newContent);
+  };
+
+  const addFeatureLine = () =>
+    setContent({ ...content, features: [...content.features, ""] });
+  const updateFeatureLine = (i: number, v: string) => {
+    const f = [...content.features];
+    f[i] = v;
+    setContent({ ...content, features: f });
+  };
+  const removeFeatureLine = (i: number) =>
+    setContent({
+      ...content,
+      features: content.features.filter((_, idx) => idx !== i),
+    });
+
+  const addFaqItem = () =>
+    setContent({ ...content, items: [...content.items, { q: "", a: "" }] });
+  const updateFaqItem = (i: number, fld: "q" | "a", v: string) => {
+    const itm = [...content.items];
+    itm[i] = { ...itm[i], [fld]: v };
+    setContent({ ...content, items: itm });
+  };
+  const removeFaqItem = (i: number) =>
+    setContent({
+      ...content,
+      items: content.items.filter((_, idx) => idx !== i),
+    });
 
   useEffect(() => {
     if (blockId) {
@@ -1227,6 +1462,7 @@ function QuickEditBlockPopup({
       getReusableBlockById(blockId)
         .then((data) => {
           if (data.content_json) setContent(JSON.parse(data.content_json));
+          setStatus(data.status);
           setLoading(false);
         })
         .catch(() => {
@@ -1239,19 +1475,31 @@ function QuickEditBlockPopup({
   const handleSave = async () => {
     setSaving(true);
     try {
+      let blockTitle = content.company_name;
+      if (blockType === "feature_list")
+        blockTitle = content.features?.[0]?.substring(0, 30) || "Untitled";
+      if (blockType === "faq_accordion")
+        blockTitle = content.items?.[0]?.q?.substring(0, 30) || "Untitled";
+      if (blockTitle === "job_card" || content.layout === "intro") {
+        blockTitle = content.description?.substring(0, 30) || "Untitled";
+      }
       const payload: ReusableBlock = {
         id: blockId || 0,
-        title: content.company_name || "Untitled Block",
-        content_json: JSON.stringify(content),
-        status: "active",
+        title: blockTitle || "Untitled Block",
+        content_json: JSON.stringify({ ...content, type: blockType }),
+        status: status,
       };
 
-      await createOrUpdateReusableBlock(payload);
-      toast.success(
-        isNewBlock
-          ? "Block created successfully!"
-          : "Block updated successfully!",
-      );
+      const savedBlock = await createOrUpdateReusableBlock(payload);
+
+      if (isNewBlock && savedBlock.id) {
+        const shortcode = `[block id="${savedBlock.id}"]`;
+        navigator.clipboard.writeText(shortcode);
+        toast.success(`Block created & shortcode copied!`);
+      } else {
+        toast.success("Block updated successfully!");
+      }
+
       onSuccess();
       onClose();
     } catch (error) {
@@ -1264,179 +1512,490 @@ function QuickEditBlockPopup({
   };
 
   return (
-    <div className="fixed  inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md">
-      <div className="bg-white w-full max-w-7xl h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-200 rounded-none">
-        {/* Header */}
-        <div className="p-4 border-b flex justify-between items-center bg-white border-gray-300">
-          <div className="flex items-center gap-2">
-            {isNewBlock ? (
-              <Plus className="w-4 h-4 text-blue-500" />
-            ) : (
-              <Pencil className="w-4 h-4 text-blue-500" />
-            )}
-            <span className="font-bold text-slate-700">
-              {isNewBlock
-                ? "Create New Reusable Block"
-                : `Quick Edit: ${content.company_name}`}
-            </span>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-7xl h-[92vh] shadow-2xl overflow-hidden flex flex-col border border-slate-200 rounded-none">
+        <div className="px-6 py-4 border-b flex justify-between items-center bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-none bg-blue-50 flex items-center justify-center">
+              {isNewBlock ? (
+                <Plus className="w-5 h-5 text-blue-600" />
+              ) : (
+                <Pencil className="w-5 h-5 text-blue-600" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-800 leading-none">
+                {isNewBlock ? "Create New Block" : "Edit Reusable Block"}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-bold">
+                {isNewBlock ? "" : `Block ID: ${blockId}`}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-100 rounded-full"
+            className="p-2 hover:bg-slate-100 rounded-none transition-colors"
           >
-            <X className="w-5 h-5 text-slate-400" />
+            <X className="w-6 h-6 text-slate-400" />
           </button>
         </div>
 
         {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="animate-spin text-blue-600 w-10 h-10" />
+            <p className="text-sm font-medium text-slate-400">
+              Loading block data...
+            </p>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col overflow-hidden bg-white">
-            <div className="p-4 grid grid-cols-4 gap-3 bg-slate-50/50 border-b border-gray-300">
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Heading
-                </label>
-                <input
-                  value={content.heading}
-                  onChange={(e) =>
-                    setContent({ ...content, heading: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Company Name (for Title)
-                </label>
-                <input
-                  value={content.company_name}
-                  onChange={(e) =>
-                    setContent({ ...content, company_name: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Logo URL
-                </label>
-                <input
-                  value={content.image_url}
-                  onChange={(e) =>
-                    setContent({ ...content, image_url: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Badge
-                </label>
-                <input
-                  value={content.badge_text}
-                  onChange={(e) =>
-                    setContent({ ...content, badge_text: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Description
-                </label>
-                <textarea
-                  value={content.description}
-                  onChange={(e) =>
-                    setContent({ ...content, description: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none resize"
-                  rows={1}
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Button Text
-                </label>
-                <input
-                  value={content.button_text}
-                  onChange={(e) =>
-                    setContent({ ...content, button_text: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Button URL
-                </label>
-                <input
-                  value={content.button_url}
-                  onChange={(e) =>
-                    setContent({ ...content, button_url: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Footer Text
-                </label>
-                <input
-                  value={content.footer_text}
-                  onChange={(e) =>
-                    setContent({ ...content, footer_text: e.target.value })
-                  }
-                  className="w-full border border-slate-200 p-2 text-sm rounded outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-0 p-10 bg-[#f8fafc] flex items-center justify-center">
-              <div className="w-full max-w-4xl bg-white shadow-sm border border-slate-100">
-                <JobBoxRenderer
-                  block={
-                    {
-                      id: blockId,
-                      title: content.company_name,
-                      status: "active",
-                      content_json: JSON.stringify(content),
-                    } as ReusableBlock
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="p-4 border-t flex justify-end items-center bg-white border-gray-300">
-              <div className="flex gap-3">
-                <button
-                  onClick={onClose}
-                  className="px-6 py-2 text-sm font-bold text-slate-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 rounded-none"
-                >
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
+          <div className="flex-1 flex overflow-hidden bg-slate-50/50">
+            <div className="w-[40%] flex flex-col border-r border-slate-200 bg-white overflow-y-auto custom-scrollbar">
+              <div className="p-6 border-b border-slate-100 bg-white">
+                <label className="block text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em]">
+                  Block Framework
+                  {!isNewBlock && (
+                    <span className="normal-case font-medium italic">
+                      {" "}
+                      (Locked when editing)
+                    </span>
                   )}
-                  {saving
-                    ? "SAVING..."
-                    : isNewBlock
-                      ? "CREATE BLOCK"
-                      : "SAVE CHANGES"}
-                </button>
+                </label>
+                <div className="flex p-1 bg-slate-100 rounded-none gap-1">
+                  {[
+                    {
+                      id: "job_card",
+                      label: "Job Card",
+                      icon: <Box className="w-4 h-4" />,
+                    },
+                    {
+                      id: "feature_list",
+                      label: "Feature List",
+                      icon: <Plus className="w-4 h-4" />,
+                    },
+                    {
+                      id: "faq_accordion",
+                      label: "FAQ Accordion",
+                      icon: <ChevronDown className="w-4 h-4" />,
+                    },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => handleTypeChange(t.id)}
+                      disabled={!isNewBlock}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-none transition-all font-bold text-xs ${blockType === t.id
+                          ? "bg-white text-blue-600 shadow-sm"
+                          : "text-slate-500"
+                        } ${isNewBlock ? "hover:bg-slate-200/50 hover:text-slate-700" : "cursor-not-allowed opacity-60"}`}
+                    >
+                      {t.icon} {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="px-8 pt-0 pb-0">
+                <div className="flex items-center justify-end px-1 bg-slate-0 py-2 gap-2">
+                  <label
+                    htmlFor="block-status-toggle"
+                    className="text-sm font-bold text-slate-600"
+                  >
+                    Active
+                  </label>
+                  <button
+                    id="block-status-toggle"
+                    onClick={() =>
+                      setStatus((prev) =>
+                        prev === "active" ? "inactive" : "active",
+                      )
+                    }
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${status === "active" ? "bg-green-500" : "bg-slate-300"
+                      }`}
+                  >
+                    <span
+                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${status === "active" ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-8 space-y-5 pt-1">
+                {blockType === "job_card" && (
+                  <div className="space-y-1 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="space-y-2 border-b border-slate-100 pb-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Display Layout
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleLayoutChange("standard")}
+                          disabled={!isNewBlock}
+                          className={`px-4 py-2 text-xs font-bold rounded-lg border-2 transition-all ${content.layout === "standard" || !content.layout
+                              ? "border-blue-600 bg-blue-50 text-blue-600 rounded-none"
+                              : "border-slate-200 text-slate-400 rounded-none"
+                            } ${!isNewBlock && "cursor-not-allowed opacity-60"}`}
+                        >
+                          Standard
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleLayoutChange("intro")}
+                          disabled={!isNewBlock}
+                          className={`px-4 py-2 text-xs font-bold rounded-lg border-2 transition-all ${content.layout === "intro"
+                              ? "border-blue-600 bg-blue-50 text-blue-600 rounded-none"
+                              : "border-slate-200 text-slate-400 rounded-none"
+                            } ${!isNewBlock && "cursor-not-allowed opacity-60"}`}
+                        >
+                          Intro
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {(content.layout === "standard" || !content.layout) && (
+                        <>
+                          <div className="col-span-2 space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Block Heading
+                            </label>
+                            <input
+                              value={content.heading}
+                              onChange={(e) =>
+                                setContent({
+                                  ...content,
+                                  heading: e.target.value,
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-none p-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none"
+                              placeholder="e.g. Open Roles"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Company Name
+                            </label>
+                            <input
+                              value={content.company_name}
+                              onChange={(e) =>
+                                setContent({
+                                  ...content,
+                                  company_name: e.target.value,
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-none p-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Badge Text
+                            </label>
+                            <input
+                              value={content.badge_text}
+                              onChange={(e) =>
+                                setContent({
+                                  ...content,
+                                  badge_text: e.target.value,
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-none p-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      <div className="col-span-2 space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">
+                          {content.layout === "intro"
+                            ? "Introductory Text"
+                            : "Job Description"}
+                        </label>
+                        <textarea
+                          value={content.description}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              description: e.target.value,
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded-none p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/50 min-h-[120px]"
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="col-span-2 space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">
+                          Image URL
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            value={content.image_url}
+                            onChange={(e) =>
+                              setContent({
+                                ...content,
+                                image_url: e.target.value,
+                              })
+                            }
+                            className="flex-1 border border-slate-300 rounded-none p-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none"
+                            placeholder="e.g. /uploads/image.jpg or paste URL"
+                          />
+                          <label
+                            className="flex items-center justify-center w-10 h-10 border border-slate-300 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 cursor-pointer transition-colors"
+                            style={{
+                              opacity: blockImageUploading ? 0.5 : 1,
+                              pointerEvents: blockImageUploading ? "none" : "auto",
+                            }}
+                            title="Upload image from computer"
+                          >
+                            {blockImageUploading ? (
+                              <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                            ) : (
+                              <Plus className="w-4 h-4 text-slate-500" />
+                            )}
+                            <input
+                              ref={blockImageInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleBlockImageUpload}
+                              disabled={blockImageUploading}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {blockType === "feature_list" && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                        List Description
+                      </label>
+                      <textarea
+                        value={content.heading}
+                        onChange={(e) =>
+                          setContent({ ...content, heading: e.target.value })
+                        }
+                        className="w-full border border-slate-300 rounded-none p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 tracking-widest">
+                          Key Features
+                        </label>
+                        <button
+                          type="button"
+                          onClick={addFeatureLine}
+                          className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-none hover:bg-blue-100 transition-all flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" /> ADD LINE
+                        </button>
+                      </div>
+                      <div className="grid gap-3">
+                        {content.features.map((feat, idx) => (
+                          <div
+                            key={idx}
+                            className="flex gap-3 group items-center"
+                          >
+                            <div className="w-6 h-6 rounded-none bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                              {idx + 1}
+                            </div>
+                            <input
+                              value={feat}
+                              onChange={(e) =>
+                                updateFeatureLine(idx, e.target.value)
+                              }
+                              className="flex-1 bg-transparent border border-slate-300 rounded-none p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/50"
+                              placeholder="Type feature..."
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeFeatureLine(idx)}
+                              className="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {blockType === "faq_accordion" && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 tracking-widest">
+                        Questions & Answers
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addFaqItem}
+                        className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-none hover:bg-blue-100 transition-all flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" /> ADD FAQ
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      {content.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="p-4 border border-slate-300 bg-white rounded-none shadow-sm relative group space-y-3"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => removeFaqItem(idx)}
+                            className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-all"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase">
+                              Question {idx + 1}
+                            </label>
+                            <input
+                              value={item.q}
+                              onChange={(e) =>
+                                updateFaqItem(idx, "q", e.target.value)
+                              }
+                              className="w-full border border-slate-300 rounded-none p-2 font-bold text-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500/50"
+                              placeholder="Enter question..."
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase">
+                              Answer
+                            </label>
+                            <textarea
+                              value={item.a}
+                              onChange={(e) =>
+                                updateFaqItem(idx, "a", e.target.value)
+                              }
+                              className="w-full border border-slate-300 rounded-none p-2 text-slate-500 text-sm outline-none focus:ring-2 focus:ring-blue-500/50 min-h-[50px] bg-transparent"
+                              placeholder="Enter answer..."
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {blockType !== "faq_accordion" && (
+                  <div className="pt-3 border-t border-slate-100 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                          CTA Button Text
+                        </label>
+                        <input
+                          value={content.button_text}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              button_text: e.target.value,
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded-none p-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                          CTA Button URL
+                        </label>
+                        <input
+                          value={content.button_url}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              button_url: e.target.value,
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded-none p-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                        Footer Disclaimer
+                      </label>
+                      <input
+                        value={content.footer_text}
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer_text: e.target.value,
+                          })
+                        }
+                        className="w-full border border-slate-300 rounded-none p-2.5 text-[11px] text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                        placeholder="e.g. You will remain on the same website"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="w-[60%] bg-slate-100 flex flex-col">
+              <div className="p-4 border-b border-slate-200 bg-white/80 flex justify-between items-center">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Eye className="w-3 h-3" /> Live Preview
+                </span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 flex flex-col items-center">
+                <div className="w-full max-w-7xl">
+                  <div className="bg-white shadow-xl rounded-none p-2 scale-95 origin-top">
+                    <div className="py-6">
+                      <JobBoxRenderer
+                        block={
+                          {
+                            id: blockId,
+                            title: content.company_name,
+                            status: "active",
+                            content_json: JSON.stringify(content),
+                          } as ReusableBlock
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        <div className="p-6 border-t flex justify-end items-center bg-white border-slate-200 gap-5">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-none font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Save className="w-5 h-5" />
+              )}
+              {saving
+                ? "SAVING..."
+                : isNewBlock
+                  ? "CREATE BLOCK"
+                  : "UPDATE BLOCK"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

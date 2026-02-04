@@ -215,9 +215,16 @@ func UpdatePostById(db *gorm.DB) http.HandlerFunc {
 			query = query.Where("type_id = ?", typeID)
 		}
 
-		// Xử lý ảnh nếu có thay đổi thumbnail
-		if url, ok := payload["thumbnail_url"].(string); ok {
-			payload["thumbnail_url"] = processThumbnailWithService(url)
+		if val, ok := payload["thumbnail_url"]; ok {
+			payload["thumbnailUrl"] = val
+			delete(payload, "thumbnail_url")
+		}
+
+		if url, ok := payload["thumbnailUrl"].(string); ok {
+			processedURL := processThumbnailWithService(url)
+			if processedURL != url {
+				payload["thumbnailUrl"] = processedURL
+			}
 		}
 
 		result := query.Updates(payload)
@@ -241,7 +248,6 @@ func UpdatePostById(db *gorm.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(map[string]string{"message": "Post updated successfully"})
 	}
 }
-
 func CreatePost(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var post PostModel
