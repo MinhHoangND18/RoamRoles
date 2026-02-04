@@ -165,10 +165,53 @@ function EditPostContent() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryOpen(false);
+      }
+      if (
+        recommendDropdownRef.current &&
+        !recommendDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRecommendOpen(false);
+      }
+      if (
+        surveyDropdownRef.current &&
+        !surveyDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSurveyOpen(false);
+      }
+      if (
+        blockDropdownRef.current &&
+        !blockDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsBlockDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isRecommendOpen) {
+      setSearchTerm("");
+    }
+  }, [isRecommendOpen]);
+
+  useEffect(() => {
+    if (!isSurveyOpen) {
+      setSurveySearchTerm("");
+    }
+  }, [isSurveyOpen]);
+
+  useEffect(() => {
+    if (!isBlockDropdownOpen) {
+      setBlockSearchTerm("");
+      setFilterType("all");
+    }
+  }, [isBlockDropdownOpen]);
 
   const [displayTitle, setDisplayTitle] = useState("");
   const getCleanTitle = (htmlTitle: string | undefined): string => {
@@ -937,7 +980,7 @@ function EditPostContent() {
                                   {getCleanTitle(p.title) || p.slug}
                                 </div>
                                 <div className="text-[10px] text-slate-400 font-normal">
-                                  ID: {p.id} - Slug: {p.slug}
+                                  ID: {p.id}
                                 </div>
                               </li>
                             ))}
@@ -1072,7 +1115,7 @@ function EditPostContent() {
                       />
                     </button>
                     {isBlockDropdownOpen && (
-                      <div className="absolute bottom-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute mb-2 bottom-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="p-2 border-b border-slate-100 bg-slate-50 flex gap-2">
                           <div className="relative flex-grow">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
