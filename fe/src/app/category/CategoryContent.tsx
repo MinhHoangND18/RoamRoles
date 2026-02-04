@@ -88,6 +88,16 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                     {posts.filter((post: PostApiResponse)  => post.status === 'active').map((post) => {
                         const processedTitle = transformContent(post.title || "");
                         const processedExcerpt = transformContent(post.excerpt || "");
+                        
+                        // Helper to determine thumbnail source
+                        const getThumbnailSrc = (url: string) => {
+                            if (url.startsWith('http')) return url;
+                            if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
+                                const cleanPath = url.startsWith('/') ? url.substring(1) : url;
+                                return `https://upload.jobzesty.com/${cleanPath}`;
+                            }
+                            return `/images/${url}`;
+                        };
 
                         return (
                             <article
@@ -108,7 +118,7 @@ export default function CategoryContent({ data, slug, currentPage }: CategoryCon
                                                         objectFit: "cover",
                                                         borderRadius: "0px"
                                                     }}
-                                                    src={`/images/${post.thumbnail_url}`}
+                                                    src={getThumbnailSrc(post.thumbnail_url)}
                                                     loading="lazy"
                                                 />
                                             </a>

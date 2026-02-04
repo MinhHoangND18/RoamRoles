@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Post, Type, Category, ReusableBlock } from "@/types";
-import { processThumbnailUrl, isExternalUrl } from "@/lib/api/upload";
+import { processThumbnailUrl, isExternalUrl, uploadFile, getThumbnailDisplayUrl } from "@/lib/api/upload";
 import { getCategories } from "@/lib/api/categories";
 import {
   getTypes,
@@ -80,6 +80,9 @@ function EditPostContent() {
     number | "new" | null
   >(null);
 
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const loadReusableBlocks = useCallback(async () => {
     try {
       const data = await getReusableBlocks();
@@ -88,6 +91,48 @@ function EditPostContent() {
       toast.error("Failed to refresh blocks");
     }
   }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    toast.loading('Uploading image...', { id: 'upload-image' });
+
+    try {
+      const result = await uploadFile(file);
+      
+      if (result.success && result.local_path) {
+        // Save the local path returned from server
+        setPost((prev) =>
+          prev ? { ...prev, thumbnail_url: result.local_path } : null,
+        );
+        toast.success('Image uploaded successfully!', { id: 'upload-image' });
+      } else {
+        toast.error(result.error || 'Upload failed', { id: 'upload-image' });
+      }
+    } catch (error) {
+      toast.error('Failed to upload image', { id: 'upload-image' });
+      console.error(error);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   useEffect(() => {
     loadReusableBlocks();
@@ -583,48 +628,87 @@ function EditPostContent() {
                     Thumbnail URL
                   </label>
                   <div className="flex flex-col md:flex-row gap-4">
-                    {/* Ô nhập link */}
+                    {/* File Upload & Input */}
                     <div className="flex-1">
-                      <input
-                        type="text"
-                        value={post.thumbnail_url || ""}
-                        onChange={(e) =>
-                          setPost((prev) =>
-                            prev
-                              ? { ...prev, thumbnail_url: e.target.value }
-                              : null,
-                          )
-                        }
-                        className="w-full border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                        placeholder="e.g. 07/image-name.jpg"
-                      />
-                      <p className="mt-1 text-[10px] text-slate-400 italic">
-                        Enter the corresponding path (number/abc.jpg) or absolute
-                        link.{" "}
-                      </p>
+                      <div className="mb-3">
+                        <label className="block w-full border-2 border-dashed border-slate-300 hover:border-blue-400 p-4 text-center cursor-pointer rounded transition-colors bg-slate-50 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ opacity: uploading ? 0.5 : 1, pointerEvents: uploading ? 'none' : 'auto' }}>
+                          <div className="flex flex-col items-center gap-2">
+                            <svg
+                              className="w-6 h-6 text-slate-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                            <span className="text-sm font-medium text-slate-600">
+                              {uploading ? 'Uploading...' : 'Click to upload'}
+                            </span>
+                            <span className="text-xs text-slate-400">PNG, JPG, GIF up to 5MB</span>
+                          </div>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            disabled={uploading}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Or input link */}
+                      <div className="relative">
+                        <p className="text-[10px] text-slate-400 italic mb-2">Or enter image path:</p>
+                        <input
+                          type="text"
+                          value={post.thumbnail_url || ""}
+                          onChange={(e) =>
+                            setPost((prev) =>
+                              prev
+                                ? { ...prev, thumbnail_url: e.target.value }
+                                : null,
+                            )
+                          }
+                          className="w-full border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                          placeholder="e.g. /uploads/image-name.jpg"
+                        />
+                      </div>
                     </div>
 
-                    <div className="w-full md:w-32 h-20 bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
-                      {post.thumbnail_url ? (
-                        <img
-                          src={
-                            post.thumbnail_url.startsWith("http")
-                              ? post.thumbnail_url
-                              : `${APP_CONFIG.FRONTEND_URL}${post.thumbnail_url}`
-                          }
-                          alt="Thumbnail Preview"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://placehold.co/100x100?text=Error";
-                          }}
-                        />
-                      ) : (
-                        <span className="text-[10px] text-slate-300">
-                          No Image
-                        </span>
-                      )}
-                    </div>
+                    {/* Thumbnail Preview */}
+                    {post.thumbnail_url && (
+                      <div className="md:w-48 flex-shrink-0">
+                        <p className="text-[10px] text-slate-400 italic mb-2">Preview:</p>
+                        <div className="relative aspect-video bg-slate-100 border border-slate-200 rounded overflow-hidden">
+                          <img
+                            src={getThumbnailDisplayUrl(post.thumbnail_url)}
+                            alt="Thumbnail preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/landscape-placeholder-svgrepo-com.svg ';
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setPost((prev) => prev ? { ...prev, thumbnail_url: '' } : null)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors"
+                            title="Remove thumbnail"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <p className="text-[9px] text-slate-400 mt-1 break-all">
+                          {post.thumbnail_url}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1039,15 +1123,15 @@ function EditPostContent() {
 
                   <button
                     onClick={handleSave}
-                    disabled={saving}
+                    disabled={saving || uploading}
                     className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                   >
-                    {saving ? (
+                    {saving || uploading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    {saving ? "Saving..." : "Save Content"}
+                    {saving ? "Saving..." : uploading ? "Uploading Image..." : "Save Content"}
                   </button>
 
                   <button

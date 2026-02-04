@@ -72,19 +72,25 @@ type CategoryPostsResponse struct {
 
 // Helper: Gọi sang Upload Service để tải ảnh về
 func processThumbnailWithService(thumbnailURL string) string {
+	fmt.Printf("[THUMBNAIL] Processing URL: %s\n", thumbnailURL)
+
 	// 1. Nếu URL rỗng hoặc đã là link nội bộ (chứa domain của mình hoặc đường dẫn tương đối) thì bỏ qua
 	// Bạn có thể thay "jobzestry.com" bằng domain thực tế hoặc check biến môi trường
 	if thumbnailURL == "" || strings.Contains(thumbnailURL, "/uploads/") {
+		fmt.Printf("[THUMBNAIL] Skipping - already local or empty\n")
 		return thumbnailURL
 	}
 
 	// 2. Cấu hình request gửi sang Upload Service
 	// Giả sử Upload Service chạy ở localhost:8089 trên cùng server
 	uploadServiceURL := "http://127.0.0.1:8089/api/upload/from-url"
-	
+
 	requestBody, _ := json.Marshal(map[string]string{
-		"url": thumbnailURL,  
+		"url": thumbnailURL,
 	})
+
+	fmt.Printf("[THUMBNAIL] Calling upload service: %s\n", uploadServiceURL)
+	fmt.Printf("[THUMBNAIL] Request body: %s\n", string(requestBody))
 
 	resp, err := http.Post(uploadServiceURL, "application/json", bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -94,20 +100,27 @@ func processThumbnailWithService(thumbnailURL string) string {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Upload service returned status: %d\n", resp.StatusCode)
+		fmt.Printf("[THUMBNAIL ERROR] Upload service returned status: %d\n", resp.StatusCode)
 		return thumbnailURL
 	}
 
 	// 3. Parse kết quả trả về (Giả sử service trả về {"url": "..."} hoặc {"file_path": "..."})
 	var result map[string]string
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		fmt.Printf("[THUMBNAIL ERROR] Failed to decode response: %v\n", err)
 		return thumbnailURL
 	}
 
-	// Ưu tiên lấy key "url" hoặc "file_path" tùy theo code của service upload
-	if newURL, ok := result["url"]; ok && newURL != "" {
-		return newURL
+	fmt.Printf("[THUMBNAIL] Upload service response: %+v\n", result)
+
+	// Ưu tiên lấy "file_path" để lưu vào database (ví dụ: /uploads/anh-dep-15-abc123.jpg)
+	// Không lấy "url" vì đó là full URL (https://jobzesty.com/uploads/...)
+	if filePath, ok := result["file_path"]; ok && filePath != "" {
+		fmt.Printf("[THUMBNAIL SUCCESS] Processed thumbnail: %s -> %s\n", thumbnailURL, filePath)
+		return filePath
 	}
+
+	fmt.Printf("[THUMBNAIL WARNING] No file_path in response, returning original URL\n")
 	return thumbnailURL
 }
 
