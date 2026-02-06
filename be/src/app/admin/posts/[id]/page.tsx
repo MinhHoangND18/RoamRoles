@@ -688,81 +688,56 @@ function EditPostContent() {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
                     Thumbnail URL
                   </label>
-                  <div className="flex flex-col md:flex-row gap-4">
-                    {/* File Upload & Input */}
-                    <div className="flex-1">
-                      <div className="mb-3">
-                        <label
-                          className="block w-full border-2 border-dashed border-slate-300 hover:border-blue-400 p-4 text-center cursor-pointer rounded transition-colors bg-slate-50 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{
-                            opacity: uploading ? 0.5 : 1,
-                            pointerEvents: uploading ? "none" : "auto",
-                          }}
-                        >
-                          <div className="flex flex-col items-center gap-2">
-                            <svg
-                              className="w-6 h-6 text-slate-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                              />
-                            </svg>
-                            <span className="text-sm font-medium text-slate-600">
-                              {uploading ? "Uploading..." : "Click to upload"}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              PNG, JPG, GIF up to 5MB
-                            </span>
-                          </div>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileUpload}
-                            disabled={uploading}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
+                  
+                  {/* Input link with upload button */}
+                  <div className="mb-4 flex gap-2">
+                    <input
+                      type="text"
+                      value={post.thumbnail_url || ""}
+                      onChange={(e) =>
+                        setPost((prev) =>
+                          prev
+                            ? { ...prev, thumbnail_url: e.target.value }
+                            : null,
+                        )
+                      }
+                      className="flex-1 border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
+                      placeholder="e.g. /uploads/image-name.jpg or paste external URL"
+                    />
+                    <label
+                      className="flex items-center justify-center w-12 h-12 border-2 border-dashed border-slate-300 hover:border-blue-400 cursor-pointer transition-colors bg-slate-50 hover:bg-blue-50"
+                      style={{
+                        opacity: uploading ? 0.5 : 1,
+                        pointerEvents: uploading ? "none" : "auto",
+                      }}
+                      title="Upload image"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                      ) : (
+                        <Plus className="w-5 h-5 text-slate-400" />
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic">PNG, JPG, GIF - Max 5MB</p>
 
-                      {/* Or input link */}
+                  {/* Thumbnail Preview */}
+                  <div className="w-full">
+                    {post.thumbnail_url ? (
                       <div className="relative">
-                        <p className="text-[10px] text-slate-400 italic mb-2">
-                          Or enter image path:
-                        </p>
-                        <input
-                          type="text"
-                          value={post.thumbnail_url || ""}
-                          onChange={(e) =>
-                            setPost((prev) =>
-                              prev
-                                ? { ...prev, thumbnail_url: e.target.value }
-                                : null,
-                            )
-                          }
-                          className="w-full border p-3 text-[14px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 bg-white border-slate-200"
-                          placeholder="e.g. /uploads/image-name.jpg"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Thumbnail Preview */}
-                    {post.thumbnail_url && (
-                      <div className="md:w-48 flex-shrink-0">
-                        <p className="text-[10px] text-slate-400 italic mb-2">
-                          Preview:
-                        </p>
-                        <div className="relative aspect-video bg-slate-100 border border-slate-200 rounded overflow-hidden">
+                        <div className="relative w-full min-h-[300px] max-h-[500px] bg-slate-100 border border-slate-200 overflow-hidden shadow-sm flex items-center justify-center">
                           <img
                             src={getThumbnailDisplayUrl(post.thumbnail_url)}
                             alt="Thumbnail preview"
-                            className="w-full h-full object-cover"
+                            className="max-w-full max-h-[500px] object-contain"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
                                 "/landscape-placeholder-svgrepo-com.svg ";
@@ -775,15 +750,24 @@ function EditPostContent() {
                                 prev ? { ...prev, thumbnail_url: "" } : null,
                               )
                             }
-                            className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors"
+                            className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors"
                             title="Remove thumbnail"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-1 break-all">
+                        <p className="text-[10px] text-slate-400 mt-2 break-all truncate">
                           {post.thumbnail_url}
                         </p>
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 bg-slate-50 border border-slate-200 flex items-center justify-center">
+                        <div className="text-center text-slate-400">
+                          <svg className="w-8 h-8 mx-auto mb-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-xs">No image</p>
+                        </div>
                       </div>
                     )}
                   </div>
