@@ -5,7 +5,6 @@ import { transformContent } from "@/lib/content-utils";
 
 /* eslint-disable @next/next/no-html-link-for-pages */
 
-// Strip HTML tags để lấy text thuần
 const stripHtml = (html: string) => {
   return html.replace(/<[^>]*>/g, '').trim();
 };
@@ -31,19 +30,13 @@ export default async function HomePage({
   if (query) {
     const posts = (await fetchAllPosts()) || [];
 
-    // Helper để check xem post có ảnh thật không (không phải default)
     const hasImage = (post: { content?: string }) => {
       const imgMatch = post.content?.match(/<img[^>]+src="([^"]+)"/);
       return imgMatch && imgMatch[1] && !imgMatch[1].includes('default-post.jpg');
     };
 
-    const filteredPosts = posts.filter((post) => {
-      // Loại bỏ các post không có ảnh
-      if (!hasImage(post)) {
-        return false;
-      }
+    const matchedPosts = posts.filter((post) => {
 
-      // Strip HTML trước khi search - chỉ tìm trong nội dung text, không tìm trong HTML tags
       const processedTitle = normalizeText(transformContent(post.title || ""));
 
       const processedExcerpt = normalizeText(transformContent(post.excerpt || ""));
@@ -52,6 +45,18 @@ export default async function HomePage({
         processedTitle.includes(query) ||
         processedExcerpt.includes(query)
       );
+    });
+
+    matchedPosts.sort((a, b) => b.id - a.id);
+
+    const seenTitles = new Set();
+    const filteredPosts = matchedPosts.filter((post) => {
+      const cleanTitle = normalizeText(transformContent(post.title || ""));
+      if (seenTitles.has(cleanTitle)) {
+        return false;
+      }
+      seenTitles.add(cleanTitle);
+      return true;
     });
 
     const truncateText = (text: string, maxLength: number = 150) => {
