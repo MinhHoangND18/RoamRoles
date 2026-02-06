@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   Loader2,
   ChevronDown,
+  AlertCircle,
 } from "lucide-react";
 import { Post, Category } from "@/types";
 import { getPosts } from "@/lib/api/admin";
@@ -221,10 +222,11 @@ if (slugs.size > 1) {
     (currentPage - 1) * pageSize + pageSize,
   );
 
+  const selectedCategoryObj = categories.find((c) => c.id.toString() === selectedCategory);
   const selectedCategoryName =
     selectedCategory === "0"
       ? "No Category"
-      : categories.find((c) => c.id.toString() === selectedCategory)?.title ||
+      : selectedCategoryObj?.title ||
         "All Categories";
 
   const statusOptions = [
@@ -264,11 +266,17 @@ if (slugs.size > 1) {
                 onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                 className="flex items-center justify-between w-full md:w-40 bg-white border border-slate-200  py-4 px-4 text-[15px] shadow-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 transition-all"
               >
-                <span className="text-left">{selectedCategoryName}</span>
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className={`text-left truncate ${selectedCategoryObj?.status === "inactive" ? "text-slate-400 italic" : ""}`}>
+                    {selectedCategoryName}
+                  </span>
+                  {selectedCategoryObj?.status === "inactive" && (
+                    <AlertCircle className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                  )}
+                </div>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform text-slate-400 ${
-                    isCategoryOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 transition-transform text-slate-400 flex-shrink-0 ${isCategoryOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
               {isCategoryOpen && (
@@ -298,9 +306,15 @@ if (slugs.size > 1) {
                         setSelectedCategory(category.id.toString());
                         setIsCategoryOpen(false);
                       }}
-                      className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
+                      className={`px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center justify-between group ${category.status === "inactive"
+                          ? "text-slate-400 italic"
+                          : "text-slate-600 hover:text-blue-600"
+                        }`}
                     >
-                      {category.title}
+                      <span>{category.title}</span>
+                      {category.status === "inactive" && (
+                        <AlertCircle className="w-3 h-3 text-slate-400" />
+                      )}
                     </li>
                   ))}
                 </ul>

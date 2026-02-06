@@ -70,6 +70,15 @@ export default function RelatedPosts({ currentPost }: RelatedPostsProps) {
     return null;
   }
 
+  const getThumbnailSrc = (url: string) => {
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
+      const cleanPath = url.startsWith('/') ? url.substring(1) : url;
+      return `https://upload.jobzesty.com/${cleanPath}`;
+    }
+    return `/images/${url}`;
+  };
+
   return (
     <div className="related-posts-section my-5">
 
@@ -77,7 +86,7 @@ export default function RelatedPosts({ currentPost }: RelatedPostsProps) {
         {relatedPosts.map((post) => {
           const processedTitle = transformContent(post.title || "");
           const imageUrl = post.thumbnail_url
-            ? `/images/${post.thumbnail_url}`
+            ? getThumbnailSrc(post.thumbnail_url)
             : '/images/default-thumbnail.jpg';
 
           return (

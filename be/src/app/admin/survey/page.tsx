@@ -68,7 +68,7 @@ export default function SurveyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-6 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] p-6 font-sans relative">
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 text-left">
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
@@ -198,17 +198,22 @@ export default function SurveyPage() {
           </div>
         )}
 
-        {/* Modal và Manager */}
+        {/* Modal và Manager  */}
         {showSetForm && (
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
-              <SurveySetForm
-                set={editingSet}
-                onSuccess={() => { setShowSetForm(false); setEditingSet(null); loadSets(); }}
-                onCancel={() => { setShowSetForm(false); setEditingSet(null); }}
-              />
+          <>
+            {/* Overlay */}
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" onClick={() => { setShowSetForm(false); setEditingSet(null); }} />
+            {/* Modal content  */}
+            <div className="absolute inset-0 flex items-center justify-center p-4 z-50">
+              <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+                <SurveySetForm
+                  set={editingSet}
+                  onSuccess={() => { setShowSetForm(false); setEditingSet(null); loadSets(); }}
+                  onCancel={() => { setShowSetForm(false); setEditingSet(null); }}
+                />
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {showQuestionsManager && selectedSet && (

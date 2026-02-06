@@ -86,6 +86,9 @@ function EditPostContent() {
   const blockDropdownRef = useRef<HTMLDivElement>(null);
   const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
   const typeFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+  const statusFilterDropdownRef = useRef<HTMLDivElement>(null);
   const [blockForEditing, setBlockForEditing] = useState<number | "new" | null>(
     null,
   );
@@ -115,13 +118,11 @@ function EditPostContent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size must be less than 5MB");
       return;
@@ -134,7 +135,6 @@ function EditPostContent() {
       const result = await uploadFile(file);
 
       if (result.success && result.local_path) {
-        // Save the local path returned from server
         setPost((prev) =>
           prev ? { ...prev, thumbnail_url: result.local_path } : null,
         );
@@ -165,10 +165,66 @@ function EditPostContent() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryOpen(false);
+      }
+      if (
+        recommendDropdownRef.current &&
+        !recommendDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRecommendOpen(false);
+      }
+      if (
+        surveyDropdownRef.current &&
+        !surveyDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSurveyOpen(false);
+      }
+      if (
+        blockDropdownRef.current &&
+        !blockDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsBlockDropdownOpen(false);
+      }
+      if (
+        typeFilterDropdownRef.current &&
+        !typeFilterDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsTypeFilterOpen(false);
+      }
+      if (
+        statusFilterDropdownRef.current &&
+        !statusFilterDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsStatusFilterOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isRecommendOpen) {
+      setSearchTerm("");
+    }
+  }, [isRecommendOpen]);
+
+  useEffect(() => {
+    if (!isSurveyOpen) {
+      setSurveySearchTerm("");
+    }
+  }, [isSurveyOpen]);
+
+  useEffect(() => {
+    if (!isBlockDropdownOpen) {
+      setBlockSearchTerm("");
+      setFilterType("all");
+      setFilterStatus("all");
+    }
+  }, [isBlockDropdownOpen]);
 
   const [displayTitle, setDisplayTitle] = useState("");
   const getCleanTitle = (htmlTitle: string | undefined): string => {
@@ -305,7 +361,6 @@ function EditPostContent() {
         toast.success("Image downloaded successfully!", {
           id: "download-image",
         });
-        // Update the local state
         setPost((prev) =>
           prev ? { ...prev, thumbnail_url: processedThumbnailUrl } : null,
         );
@@ -406,7 +461,6 @@ function EditPostContent() {
         </div>
       );
     }
-    // If not loading but post is still null, show error
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#f8fafc]">
         <div className="text-center">
@@ -423,11 +477,9 @@ function EditPostContent() {
     );
   }
 
-  const selectedCategoryName =
-    post.category_id === null
-      ? "No Category"
-      : categories.find((c) => c.id === post.category_id)?.title ||
-      "Select Category";
+  const selectedCategory = post.category_id
+    ? categories.find((c) => c.id === post.category_id)
+    : null;
 
   return (
     <div className="relative" style={loaderStyle}>
@@ -783,48 +835,28 @@ function EditPostContent() {
                     </button>
                   </div>
 
-                  {/* <div className="flex items-center justify-between px-1">
-                    <label
-                      htmlFor="survey-toggle"
-                      className="text-sm font-bold text-slate-600"
-                    >
-                      Show Survey
-                    </label>
-                    <button
-                      id="survey-toggle"
-                      onClick={() =>
-                        setPost((prev) =>
-                          prev
-                            ? {
-                              ...prev,
-                              show_survey: !prev.show_survey,
-                            }
-                            : null,
-                        )
-                      }
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.show_survey ? "bg-green-500" : "bg-slate-300"
-                        }`}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${post.show_survey ? "translate-x-6" : "translate-x-1"
-                          }`}
-                      />
-                    </button>
-                  </div> */}
-
                   <div className="relative" ref={categoryDropdownRef}>
                     <button
                       onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                       className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
                     >
-                      <span className="text-left">{selectedCategoryName}</span>
+                      <div className="flex items-center gap-2 overflow-hidden justify-between flex-grow">
+                        <span className={`text-left truncate ${selectedCategory?.status === "inactive" ? "text-slate-400 italic" : ""}`}>
+                          {selectedCategory ? selectedCategory.title : (post.category_id === null ? "No Category" : "Select Category")}
+                        </span>
+                        {selectedCategory?.status === "inactive" && (
+                          <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded flex-shrink-0 rounded-none iltalic">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform text-slate-400 ${isCategoryOpen ? "rotate-180" : ""
+                        className={`w-4 h-4 transition-transform text-slate-400 flex-shrink-0 ${isCategoryOpen ? "rotate-180" : ""
                           }`}
                       />
                     </button>
                     {isCategoryOpen && (
-                      <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm">
+                      <ul className="absolute top-full mt-1 left-0 w-full bg-white border border-slate-200 shadow-lg py-1 z-20 font-medium text-sm max-h-60 overflow-y-auto">
                         <li
                           onClick={() => {
                             setPost((prev) =>
@@ -847,9 +879,18 @@ function EditPostContent() {
                               );
                               setIsCategoryOpen(false);
                             }}
-                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600"
+                            className={`px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center justify-between group ${
+                              category.status === "inactive"
+                                ? "text-slate-400 italic"
+                                : "text-slate-600 hover:text-blue-600"
+                            }`}
                           >
-                            {category.title}
+                            <span>{category.title}</span>
+                            {category.status === "inactive" && (
+                              <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-none group-hover:bg-white">
+                                Inactive
+                              </span>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -937,12 +978,11 @@ function EditPostContent() {
                                   {getCleanTitle(p.title) || p.slug}
                                 </div>
                                 <div className="text-[10px] text-slate-400 font-normal">
-                                  ID: {p.id} - Slug: {p.slug}
+                                  ID: {p.id}
                                 </div>
                               </li>
                             ))}
 
-                          {/* Hiển thị khi không tìm thấy kết quả */}
                           {allPosts.filter(
                             (p) =>
                               p.status === "active" &&
@@ -986,7 +1026,7 @@ function EditPostContent() {
                             onChange={(e) =>
                               setSurveySearchTerm(e.target.value)
                             }
-                            className="w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                            className="rounded-none w-full p-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                             autoFocus
                           />
                         </div>
@@ -1010,7 +1050,7 @@ function EditPostContent() {
                               const searchLower =
                                 surveySearchTerm.toLowerCase();
                               return (
-                                s.active && // Chỉ hiện survey active
+                                s.active && 
                                 (s.name.toLowerCase().includes(searchLower) ||
                                   s.slug.toLowerCase().includes(searchLower))
                               );
@@ -1047,7 +1087,7 @@ function EditPostContent() {
                               .toLowerCase()
                               .includes(surveySearchTerm.toLowerCase()),
                           ).length === 0 && (
-                              <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
+                              <li className="px-4 py-3 text-center text-slate-400 text-xs">
                                 No survey sets found matching {surveySearchTerm}
                               </li>
                             )}
@@ -1072,8 +1112,8 @@ function EditPostContent() {
                       />
                     </button>
                     {isBlockDropdownOpen && (
-                      <div className="absolute bottom-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
-                        <div className="p-2 border-b border-slate-100 bg-slate-50 flex gap-2">
+                      <div className="absolute mb-2 bottom-full mt-2 left-0 w-full bg-white border border-slate-200 shadow-xl z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 border-b border-slate-100 bg-slate-50 flex gap-1">
                           <div className="relative flex-grow">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                             <input
@@ -1092,9 +1132,9 @@ function EditPostContent() {
                               onClick={() =>
                                 setIsTypeFilterOpen(!isTypeFilterOpen)
                               }
-                              className="flex items-center justify-between bg-white border border-slate-200 px-2 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                              className="flex items-center justify-between bg-white border border-slate-200 px-2 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-19"
                             >
-                              <span className="text-left whitespace-nowrap">
+                              <span className="text-left whitespace-nowrap truncate">
                                 {{
                                   all: "All Types",
                                   job_card: "Job Card",
@@ -1103,7 +1143,7 @@ function EditPostContent() {
                                 }[filterType] || "All Types"}
                               </span>
                               <ChevronDown
-                                className={`w-3 h-3 transition-transform text-slate-400 ml-2 ${isTypeFilterOpen ? "rotate-180" : ""}`}
+                                className={`w-3 h-3 transition-transform text-slate-400 ml-2 shrink-0 ${isTypeFilterOpen ? "rotate-180" : ""}`}
                               />
                             </button>
                             {isTypeFilterOpen && (
@@ -1123,7 +1163,46 @@ function EditPostContent() {
                                       setFilterType(option.value);
                                       setIsTypeFilterOpen(false);
                                     }}
-                                    className="px-3 py-1.5 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 whitespace-nowrap"
+                                    className="px-1.5 py-1.5 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 whitespace-nowrap"
+                                  >
+                                    {option.label}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                           <div className="relative" ref={statusFilterDropdownRef}>
+                            <button
+                              onClick={() =>
+                                setIsStatusFilterOpen(!isStatusFilterOpen)
+                              }
+                              className="flex items-center justify-between bg-white border border-slate-200 px-2 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-19"
+                            >
+                              <span className="text-left whitespace-nowrap truncate">
+                                {{
+                                  all: "All Statuses",
+                                  active: "Active",
+                                  inactive: "Inactive",
+                                }[filterStatus] || "All Statuses"}
+                              </span>
+                              <ChevronDown
+                                className={`w-3 h-3 transition-transform text-slate-400 ml-2 shrink-0 ${isStatusFilterOpen ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                            {isStatusFilterOpen && (
+                              <ul className="absolute top-full mt-1 right-0 w-auto bg-white border border-slate-200 shadow-lg py-1 z-30 font-medium text-xs">
+                                {[
+                                  { value: "all", label: "All Statuses" },
+                                  { value: "active", label: "Active" },
+                                  { value: "inactive", label: "Inactive" },
+                                ].map((option) => (
+                                  <li
+                                    key={option.value}
+                                    onClick={() => {
+                                      setFilterStatus(option.value);
+                                      setIsStatusFilterOpen(false);
+                                    }}
+                                    className="px-1.5 py-1.5 cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-600 whitespace-nowrap"
                                   >
                                     {option.label}
                                   </li>
@@ -1134,22 +1213,41 @@ function EditPostContent() {
                         </div>
 
                         <ul className="max-h-60 overflow-y-auto py-1">
-                          {reusableBlocks
-                            .filter((b) => {
-                              const blockData = JSON.parse(
-                                b.content_json || "{}",
+                          {(() => {
+                            const filteredBlocks = reusableBlocks.filter(
+                              (b) => {
+                                const blockData = JSON.parse(
+                                  b.content_json || "{}",
+                                );
+                                const bType = blockData.type || "job_card";
+                                const searchLower =
+                                  blockSearchTerm.toLowerCase();
+                                const shortcode = `[block id="${b.id}"]`;
+                                const matchesSearch =
+                                  b.title
+                                    .toLowerCase()
+                                    .includes(searchLower) ||
+                                  shortcode.includes(searchLower);
+                                const matchesType =
+                                  filterType === "all" || bType === filterType;
+                                const matchesStatus =
+                                  filterStatus === "all" ||
+                                  b.status === filterStatus;
+                                return (
+                                  matchesSearch && matchesType && matchesStatus
+                                );
+                              },
+                            );
+
+                            if (filteredBlocks.length === 0) {
+                              return (
+                                <li className="px-4 py-3 text-center text-slate-400 text-xs">
+                                  No blocks found
+                                </li>
                               );
-                              const bType = blockData.type || "job_card";
-                              const searchLower = blockSearchTerm.toLowerCase();
-                              const shortcode = `[block id="${b.id}"]`;
-                              const matchesSearch =
-                                b.title.toLowerCase().includes(searchLower) ||
-                                shortcode.includes(searchLower);
-                              const matchesType =
-                                filterType === "all" || bType === filterType;
-                              return matchesSearch && matchesType;
-                            })
-                            .map((block) => {
+                            }
+
+                            return filteredBlocks.map((block) => {
                               const blockData = JSON.parse(
                                 block.content_json || "{}",
                               );
@@ -1193,17 +1291,18 @@ function EditPostContent() {
                                   </div>
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="text-[10px] font-mono text-slate-400 group-hover:text-blue-400 transition-colors mt-0.5">
-                                      [block id={block.id}]
+                                      {`[block id="${block.id}"]`}
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-grow min-w-0 justify-end">
                                       <span
-                                        className={`flex-shrink-0 text-[8px] font-black uppercase px-1.5 py-0.5 ${blockType === "faq_accordion"
+                                        className={`flex-shrink-0 text-[8px] font-black uppercase px-1.5 py-0.5 ${
+                                          blockType === "faq_accordion"
                                             ? "bg-purple-100 text-purple-600 rounded-none"
                                             : blockType === "feature_list"
                                               ? "bg-orange-100 text-orange-600 rounded-none"
                                               : "bg-blue-100 text-blue-600 rounded-none"
-                                          }`}
+                                        }`}
                                       >
                                         {blockType === "faq_accordion"
                                           ? "FAQ"
@@ -1215,10 +1314,11 @@ function EditPostContent() {
 
                                     <div className="flex items-center gap-2 flex-grow min-w-0 justify-end">
                                       <span
-                                        className={`flex-shrink-0 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-none ${block.status === "active"
+                                        className={`flex-shrink-0 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-none ${
+                                          block.status === "active"
                                             ? "bg-green-100 text-green-700"
                                             : "bg-red-100 text-red-700"
-                                          }`}
+                                        }`}
                                       >
                                         {block.status}
                                       </span>
@@ -1226,7 +1326,8 @@ function EditPostContent() {
                                   </div>
                                 </li>
                               );
-                            })}
+                            });
+                          })()}
                         </ul>
 
                         <div className="p-2 border-t border-slate-100">
@@ -1264,6 +1365,8 @@ function EditPostContent() {
                       isNewPost ||
                       originalPost === null ||
                       originalPost?.status !== "active" ||
+                      categories.find((c) => c.id === originalPost?.category_id)?.status ===
+                        "inactive" ||
                       previewing
                     }
                     className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1357,7 +1460,6 @@ function QuickEditBlockPopup({
 
   const [blockType, setBlockType] = useState("job_card");
 
-  // For block image upload
   const [blockImageUploading, setBlockImageUploading] = useState(false);
   const blockImageInputRef = useRef<HTMLInputElement>(null);
 

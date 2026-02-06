@@ -317,7 +317,13 @@ func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
 		typeParam := r.URL.Query().Get("type")
 
 		post := PostModel{}
-		query := db.Model(&PostModel{}).Preload("Type").Preload("RecommendPost").Where("slug = ?", slug).Where("status = ?", "active")
+		query := db.Model(&PostModel{}).
+			Preload("Type").
+			Preload("RecommendPost").
+			Joins("LEFT JOIN categories ON categories.id = posts.category_id").
+			Where("posts.slug = ?", slug).
+			Where("posts.status = ?", "active").
+			Where("(categories.id IS NULL OR categories.status = ?)", "active")
 
 		if typeParam != "" {
 			typeID, err := strconv.Atoi(typeParam)
@@ -325,7 +331,7 @@ func GetPostBySlug(db *gorm.DB) http.HandlerFunc {
 				http.Error(w, "Invalid type parameter", http.StatusBadRequest)
 				return
 			}
-			query = query.Where("type_id = ?", typeID)
+			query = query.Where("posts.type_id = ?", typeID)
 		}
 
 		result := query.First(&post)
@@ -371,7 +377,7 @@ func GetPostsByCategorySlug(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var category CategoryModel
-		if err := db.Where("slug = ?", slug).First(&category).Error; err != nil {
+		if err := db.Where("slug = ? AND status = ?", slug, "active").First(&category).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				http.Error(w, "Category not found", http.StatusNotFound)
 				return

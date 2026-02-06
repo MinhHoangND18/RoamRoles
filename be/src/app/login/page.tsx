@@ -134,7 +134,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-8 flex items-center justify-center text-slate-400">
-           <span className="text-[10px] font-bold tracking-[0.2em] uppercase">© 2026 ROAMROLES Production</span>
+           <span className="text-[10px] font-bold tracking-[0.2em] uppercase">© 2026 JOBZESTY Production</span>
         </div>
       </div>
     </div>

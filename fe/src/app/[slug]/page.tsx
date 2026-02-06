@@ -91,8 +91,6 @@ async function ContentParser({ htmlContent }: { htmlContent: string }) {
     if (blockData) {
       if (blockData.status === "active") {
         parts.push({ type: "block", data: blockData });
-      } else {
-        parts.push({ type: "text", content: match[0] });
       }
     }
 

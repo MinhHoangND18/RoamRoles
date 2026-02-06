@@ -1,3 +1,5 @@
+'use client';
+
 import { ReusableBlock } from "@/types/ReusableBlock";
 import { UPLOAD_CONFIG } from "@/constants/app-config";
 
