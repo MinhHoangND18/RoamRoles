@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"github.com/gorilla/mux"
 	"errors"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -83,6 +87,14 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
+		// #region agent log
+		if f, err := os.OpenFile("c:\\roamroles\\RoamRoles\\.cursor\\debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			defer f.Close()
+			entry := fmt.Sprintf(`{"sessionId":"debug-session","runId":"initial","hypothesisId":"G1","location":"api/handlers/account_handler.go:CheckAccess:entry","message":"CheckAccess called","data":{"email":"%s"}, "timestamp":%d}`+"\n", email, time.Now().UnixMilli())
+			_, _ = f.WriteString(entry)
+		}
+		// #endregion
+
 		var account AccountModel
 		result := db.Where("account = ?", email).First(&account)
 
@@ -93,6 +105,14 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 				http.Error(w, "Database error", http.StatusInternalServerError)
 				return
 			}
+
+			// #region agent log
+			if f, err := os.OpenFile("c:\\roamroles\\RoamRoles\\.cursor\\debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				defer f.Close()
+				entry := fmt.Sprintf(`{"sessionId":"debug-session","runId":"initial","hypothesisId":"G2","location":"api/handlers/account_handler.go:CheckAccess:notFound","message":"Account not found, creating pending","data":{"email":"%s"}, "timestamp":%d}`+"\n", email, time.Now().UnixMilli())
+				_, _ = f.WriteString(entry)
+			}
+			// #endregion
 
 			newAccount := AccountModel{
 				Account: email,
@@ -112,6 +132,14 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 		}
 
 		if account.Status != "active" {
+			// #region agent log
+			if f, err := os.OpenFile("c:\\roamroles\\RoamRoles\\.cursor\\debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				defer f.Close()
+				entry := fmt.Sprintf(`{"sessionId":"debug-session","runId":"initial","hypothesisId":"G3","location":"api/handlers/account_handler.go:CheckAccess:notActive","message":"Account not active","data":{"email":"%s","status":"%s"}, "timestamp":%d}`+"\n", email, account.Status, time.Now().UnixMilli())
+				_, _ = f.WriteString(entry)
+			}
+			// #endregion
+
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"allowed": false,
 				"status":  account.Status,
@@ -119,6 +147,14 @@ func CheckAccess(db *gorm.DB) http.HandlerFunc {
 			})
 			return
 		}
+
+		// #region agent log
+		if f, err := os.OpenFile("c:\\roamroles\\RoamRoles\\.cursor\\debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			defer f.Close()
+			entry := fmt.Sprintf(`{"sessionId":"debug-session","runId":"initial","hypothesisId":"G4","location":"api/handlers/account_handler.go:CheckAccess:allowed","message":"Account allowed","data":{"email":"%s","status":"%s"}, "timestamp":%d}`+"\n", email, account.Status, time.Now().UnixMilli())
+			_, _ = f.WriteString(entry)
+		}
+		// #endregion
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"allowed": true,

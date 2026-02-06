@@ -13,7 +13,20 @@ const handler = NextAuth({
       if (!user.email) return false;
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/check-access?email=${user.email}`);
+        // Dùng NEXTAUTH_URL thay vì NEXT_PUBLIC_API_URL
+        const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+        const url = `${baseUrl}/api/check-access?email=${encodeURIComponent(user.email)}`;
+
+        console.log("Checking access for:", user.email);
+        console.log("API URL:", url);
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          console.error(`API returned status ${response.status}`);
+          return false;
+        }
+
         const data = await response.json();
         console.log("Auth server response:", data);
         return data.allowed === true;

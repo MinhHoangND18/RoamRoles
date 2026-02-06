@@ -25,6 +25,21 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ s?: string }>;
 }) {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/c802d064-0fa2-4863-82ae-6ea970cce8eb', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'debug-session',
+      runId: 'initial',
+      hypothesisId: 'H1',
+      location: 'fe/src/app/page.tsx:HomePage',
+      message: 'HomePage invoked',
+      data: {},
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   const params = await searchParams;
   const query = normalizeText(params?.s || "");
 

@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -18,7 +21,7 @@ type PostModel struct {
 	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
 	Status          string         `gorm:"column:status" json:"status"`
 	PostNavigation  string         `gorm:"column:post_navigation" json:"post_navigation"`
-	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
+	ThumbnailURL    string         `gorm:"column:thumbnail_url" json:"thumbnail_url"`
 	TypeID          int64          `gorm:"column:type_id" json:"type_id,omitempty"`
 	Type            TypeModel      `json:"type,omitempty"`
 	CategoryID      *int64         `gorm:"column:category_id" json:"category_id"`
@@ -41,7 +44,7 @@ type PostResponse struct {
 	Excerpt         string         `gorm:"column:excerpt" json:"excerpt"`
 	Status          string         `gorm:"column:status" json:"status"`
 	PostNavigation  string         `json:"post_navigation"`
-	ThumbnailURL    string         `gorm:"column:thumbnailUrl" json:"thumbnail_url"`
+	ThumbnailURL    string         `gorm:"column:thumbnail_url" json:"thumbnail_url"`
 	TypeID          int64          `gorm:"column:type_id" json:"type_id"`
 	Type            TypeModel      `gorm:"foreignKey:TypeID" json:"type"`
 	CategoryID      *int64         `gorm:"column:category_id" json:"category_id"`
@@ -67,6 +70,47 @@ type CategoryPostsResponse struct {
 	Pagination PaginationMeta `json:"pagination"`
 }
 
+// Helper: Gọi sang Upload Service để tải ảnh về
+func processThumbnailWithService(thumbnailURL string) string {
+	// 1. Nếu URL rỗng hoặc đã là link nội bộ (chứa domain của mình hoặc đường dẫn tương đối) thì bỏ qua
+	// Bạn có thể thay "jobzestry.com" bằng domain thực tế hoặc check biến môi trường
+	if thumbnailURL == "" || strings.Contains(thumbnailURL, "/uploads/") {
+		return thumbnailURL
+	}
+
+	// 2. Cấu hình request gửi sang Upload Service
+	// Giả sử Upload Service chạy ở localhost:8089 trên cùng server
+	uploadServiceURL := "http://127.0.0.1:8089/api/upload/from-url"
+	
+	requestBody, _ := json.Marshal(map[string]string{
+		"url": thumbnailURL,  
+	})
+
+	resp, err := http.Post(uploadServiceURL, "application/json", bytes.NewBuffer(requestBody))
+	if err != nil {
+		fmt.Printf("Error calling upload service: %v\n", err)
+		return thumbnailURL // Lỗi thì giữ nguyên link cũ
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Upload service returned status: %d\n", resp.StatusCode)
+		return thumbnailURL
+	}
+
+	// 3. Parse kết quả trả về (Giả sử service trả về {"url": "..."} hoặc {"file_path": "..."})
+	var result map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return thumbnailURL
+	}
+
+	// Ưu tiên lấy key "url" hoặc "file_path" tùy theo code của service upload
+	if newURL, ok := result["url"]; ok && newURL != "" {
+		return newURL
+	}
+	return thumbnailURL
+}
+
 func GetPostById(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
@@ -81,7 +125,7 @@ func GetPostById(db *gorm.DB) http.HandlerFunc {
 		post := PostModel{}
 		query := db.Model(&PostModel{}).Preload("Type").
 			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
-				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
+				return db.Select("id", "slug", "title", "thumbnail_url", "excerpt", "status")
 			}).
 			Preload("SurveySet").
 			Where("id = ?", id)
@@ -116,7 +160,7 @@ func GetPosts(db *gorm.DB) http.HandlerFunc {
 		err := db.Model(&PostModel{}).Preload("Type").
 			Preload("Category").
 			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
-				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
+				return db.Select("id", "slug", "title", "thumbnail_url", "excerpt", "status")
 			}).
 			Preload("SurveySet").
 			Find(&post).Error
@@ -158,6 +202,11 @@ func UpdatePostById(db *gorm.DB) http.HandlerFunc {
 			query = query.Where("type_id = ?", typeID)
 		}
 
+		// Xử lý ảnh nếu có thay đổi thumbnail
+		if url, ok := payload["thumbnail_url"].(string); ok {
+			payload["thumbnail_url"] = processThumbnailWithService(url)
+		}
+
 		result := query.Updates(payload)
 		if result.Error != nil {
 			http.Error(w, result.Error.Error(), http.StatusInternalServerError)
@@ -188,6 +237,8 @@ func CreatePost(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		post.ThumbnailURL = processThumbnailWithService(post.ThumbnailURL)
 
 		originalSlug := post.Slug
 		suffix := 0
@@ -382,7 +433,7 @@ func GetRecommendPost(db *gorm.DB) http.HandlerFunc {
 		err = db.Model(&PostModel{}).
 			Select("recommend_post_id").
 			Preload("RecommendPost", func(db *gorm.DB) *gorm.DB {
-				return db.Select("id", "slug", "title", "thumbnailUrl", "excerpt", "status")
+				return db.Select("id", "slug", "title", "thumbnail_url", "excerpt", "status")
 			}).
 			Where("id = ?", id).
 			First(&result).Error
