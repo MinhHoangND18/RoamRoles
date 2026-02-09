@@ -249,7 +249,8 @@ function EditPageContent() {
                   </label>
                   <div className="editor-wrapper no-border-ui">
                     <Editor
-                      apiKey="86ftl32z3817cvzn7pacpxi90chujfeh49xkscb688s08uud"
+                      tinymceScriptSrc="/libs/tinymce/tinymce.min.js"
+                      licenseKey="gpl"
                       value={page?.content}
                       onInit={() => setEditorReady(true)}
                       init={{
@@ -287,32 +288,30 @@ function EditPageContent() {
                           "body { font-family:Inter,Arial,sans-serif; font-size:16px }",
                         skin: "oxide",
                         setup: (editor: TinyMCEEditor) => {
-                          editor.on("ExecCommand",
-                            (e: { command: string }) => {
-                              if (e.command === "mceCodeEditor") {
-                                let attempts = 0;
-                                const forceScrollTop = setInterval(() => {
-                                  const textarea = document.querySelector(
-                                    ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
-                                  ) as HTMLTextAreaElement;
+                          editor.on("ExecCommand", (e: { command: string }) => {
+                            if (e.command === "mceCodeEditor") {
+                              let attempts = 0;
+                              const forceScrollTop = setInterval(() => {
+                                const textarea = document.querySelector(
+                                  ".tox-dialog-wrap__backdrop + .tox-dialog-wrap .tox-textarea",
+                                ) as HTMLTextAreaElement;
 
-                                  if (textarea) {
-                                    textarea.setSelectionRange(0, 0);
-                                    textarea.scrollTop = 0;
-                                    textarea.focus();
+                                if (textarea) {
+                                  textarea.setSelectionRange(0, 0);
+                                  textarea.scrollTop = 0;
+                                  textarea.focus();
 
-                                    if (
-                                      textarea.scrollTop === 0 ||
-                                      attempts > 10
-                                    ) {
-                                      clearInterval(forceScrollTop);
-                                    }
+                                  if (
+                                    textarea.scrollTop === 0 ||
+                                    attempts > 10
+                                  ) {
+                                    clearInterval(forceScrollTop);
                                   }
-                                  attempts++;
-                                }, 50);
-                              }
-                            },
-                          );
+                                }
+                                attempts++;
+                              }, 50);
+                            }
+                          });
 
                           editor.on("OpenWindow", () => {
                             setTimeout(() => {

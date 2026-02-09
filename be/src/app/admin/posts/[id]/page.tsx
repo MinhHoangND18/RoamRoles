@@ -566,7 +566,8 @@ function EditPostContent() {
                   <div className="editor-wrapper no-border-ui">
                     {" "}
                     <Editor
-                      apiKey="86ftl32z3817cvzn7pacpxi90chujfeh49xkscb688s08uud"
+                      tinymceScriptSrc="/libs/tinymce/tinymce.min.js"
+                      licenseKey='gpl'
                       value={post.excerpt}
                       onInit={() => setEditorsReadyCount((count) => count + 1)}
                       init={{
@@ -593,9 +594,10 @@ function EditPostContent() {
                   </label>
                   <div className="editor-wrapper no-border-ui">
                     <Editor
-                      apiKey="86ftl32z3817cvzn7pacpxi90chujfeh49xkscb688s08uud"
+                      tinymceScriptSrc="/libs/tinymce/tinymce.min.js"
                       value={post.content}
                       onInit={() => setEditorsReadyCount((count) => count + 1)}
+                      licenseKey='gpl'
                       init={{
                         height: 600,
                         menubar: false,
@@ -812,25 +814,27 @@ function EditPostContent() {
                         setPost((prev) =>
                           prev
                             ? {
-                              ...prev,
-                              status:
-                                prev.status === "active"
-                                  ? "inactive"
-                                  : "active",
-                            }
+                                ...prev,
+                                status:
+                                  prev.status === "active"
+                                    ? "inactive"
+                                    : "active",
+                              }
                             : null,
                         )
                       }
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${post.status === "active"
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
+                        post.status === "active"
                           ? "bg-green-500"
                           : "bg-slate-300"
-                        }`}
+                      }`}
                     >
                       <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${post.status === "active"
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
+                          post.status === "active"
                             ? "translate-x-6"
                             : "translate-x-1"
-                          }`}
+                        }`}
                       />
                     </button>
                   </div>
@@ -841,8 +845,14 @@ function EditPostContent() {
                       className="flex items-center justify-between w-full bg-white border border-slate-200 p-3 text-[16px] shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900"
                     >
                       <div className="flex items-center gap-2 overflow-hidden justify-between flex-grow">
-                        <span className={`text-left truncate ${selectedCategory?.status === "inactive" ? "text-slate-400 italic" : ""}`}>
-                          {selectedCategory ? selectedCategory.title : (post.category_id === null ? "No Category" : "Select Category")}
+                        <span
+                          className={`text-left truncate ${selectedCategory?.status === "inactive" ? "text-slate-400 italic" : ""}`}
+                        >
+                          {selectedCategory
+                            ? selectedCategory.title
+                            : post.category_id === null
+                              ? "No Category"
+                              : "Select Category"}
                         </span>
                         {selectedCategory?.status === "inactive" && (
                           <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded flex-shrink-0 rounded-none iltalic">
@@ -851,8 +861,9 @@ function EditPostContent() {
                         )}
                       </div>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform text-slate-400 flex-shrink-0 ${isCategoryOpen ? "rotate-180" : ""
-                          }`}
+                        className={`w-4 h-4 transition-transform text-slate-400 flex-shrink-0 ${
+                          isCategoryOpen ? "rotate-180" : ""
+                        }`}
                       />
                     </button>
                     {isCategoryOpen && (
@@ -905,10 +916,10 @@ function EditPostContent() {
                       <span className="text-left truncate pr-2">
                         {post.recommend_post_id
                           ? getCleanTitle(
-                            allPosts.find(
-                              (p) => p.id === post.recommend_post_id,
-                            )?.title,
-                          ) || "Select Post"
+                              allPosts.find(
+                                (p) => p.id === post.recommend_post_id,
+                              )?.title,
+                            ) || "Select Post"
                           : "No Recommendation"}
                       </span>
                       <ChevronDown
@@ -969,10 +980,11 @@ function EditPostContent() {
                                   setIsRecommendOpen(false);
                                   setSearchTerm("");
                                 }}
-                                className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${post.recommend_post_id === p.id
+                                className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${
+                                  post.recommend_post_id === p.id
                                     ? "bg-blue-50 text-blue-600 font-bold"
                                     : ""
-                                  }`}
+                                }`}
                               >
                                 <div className="text-[13px] line-clamp-1">
                                   {getCleanTitle(p.title) || p.slug}
@@ -990,10 +1002,10 @@ function EditPostContent() {
                                 .toLowerCase()
                                 .includes(searchTerm.toLowerCase()),
                           ).length === 0 && (
-                              <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
-                                No posts found matching {searchTerm}
-                              </li>
-                            )}
+                            <li className="px-4 py-3 text-center text-slate-400 text-xs italic">
+                              No posts found matching {searchTerm}
+                            </li>
+                          )}
                         </ul>
                       </div>
                     )}
@@ -1008,7 +1020,7 @@ function EditPostContent() {
                       <span className="text-left truncate pr-2">
                         {post?.survey_set_id
                           ? surveySets.find((s) => s.id === post.survey_set_id)
-                            ?.name || "Select Survey"
+                              ?.name || "Select Survey"
                           : "No Survey"}
                       </span>
                       <ChevronDown
@@ -1050,7 +1062,7 @@ function EditPostContent() {
                               const searchLower =
                                 surveySearchTerm.toLowerCase();
                               return (
-                                s.active && 
+                                s.active &&
                                 (s.name.toLowerCase().includes(searchLower) ||
                                   s.slug.toLowerCase().includes(searchLower))
                               );
@@ -1067,10 +1079,11 @@ function EditPostContent() {
                                   setIsSurveyOpen(false);
                                   setSurveySearchTerm("");
                                 }}
-                                className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${post?.survey_set_id === s.id
+                                className={`px-4 py-2 cursor-pointer hover:bg-blue-50 text-slate-600 transition-colors border-b border-slate-50 last:border-0 ${
+                                  post?.survey_set_id === s.id
                                     ? "bg-blue-50 text-blue-600 font-bold"
                                     : ""
-                                  }`}
+                                }`}
                               >
                                 <div className="text-[13px] line-clamp-1">
                                   {s.name}
@@ -1087,10 +1100,10 @@ function EditPostContent() {
                               .toLowerCase()
                               .includes(surveySearchTerm.toLowerCase()),
                           ).length === 0 && (
-                              <li className="px-4 py-3 text-center text-slate-400 text-xs">
-                                No survey sets found matching {surveySearchTerm}
-                              </li>
-                            )}
+                            <li className="px-4 py-3 text-center text-slate-400 text-xs">
+                              No survey sets found matching {surveySearchTerm}
+                            </li>
+                          )}
                         </ul>
                       </div>
                     )}
@@ -1171,7 +1184,10 @@ function EditPostContent() {
                               </ul>
                             )}
                           </div>
-                           <div className="relative" ref={statusFilterDropdownRef}>
+                          <div
+                            className="relative"
+                            ref={statusFilterDropdownRef}
+                          >
                             <button
                               onClick={() =>
                                 setIsStatusFilterOpen(!isStatusFilterOpen)
@@ -1224,9 +1240,7 @@ function EditPostContent() {
                                   blockSearchTerm.toLowerCase();
                                 const shortcode = `[block id="${b.id}"]`;
                                 const matchesSearch =
-                                  b.title
-                                    .toLowerCase()
-                                    .includes(searchLower) ||
+                                  b.title.toLowerCase().includes(searchLower) ||
                                   shortcode.includes(searchLower);
                                 const matchesType =
                                   filterType === "all" || bType === filterType;
@@ -1365,8 +1379,8 @@ function EditPostContent() {
                       isNewPost ||
                       originalPost === null ||
                       originalPost?.status !== "active" ||
-                      categories.find((c) => c.id === originalPost?.category_id)?.status ===
-                        "inactive" ||
+                      categories.find((c) => c.id === originalPost?.category_id)
+                        ?.status === "inactive" ||
                       previewing
                     }
                     className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 font-bold transition-all border border-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1463,7 +1477,9 @@ function QuickEditBlockPopup({
   const [blockImageUploading, setBlockImageUploading] = useState(false);
   const blockImageInputRef = useRef<HTMLInputElement>(null);
 
-  const handleBlockImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBlockImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -1488,9 +1504,13 @@ function QuickEditBlockPopup({
           ...prev,
           image_url: result.local_path || "",
         }));
-        toast.success("Image uploaded successfully!", { id: "upload-block-image" });
+        toast.success("Image uploaded successfully!", {
+          id: "upload-block-image",
+        });
       } else {
-        toast.error(result.error || "Upload failed", { id: "upload-block-image" });
+        toast.error(result.error || "Upload failed", {
+          id: "upload-block-image",
+        });
       }
     } catch (error) {
       toast.error("Failed to upload image", { id: "upload-block-image" });
@@ -1685,10 +1705,11 @@ function QuickEditBlockPopup({
                       type="button"
                       onClick={() => handleTypeChange(t.id)}
                       disabled={!isNewBlock}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-none transition-all font-bold text-xs ${blockType === t.id
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-none transition-all font-bold text-xs ${
+                        blockType === t.id
                           ? "bg-white text-blue-600 shadow-sm"
                           : "text-slate-500"
-                        } ${isNewBlock ? "hover:bg-slate-200/50 hover:text-slate-700" : "cursor-not-allowed opacity-60"}`}
+                      } ${isNewBlock ? "hover:bg-slate-200/50 hover:text-slate-700" : "cursor-not-allowed opacity-60"}`}
                     >
                       {t.icon} {t.label}
                     </button>
@@ -1711,12 +1732,14 @@ function QuickEditBlockPopup({
                         prev === "active" ? "inactive" : "active",
                       )
                     }
-                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${status === "active" ? "bg-green-500" : "bg-slate-300"
-                      }`}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-all duration-300 ${
+                      status === "active" ? "bg-green-500" : "bg-slate-300"
+                    }`}
                   >
                     <span
-                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${status === "active" ? "translate-x-6" : "translate-x-1"
-                        }`}
+                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all duration-300 ${
+                        status === "active" ? "translate-x-6" : "translate-x-1"
+                      }`}
                     />
                   </button>
                 </div>
@@ -1734,10 +1757,11 @@ function QuickEditBlockPopup({
                           type="button"
                           onClick={() => handleLayoutChange("standard")}
                           disabled={!isNewBlock}
-                          className={`px-4 py-2 text-xs font-bold rounded-lg border-2 transition-all ${content.layout === "standard" || !content.layout
+                          className={`px-4 py-2 text-xs font-bold rounded-lg border-2 transition-all ${
+                            content.layout === "standard" || !content.layout
                               ? "border-blue-600 bg-blue-50 text-blue-600 rounded-none"
                               : "border-slate-200 text-slate-400 rounded-none"
-                            } ${!isNewBlock && "cursor-not-allowed opacity-60"}`}
+                          } ${!isNewBlock && "cursor-not-allowed opacity-60"}`}
                         >
                           Standard
                         </button>
@@ -1745,10 +1769,11 @@ function QuickEditBlockPopup({
                           type="button"
                           onClick={() => handleLayoutChange("intro")}
                           disabled={!isNewBlock}
-                          className={`px-4 py-2 text-xs font-bold rounded-lg border-2 transition-all ${content.layout === "intro"
+                          className={`px-4 py-2 text-xs font-bold rounded-lg border-2 transition-all ${
+                            content.layout === "intro"
                               ? "border-blue-600 bg-blue-50 text-blue-600 rounded-none"
                               : "border-slate-200 text-slate-400 rounded-none"
-                            } ${!isNewBlock && "cursor-not-allowed opacity-60"}`}
+                          } ${!isNewBlock && "cursor-not-allowed opacity-60"}`}
                         >
                           Intro
                         </button>
@@ -1846,7 +1871,9 @@ function QuickEditBlockPopup({
                             className="flex items-center justify-center w-10 h-10 border border-slate-300 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 cursor-pointer transition-colors"
                             style={{
                               opacity: blockImageUploading ? 0.5 : 1,
-                              pointerEvents: blockImageUploading ? "none" : "auto",
+                              pointerEvents: blockImageUploading
+                                ? "none"
+                                : "auto",
                             }}
                             title="Upload image from computer"
                           >
